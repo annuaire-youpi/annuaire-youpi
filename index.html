@@ -1017,10 +1017,358 @@
       .footer { padding: 24px 16px; font-size: 12px; }
     }
 
-    /* Loader mobile */
-    @media (max-width: 600px) {
-      .loader-content { padding: 18px 22px; font-size: 14px; }
+    /* ============================================================
+       HOME v0.5 — Composants spécifiques nouvelle page d'accueil
+       ============================================================ */
+
+    /* Hero — champ de recherche conversationnel */
+    .ai-search {
+      max-width: 620px;
+      margin: 8px auto 22px;
+      position: relative;
     }
+    .ai-search-input-wrap {
+      background: var(--card);
+      border: 2px solid var(--border);
+      border-radius: 14px;
+      padding: 6px 6px 6px 18px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: var(--shadow);
+      transition: all .2s ease;
+    }
+    .ai-search-input-wrap:focus-within {
+      border-color: var(--teal-700);
+      box-shadow: 0 0 0 4px var(--teal-100), var(--shadow-lg);
+    }
+    .ai-search-icon {
+      font-size: 20px;
+      flex-shrink: 0;
+      opacity: .7;
+    }
+    .ai-search-input {
+      flex: 1;
+      border: none !important;
+      padding: 12px 0 !important;
+      font-size: 15px !important;
+      background: transparent !important;
+      box-shadow: none !important;
+      outline: none !important;
+      min-width: 0;
+    }
+    .ai-search-input::placeholder {
+      color: var(--muted);
+      transition: opacity .3s ease;
+    }
+    .ai-search-input.fading::placeholder {
+      opacity: 0;
+    }
+    .ai-search-btn {
+      background: var(--teal-700);
+      color: #fff;
+      border-radius: 10px;
+      padding: 10px 18px;
+      font-weight: 600;
+      font-size: 14px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: background .15s ease;
+    }
+    .ai-search-btn:hover { background: var(--teal-800); }
+    .ai-search-btn span.label-full { display: inline; }
+    .ai-search-btn span.label-short { display: none; }
+    @media (max-width: 540px) {
+      .ai-search-input-wrap { padding: 5px 5px 5px 14px; }
+      .ai-search-input { font-size: 16px !important; padding: 10px 0 !important; }
+      .ai-search-btn { padding: 9px 12px; }
+      .ai-search-btn span.label-full { display: none; }
+      .ai-search-btn span.label-short { display: inline; }
+    }
+
+    /* Hero — bouton secondaire pro discret */
+    .hero-pro-link {
+      margin-top: 14px;
+      font-size: 14px;
+      color: var(--text-2);
+    }
+    .hero-pro-link a {
+      color: var(--teal-700);
+      font-weight: 600;
+      text-decoration: underline;
+      text-underline-offset: 3px;
+      text-decoration-thickness: 1.5px;
+    }
+    .hero-pro-link a:hover { color: var(--teal-800); }
+
+    /* Section "3 promesses utilisateur" */
+    .promises {
+      margin-top: 50px;
+      max-width: 1000px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .promises-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 20px;
+    }
+    .promise {
+      text-align: center;
+      padding: 24px 18px;
+    }
+    .promise-icon {
+      font-size: 38px;
+      margin-bottom: 10px;
+      display: block;
+    }
+    .promise h3 {
+      font-family: var(--font-display);
+      font-size: 19px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: var(--teal-900);
+    }
+    .promise p {
+      font-size: 14px;
+      color: var(--text-2);
+      line-height: 1.55;
+    }
+
+    /* Section "Exemples de questions" */
+    .examples-section {
+      margin-top: 60px;
+      max-width: 1000px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .examples-section h2 {
+      font-family: var(--font-display);
+      font-size: 26px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: var(--teal-900);
+      text-align: center;
+    }
+    .examples-section .section-sub {
+      text-align: center;
+      color: var(--text-2);
+      margin-bottom: 24px;
+      font-size: 15px;
+    }
+    .examples-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 12px;
+    }
+    .example-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px 16px;
+      cursor: pointer;
+      transition: all .15s ease;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-align: left;
+      font-family: inherit;
+      font-size: 14px;
+      color: var(--text);
+      line-height: 1.4;
+    }
+    .example-card:hover {
+      border-color: var(--teal-600);
+      transform: translateY(-1px);
+      box-shadow: var(--shadow);
+    }
+    .example-card-icon {
+      font-size: 22px;
+      flex-shrink: 0;
+    }
+    .example-card-text {
+      flex: 1;
+    }
+    .example-card-arrow {
+      color: var(--teal-600);
+      font-size: 18px;
+      flex-shrink: 0;
+      opacity: 0;
+      transition: opacity .15s ease;
+    }
+    .example-card:hover .example-card-arrow { opacity: 1; }
+
+    /* Section "Vous êtes une entreprise ?" — bloc vendeur pro */
+    .pro-cta {
+      margin-top: 70px;
+      background: linear-gradient(135deg, var(--teal-50) 0%, var(--sand-50) 100%);
+      border: 1px solid var(--teal-100);
+      border-radius: 20px;
+      padding: 40px 32px;
+      max-width: 1000px;
+      margin-left: auto;
+      margin-right: auto;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .pro-cta::before {
+      content: '';
+      position: absolute;
+      top: -60px; right: -60px;
+      width: 200px; height: 200px;
+      background: radial-gradient(circle, var(--teal-100) 0%, transparent 70%);
+      border-radius: 50%;
+      pointer-events: none;
+    }
+    .pro-cta-inner { position: relative; }
+    .pro-cta-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--card);
+      border: 1px solid var(--teal-200, var(--teal-100));
+      color: var(--teal-800);
+      padding: 5px 12px;
+      border-radius: 100px;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: .3px;
+      text-transform: uppercase;
+      margin-bottom: 16px;
+    }
+    .pro-cta h2 {
+      font-family: var(--font-display);
+      font-size: clamp(24px, 4vw, 32px);
+      font-weight: 600;
+      color: var(--teal-900);
+      margin-bottom: 12px;
+      line-height: 1.2;
+      letter-spacing: -.5px;
+    }
+    .pro-cta-sub {
+      font-size: 16px;
+      color: var(--text-2);
+      max-width: 600px;
+      margin: 0 auto 28px;
+    }
+    .pro-cta-benefits {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 18px;
+      max-width: 760px;
+      margin: 0 auto 30px;
+      text-align: left;
+    }
+    .pro-benefit {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      background: rgba(255,255,255,.6);
+      padding: 14px;
+      border-radius: 12px;
+      border: 1px solid rgba(37, 99, 235, .08);
+    }
+    .pro-benefit-icon {
+      font-size: 22px;
+      flex-shrink: 0;
+      line-height: 1;
+      margin-top: 2px;
+    }
+    .pro-benefit strong {
+      display: block;
+      font-size: 14px;
+      color: var(--teal-900);
+      margin-bottom: 2px;
+    }
+    .pro-benefit-desc {
+      font-size: 13px;
+      color: var(--text-2);
+      line-height: 1.45;
+    }
+    .pro-cta-action {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    @media (max-width: 600px) {
+      .pro-cta { padding: 28px 18px; }
+      .pro-cta-benefits { gap: 10px; }
+      .pro-cta-action { flex-direction: column; }
+      .pro-cta-action .btn { width: 100%; }
+    }
+
+    /* Section FAQ */
+    .faq-section {
+      margin-top: 60px;
+      max-width: 720px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .faq-section h2 {
+      font-family: var(--font-display);
+      font-size: 26px;
+      font-weight: 600;
+      margin-bottom: 20px;
+      color: var(--teal-900);
+      text-align: center;
+    }
+    .faq-item {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      margin-bottom: 10px;
+      overflow: hidden;
+      transition: border-color .15s ease;
+    }
+    .faq-item[open] { border-color: var(--teal-600); }
+    .faq-item summary {
+      padding: 16px 18px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 15px;
+      color: var(--text);
+      list-style: none;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .faq-item summary::-webkit-details-marker { display: none; }
+    .faq-item summary::after {
+      content: '+';
+      font-size: 22px;
+      color: var(--teal-700);
+      font-weight: 400;
+      transition: transform .2s ease;
+      flex-shrink: 0;
+    }
+    .faq-item[open] summary::after {
+      content: '−';
+    }
+    .faq-item-body {
+      padding: 0 18px 18px;
+      color: var(--text-2);
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    /* Mode démo — petit lien discret en bas */
+    .demo-discreet {
+      margin-top: 50px;
+      text-align: center;
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .demo-discreet a {
+      color: var(--text-2);
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+    .demo-discreet a:hover { color: var(--teal-700); }
   </style>
 </head>
 <body>
@@ -1045,7 +1393,7 @@
 
   <!-- ====================== FOOTER ====================== -->
   <footer class="footer">
-    <div>Annuaire YOUPI<span style="color:var(--teal-700)">®</span> · <span id="footer-version">v0.4 — 2026</span></div>
+    <div>Annuaire YOUPI<span style="color:var(--teal-700)">®</span> · <span id="footer-version">v0.5 — 2026</span></div>
     <div class="mt-16 text-xs">Conçu pour les entreprises ultra-marines · Martinique 🇲🇶 · Guadeloupe 🇬🇵 · Guyane 🇬🇫</div>
   </footer>
 
@@ -1067,7 +1415,7 @@
 
   const APP = {
     name: 'Annuaire YOUPI',
-    version: 'v0.4 — 2026',
+    version: 'v0.5 — 2026',
     BACKEND_URL: 'https://script.google.com/macros/s/AKfycbzQNSOAGCJp1QmZU0IE1FYiKmKCcGgTUpqKa3RJG9lwiAND_EC5dGdbh2XCu26ZTMoxtw/exec'
   };
 
@@ -1299,8 +1647,32 @@
   }
 
   // ============================================================
-  //  VIEW : HOME
+  //  VIEW : HOME v0.5 — Utilisateur dominant, pro en bas
   // ============================================================
+
+  // URL de l'agent IA Chatling (pré-remplit la question si supporté)
+  const CHATLING_URL = 'https://share.chatling.ai/s/Rd2GDW2nq82dfc5';
+
+  // Exemples de questions pour le placeholder rotatif et la grille
+  const EXAMPLE_QUESTIONS = [
+    { icon: '🔧', text: "Je cherche un mécano dispo samedi à Sainte-Anne" },
+    { icon: '🍽️', text: "Un resto créole végé qui livre au Lamentin ?" },
+    { icon: '💆', text: "Un spa pour mon mariage à Fort-de-France" },
+    { icon: '🏗️', text: "Une entreprise de rénovation à Ducos" },
+    { icon: '🤿', text: "Où faire un baptême de plongée en Martinique ?" },
+    { icon: '📚', text: "Cours particuliers de créole pour adultes" },
+    { icon: '🐕', text: "Un toiletteur pour mon chien à Schoelcher" },
+    { icon: '💻', text: "Quelqu'un pour créer le site web de ma boîte" }
+  ];
+
+  function askAI(question) {
+    // Tente de pré-remplir la question dans Chatling via query param.
+    // Si non supporté, l'utilisateur retapera — l'important est l'engagement.
+    const q = (question || '').trim();
+    const url = q ? CHATLING_URL + '?message=' + encodeURIComponent(q) : CHATLING_URL;
+    window.open(url, '_blank', 'noopener');
+  }
+
   function renderHome() {
     const regions = (state.config && state.config.regions) || [
       { code: 'MQ', name: 'Martinique', status: 'active' },
@@ -1315,23 +1687,73 @@
     document.getElementById('main').innerHTML = `
       <section class="hero">
         <div class="hero-inner">
-          <span class="hero-badge">✨ Annuaire IA — 100% gratuit pour les entreprises</span>
-          <h1>L'annuaire intelligent qui trouve la <em>bonne entreprise</em>, juste à côté de chez vous.</h1>
-          <p class="hero-sub">Annuaire YOUPI<sup>®</sup> répond aux internautes grâce à un agent IA qui connaît les meilleures entreprises locales. Inscrivez votre entreprise gratuitement et soyez recommandé en quelques secondes.</p>
-          <div class="hero-cta">
-            <button class="btn btn-primary btn-lg" onclick="navigate('register')">+ Inscrire mon entreprise</button>
-            <a class="btn btn-secondary btn-lg" href="https://share.chatling.ai/s/Rd2GDW2nq82dfc5" target="_blank" rel="noopener">💬 Essayer l'agent IA</a>
-            <button class="btn btn-ghost btn-lg" onclick="activateDemo()">🎭 Mode démonstration</button>
+          <span class="hero-badge">✨ L'agent IA caribéen qui recommande les bonnes entreprises</span>
+          <h1>Posez votre question. <em>L'IA trouve</em> la bonne entreprise, juste à côté de chez vous.</h1>
+          <p class="hero-sub">Plus besoin de scroller des pages d'annuaire ou de comparer 15 avis Google. Décrivez ce que vous cherchez en langage naturel, Annuaire YOUPI<sup>®</sup> vous recommande les meilleurs pros locaux en quelques secondes.</p>
+
+          <form class="ai-search" onsubmit="submitAISearch(event)">
+            <div class="ai-search-input-wrap">
+              <span class="ai-search-icon">💬</span>
+              <input
+                type="text"
+                id="ai-search-input"
+                class="ai-search-input"
+                placeholder="${esc(EXAMPLE_QUESTIONS[0].text)}"
+                autocomplete="off"
+              />
+              <button type="submit" class="ai-search-btn">
+                <span class="label-full">Demander à l'IA</span>
+                <span class="label-short">→</span>
+              </button>
+            </div>
+          </form>
+
+          <p class="hero-pro-link">
+            Vous êtes une entreprise ? <a href="#pro-cta" onclick="scrollToPro(event)">Faites-vous référencer gratuitement →</a>
+          </p>
+        </div>
+      </section>
+
+      <section class="promises">
+        <div class="promises-grid">
+          <div class="promise">
+            <span class="promise-icon">💬</span>
+            <h3>Parlez en langage naturel</h3>
+            <p>Plus besoin de mots-clés ou de filtres. Décrivez votre besoin comme à un ami, l'IA comprend le contexte.</p>
           </div>
+          <div class="promise">
+            <span class="promise-icon">🌴</span>
+            <h3>100% caribéen, hyper-local</h3>
+            <p>Une IA qui connaît votre quartier, vos communes, vos habitudes. Pas de réponse générique copiée du Web.</p>
+          </div>
+          <div class="promise">
+            <span class="promise-icon">⚡</span>
+            <h3>Instantané et gratuit</h3>
+            <p>Réponse en quelques secondes, jour et nuit. Aucune pub, aucune inscription, aucun tracking abusif.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="examples-section">
+        <h2>Voici le genre de questions que l'IA adore</h2>
+        <p class="section-sub">Cliquez sur un exemple pour voir la magie en action.</p>
+        <div class="examples-grid">
+          ${EXAMPLE_QUESTIONS.map(q => `
+            <button type="button" class="example-card" onclick="askAI('${esc(q.text).replace(/'/g, '&#39;')}')">
+              <span class="example-card-icon">${q.icon}</span>
+              <span class="example-card-text">${esc(q.text)}</span>
+              <span class="example-card-arrow">→</span>
+            </button>
+          `).join('')}
         </div>
       </section>
 
       <section class="regions">
         <h2>Disponible dans vos régions</h2>
-        <p class="regions-sub">Choisissez votre région pour commencer.</p>
+        <p class="regions-sub">L'agent IA Annuaire YOUPI® est aujourd'hui en service en Martinique, et bientôt dans toute la Caraïbe française.</p>
         <div class="regions-grid">
           ${regions.map(r => `
-            <div class="region-card ${r.status}" ${r.status === 'active' ? `onclick="navigate('register', {region: '${r.code}'})"` : ''}>
+            <div class="region-card ${r.status}" ${r.status === 'active' ? `onclick="askAI('')"` : ''}>
               <div class="region-flag">${flags[r.code] || '🌍'}</div>
               <div>
                 <div class="region-name">${esc(r.name)}</div>
@@ -1342,32 +1764,149 @@
         </div>
       </section>
 
-      <section class="how">
+      <section class="pro-cta" id="pro-cta">
+        <div class="pro-cta-inner">
+          <span class="pro-cta-badge">🏢 Pour les entreprises</span>
+          <h2>Soyez recommandé par l'IA caribéenne, gratuitement.</h2>
+          <p class="pro-cta-sub">Pendant que vos concurrents s'épuisent sur Google Ads et les réseaux sociaux, faites-vous référencer en 2 minutes dans l'annuaire intelligent le plus précis de la Caraïbe.</p>
+
+          <div class="pro-cta-benefits">
+            <div class="pro-benefit">
+              <span class="pro-benefit-icon">🎯</span>
+              <div>
+                <strong>Visibilité IA 24h/24</strong>
+                <div class="pro-benefit-desc">Recommandé automatiquement chaque fois qu'un internaute cherche ce que vous proposez.</div>
+              </div>
+            </div>
+            <div class="pro-benefit">
+              <span class="pro-benefit-icon">📈</span>
+              <div>
+                <strong>Prospects qualifiés</strong>
+                <div class="pro-benefit-desc">Pas de curieux, pas de spam. Que des gens qui ont un vrai besoin local maintenant.</div>
+              </div>
+            </div>
+            <div class="pro-benefit">
+              <span class="pro-benefit-icon">💸</span>
+              <div>
+                <strong>100% gratuit</strong>
+                <div class="pro-benefit-desc">Pas d'abonnement, pas d'engagement, pas de carte bancaire. Pour de vrai.</div>
+              </div>
+            </div>
+            <div class="pro-benefit">
+              <span class="pro-benefit-icon">⚙️</span>
+              <div>
+                <strong>Pages services illimitées</strong>
+                <div class="pro-benefit-desc">Créez une page par service pour multiplier vos chances d'être recommandé sur des requêtes précises.</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="pro-cta-action">
+            <button class="btn btn-primary btn-lg" onclick="navigate('register')">+ Inscrire mon entreprise (2 min)</button>
+            <button class="btn btn-secondary btn-lg" onclick="document.getElementById('how-it-works').scrollIntoView({behavior:'smooth'})">Comment ça marche ?</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="how" id="how-it-works">
         <h2>Comment ça marche ?</h2>
         <div class="how-grid">
           <div class="how-step">
             <div class="how-step-num">1</div>
-            <h3>Vous vous inscrivez</h3>
-            <p>2 minutes, gratuit, sans engagement. Vous remplissez la fiche de votre entreprise.</p>
+            <h3>L'entreprise s'inscrit</h3>
+            <p>Le pro remplit sa fiche en 2 minutes : services, horaires, coordonnées. Gratuit, sans engagement.</p>
           </div>
           <div class="how-step">
             <div class="how-step-num">2</div>
-            <h3>L'IA structure votre fiche</h3>
-            <p>Notre IA transforme vos informations en fiche optimisée et l'intègre à la base de connaissance Annuaire YOUPI®.</p>
+            <h3>L'IA structure la fiche</h3>
+            <p>Notre IA transforme les informations en fiche optimisée et l'intègre à la base de connaissance Annuaire YOUPI®.</p>
           </div>
           <div class="how-step">
             <div class="how-step-num">3</div>
-            <h3>Les internautes vous trouvent</h3>
-            <p>Quand quelqu'un cherche votre type de service, l'agent IA Annuaire YOUPI® vous recommande automatiquement.</p>
+            <h3>L'internaute pose sa question</h3>
+            <p>Vous décrivez votre besoin en langage naturel. L'IA analyse, comprend le contexte, et identifie les meilleurs candidats.</p>
           </div>
           <div class="how-step">
             <div class="how-step-num">4</div>
-            <h3>Vous boostez votre visibilité</h3>
-            <p>Depuis votre espace pro, créez des pages dédiées à chacun de vos services pour apparaître sur encore plus de requêtes.</p>
+            <h3>L'IA recommande</h3>
+            <p>Réponse précise, avec les coordonnées des entreprises pertinentes. Tout le monde y gagne : le client trouve, l'entreprise est visible.</p>
           </div>
         </div>
       </section>
+
+      <section class="faq-section">
+        <h2>Questions fréquentes</h2>
+        <details class="faq-item">
+          <summary>C'est vraiment gratuit pour les entreprises ?</summary>
+          <div class="faq-item-body">
+            Oui, totalement et sans piège. Pas d'abonnement, pas d'engagement, pas de carte bancaire à fournir. Notre modèle économique sera précisé plus tard via des fonctionnalités premium optionnelles (mise en avant, statistiques avancées), mais l'inscription et la recommandation par l'IA resteront gratuites.
+          </div>
+        </details>
+        <details class="faq-item">
+          <summary>Comment l'IA choisit quelle entreprise recommander ?</summary>
+          <div class="faq-item-body">
+            L'IA analyse le besoin exprimé (service, localisation, contexte) et le confronte aux fiches structurées des entreprises inscrites dans la région concernée. Elle privilégie la pertinence locale, la précision du service, et le niveau de détail de la fiche — pas le plus offrant.
+          </div>
+        </details>
+        <details class="faq-item">
+          <summary>Mes données personnelles sont-elles protégées ?</summary>
+          <div class="faq-item-body">
+            Nous ne collectons aucune donnée personnelle quand vous interrogez l'agent IA : pas de compte requis, pas de cookies de tracking, pas de revente de données. Les questions sont traitées de manière anonyme. Pour les entreprises inscrites, seules les informations professionnelles que vous fournissez (et qui sont destinées à être publiques) sont utilisées.
+          </div>
+        </details>
+        <details class="faq-item">
+          <summary>L'IA peut-elle se tromper ou inventer des entreprises ?</summary>
+          <div class="faq-item-body">
+            Non. L'IA est strictement limitée à la base de connaissance des entreprises réellement inscrites dans la région demandée. Si aucune entreprise ne correspond, elle vous le dit clairement plutôt que d'inventer. C'est tout l'intérêt de notre approche par rapport à un ChatGPT généraliste.
+          </div>
+        </details>
+        <details class="faq-item">
+          <summary>Je suis une entreprise, combien de temps pour être actif ?</summary>
+          <div class="faq-item-body">
+            Quelques secondes. Une fois votre fiche soumise, notre IA la traite immédiatement et l'agent IA Annuaire YOUPI® peut commencer à vous recommander dans la minute. Aucune validation manuelle, aucun délai administratif.
+          </div>
+        </details>
+      </section>
+
+      <p class="demo-discreet">
+        Curieux de voir l'interface pro côté entreprise ? <a href="#" onclick="activateDemo();return false;">Activer le mode démonstration</a>
+      </p>
     `;
+
+    // Démarre l'animation du placeholder rotatif
+    startPlaceholderRotation();
+  }
+
+  function submitAISearch(e) {
+    e.preventDefault();
+    const input = document.getElementById('ai-search-input');
+    const q = input.value.trim() || input.placeholder;
+    askAI(q);
+  }
+
+  function scrollToPro(e) {
+    e.preventDefault();
+    const el = document.getElementById('pro-cta');
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  // Animation du placeholder : questions qui défilent toutes les 3.5s
+  let _placeholderTimer = null;
+  function startPlaceholderRotation() {
+    if (_placeholderTimer) clearInterval(_placeholderTimer);
+    let idx = 0;
+    const input = document.getElementById('ai-search-input');
+    if (!input) return;
+    _placeholderTimer = setInterval(() => {
+      // Si l'utilisateur a commencé à taper, on n'écrase pas
+      if (input.value || document.activeElement === input) return;
+      idx = (idx + 1) % EXAMPLE_QUESTIONS.length;
+      input.classList.add('fading');
+      setTimeout(() => {
+        input.setAttribute('placeholder', EXAMPLE_QUESTIONS[idx].text);
+        input.classList.remove('fading');
+      }, 300);
+    }, 3500);
   }
 
   // ============================================================
