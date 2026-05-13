@@ -1,2288 +1,1116 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="theme-color" content="#0f766e" />
-  <meta name="description" content="YOUPI® — L'annuaire intelligent qui trouve les meilleures entreprises locales grâce à l'IA." />
-  <title>YOUPI® — Annuaire intelligent</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Fraunces:opsz,wght@9..144,500;9..144,700&display=swap" rel="stylesheet" />
-  <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%230f766e'/%3E%3Ctext x='50' y='66' text-anchor='middle' font-family='sans-serif' font-size='52' font-weight='800' fill='%23f5e6d3'%3EY%3C/text%3E%3C/svg%3E" />
+/**
+ * ============================================================
+ *  YOUPI® — Backend Apps Script
+ *  v0.1 — 2026
+ * ============================================================
+ *
+ *  Architecture :
+ *    Frontend (youpi.html) → fetch POST → doPost(e) → dispatch
+ *      → Google Sheets (stockage)
+ *      → Anthropic API (génération markdown via Claude Haiku 4.5)
+ *      → Chatling API (ingestion knowledge base)
+ *
+ *  Installation :
+ *    1. Apps Script → nouveau projet → coller ce fichier
+ *    2. Project Settings → Script Properties :
+ *         - ANTHROPIC_API_KEY        : sk-ant-...
+ *         - CHATLING_API_KEY         : <ton token Chatling>
+ *         - CHATLING_CHATBOT_MQ      : 9976474827 (Martinique)
+ *         - CHATLING_CHATBOT_GP      : <id Guadeloupe quand prêt>
+ *         - ADMIN_PIN                : 6 caractères (chiffres ou #)
+ *         - SHEET_ID                 : ID du Google Sheet (créé par initSheets)
+ *    3. Exécuter une fois initSheets() pour créer les onglets
+ *    4. Déployer → Nouveau déploiement → Type "Application Web"
+ *         - Exécuter en tant que : moi
+ *         - Accès : tout le monde
+ *    5. Copier l'URL /exec dans BACKEND_URL côté frontend
+ * ============================================================
+ */
 
-  <style>
-    /* ============================================================
-       YOUPI® — design tokens
-       Palette teal + sable, look SaaS soigné, mobile-first
-       ============================================================ */
-    :root {
-      --teal-50:  #f0fdfa;
-      --teal-100: #ccfbf1;
-      --teal-500: #14b8a6;
-      --teal-600: #0d9488;
-      --teal-700: #0f766e;
-      --teal-800: #115e59;
-      --teal-900: #134e4a;
+const VERSION = 'v0.2';
+const APP_NAME = 'Annuaire YOUPI';
 
-      --sand-50:  #fdfbf7;
-      --sand-100: #faf3e7;
-      --sand-200: #f5e6d3;
-      --sand-300: #e8d3b3;
-      --sand-400: #d4b88a;
+const SECTORS = [
+  'Restauration & Cafés',
+  'Hôtellerie & Hébergement',
+  'Tourisme & Loisirs',
+  'BTP & Travaux',
+  'Auto & Mécanique',
+  'Beauté & Bien-être',
+  'Santé & Paramédical',
+  'Services à la personne',
+  'Commerce & Boutiques',
+  'Alimentation & Épicerie',
+  'Mode & Vêtements',
+  'Artisanat & Création',
+  'Numérique & Tech',
+  'Conseil & Services pro',
+  'Éducation & Formation',
+  'Transport & Logistique',
+  'Immobilier',
+  'Événementiel',
+  'Sport & Fitness',
+  'Animaux',
+  'Autre'
+];
 
-      --bg:        #fafaf9;
-      --card:      #ffffff;
-      --border:    #e7e5e4;
-      --border-2:  #d6d3d1;
-      --text:      #1c1917;
-      --text-2:    #57534e;
-      --muted:     #a8a29e;
+const REGIONS = [
+  { code: 'MQ', name: 'Martinique',  status: 'active' },
+  { code: 'GP', name: 'Guadeloupe',  status: 'soon'   },
+  { code: 'GF', name: 'Guyane',      status: 'planned'}
+];
 
-      --success:   #16a34a;
-      --warning:   #ea580c;
-      --error:     #dc2626;
-      --info:      #2563eb;
+// ============================================================
+//  POINT D'ENTRÉE HTTP
+// ============================================================
 
-      --radius-sm: 6px;
-      --radius:    10px;
-      --radius-lg: 16px;
+function doGet(e) {
+  return jsonResponse({ ok: true, app: APP_NAME, version: VERSION, time: new Date().toISOString() });
+}
 
-      --shadow-sm: 0 1px 2px rgba(0,0,0,.04);
-      --shadow:    0 2px 12px rgba(0,0,0,.06);
-      --shadow-lg: 0 8px 32px rgba(0,0,0,.10);
+function doPost(e) {
+  let body;
+  try {
+    body = JSON.parse(e.postData.contents);
+  } catch (err) {
+    return jsonResponse({ ok: false, error: 'Body JSON invalide' });
+  }
 
-      --font-sans: 'Manrope', system-ui, -apple-system, sans-serif;
-      --font-display: 'Fraunces', Georgia, serif;
-    }
+  const action = body.action;
+  const data = body.data || {};
+  log_('REQUEST', action, JSON.stringify(data).slice(0, 200));
 
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+  try {
+    switch (action) {
+      // PUBLIC
+      case 'ping':              return jsonResponse({ ok: true, version: VERSION });
+      case 'getConfig':         return jsonResponse(getConfig_());
+      case 'registerCompany':   return jsonResponse(registerCompany_(data));
 
-    html, body { height: 100%; }
-    body {
-      font-family: var(--font-sans);
-      font-size: 15px;
-      line-height: 1.55;
-      color: var(--text);
-      background: var(--bg);
-      -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
-    }
+      // ESPACE PRO (auth par PIN entreprise)
+      case 'loginCompany':      return jsonResponse(loginCompany_(data));
+      case 'getCompanyData':    return jsonResponse(getCompanyData_(data));
+      case 'updateCompany':     return jsonResponse(updateCompany_(data));
+      case 'changePIN':         return jsonResponse(changePIN_(data));
+      case 'addServicePage':    return jsonResponse(addServicePage_(data));
+      case 'listMyPages':       return jsonResponse(listMyPages_(data));
+      case 'deleteMyPage':      return jsonResponse(deleteMyPage_(data));
 
-    a { color: var(--teal-700); text-decoration: none; }
-    a:hover { text-decoration: underline; }
+      // ADMIN (auth par PIN admin)
+      case 'loginAdmin':        return jsonResponse(loginAdmin_(data));
+      case 'listCompanies':     return jsonResponse(listCompanies_(data));
+      case 'listAllPages':      return jsonResponse(listAllPages_(data));
+      case 'getStats':          return jsonResponse(getStats_(data));
+      case 'reprocessCompany':  return jsonResponse(reprocessCompany_(data));
+      case 'reprocessPage':     return jsonResponse(reprocessPage_(data));
+      case 'updateCompanyAdmin':return jsonResponse(updateCompanyAdmin_(data));
+      case 'deleteCompany':     return jsonResponse(deleteCompany_(data));
+      case 'getPrompts':        return jsonResponse(getPrompts_(data));
+      case 'updatePrompts':     return jsonResponse(updatePrompts_(data));
+      case 'getAuditLog':       return jsonResponse(getAuditLog_(data));
 
-    button { font-family: inherit; cursor: pointer; border: none; background: none; color: inherit; }
+      default:
+        return jsonResponse({ ok: false, error: 'Action inconnue : ' + action });
+    }
+  } catch (err) {
+    log_('ERROR', action, err.message + ' | ' + err.stack);
+    return jsonResponse({ ok: false, error: err.message });
+  }
+}
 
-    input, select, textarea {
-      font-family: inherit;
-      font-size: 15px;
-      color: var(--text);
-      background: var(--card);
-      border: 1px solid var(--border-2);
-      border-radius: var(--radius);
-      padding: 10px 12px;
-      width: 100%;
-      transition: border-color .15s ease, box-shadow .15s ease;
-    }
-    input:focus, select:focus, textarea:focus {
-      outline: none;
-      border-color: var(--teal-600);
-      box-shadow: 0 0 0 3px var(--teal-100);
-    }
-    textarea { resize: vertical; min-height: 90px; }
-    label {
-      display: block;
-      font-size: 13px;
-      font-weight: 600;
-      color: var(--text-2);
-      margin-bottom: 6px;
-    }
-    label .req { color: var(--error); }
-    .hint { font-size: 12px; color: var(--muted); margin-top: 4px; }
+function jsonResponse(obj) {
+  return ContentService
+    .createTextOutput(JSON.stringify(obj))
+    .setMimeType(ContentService.MimeType.JSON);
+}
 
-    /* ============================================================
-       Boutons
-       ============================================================ */
-    .btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      padding: 10px 18px;
-      border-radius: var(--radius);
-      font-weight: 600;
-      font-size: 14px;
-      transition: all .15s ease;
-      white-space: nowrap;
-    }
-    .btn-primary {
-      background: var(--teal-700);
-      color: #fff;
-    }
-    .btn-primary:hover { background: var(--teal-800); transform: translateY(-1px); box-shadow: var(--shadow); }
-    .btn-secondary {
-      background: var(--card);
-      color: var(--text);
-      border: 1px solid var(--border-2);
-    }
-    .btn-secondary:hover { background: var(--sand-50); border-color: var(--teal-600); }
-    .btn-ghost {
-      background: transparent;
-      color: var(--text-2);
-    }
-    .btn-ghost:hover { background: var(--sand-100); color: var(--text); }
-    .btn-danger {
-      background: var(--error);
-      color: #fff;
-    }
-    .btn-danger:hover { background: #b91c1c; }
-    .btn-block { width: 100%; }
-    .btn-lg { padding: 14px 24px; font-size: 16px; }
-    .btn-sm { padding: 6px 12px; font-size: 13px; }
-    .btn:disabled { opacity: .5; cursor: not-allowed; transform: none !important; }
+// ============================================================
+//  INITIALISATION DES ONGLETS
+// ============================================================
 
-    /* ============================================================
-       Layout
-       ============================================================ */
-    .header {
-      background: var(--card);
-      border-bottom: 1px solid var(--border);
-      position: sticky;
-      top: 0;
-      z-index: 100;
-      backdrop-filter: blur(8px);
-      background: rgba(255,255,255,.92);
-    }
-    .header-inner {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 14px 20px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 16px;
-    }
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      font-family: var(--font-display);
-      font-size: 22px;
-      font-weight: 700;
-      color: var(--teal-800);
-      letter-spacing: -.5px;
-    }
-    .brand-logo {
-      width: 32px; height: 32px;
-      background: var(--teal-700);
-      color: var(--sand-200);
-      border-radius: 8px;
-      display: grid;
-      place-items: center;
-      font-weight: 800;
-      font-family: var(--font-sans);
-      font-size: 16px;
-    }
-    .brand-r { font-size: 12px; color: var(--teal-600); margin-left: 2px; }
+function initSheets() {
+  const props = PropertiesService.getScriptProperties();
+  let sheetId = props.getProperty('SHEET_ID');
+  let ss;
 
-    .header-nav {
-      display: flex;
-      gap: 6px;
-      align-items: center;
-    }
+  if (sheetId) {
+    ss = SpreadsheetApp.openById(sheetId);
+  } else {
+    ss = SpreadsheetApp.create('YOUPI Annuaire — Database');
+    props.setProperty('SHEET_ID', ss.getId());
+    Logger.log('Nouveau Sheet créé : ' + ss.getUrl());
+  }
 
-    .main { max-width: 1200px; margin: 0 auto; padding: 24px 20px 80px; }
-    .container-narrow { max-width: 640px; margin: 0 auto; }
+  ensureSheet_(ss, 'Companies', [
+    'id', 'region', 'date_inscription', 'statut',
+    'nom_entreprise', 'secteur', 'description',
+    'telephone', 'email', 'site_web',
+    'adresse_complete', 'ville',
+    'liste_services', 'horaires',
+    'facebook', 'instagram', 'image_url',
+    'pin_hash', 'pin_salt',
+    'chatling_status', 'chatling_source_id', 'chatling_processed_at',
+    'markdown_genere', 'last_updated_at', 'audit_count'
+  ]);
 
-    /* ============================================================
-       Cards
-       ============================================================ */
-    .card {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-lg);
-      padding: 24px;
-      box-shadow: var(--shadow-sm);
-    }
-    .card + .card { margin-top: 16px; }
-    .card h2 {
-      font-family: var(--font-display);
-      font-size: 22px;
-      font-weight: 600;
-      margin-bottom: 6px;
-      color: var(--text);
-    }
-    .card h3 {
-      font-size: 16px;
-      font-weight: 700;
-      margin-bottom: 12px;
-    }
-    .card .subtitle {
-      color: var(--text-2);
-      font-size: 14px;
-      margin-bottom: 20px;
-    }
+  ensureSheet_(ss, 'Pages', [
+    'id', 'company_id', 'date_creation', 'statut',
+    'titre_service', 'description_detaillee', 'image_url',
+    'chatling_status', 'chatling_source_id', 'chatling_processed_at',
+    'markdown_genere', 'last_updated_at'
+  ]);
 
-    /* ============================================================
-       Hero / accueil
-       ============================================================ */
-    .hero {
-      position: relative;
-      padding: 64px 20px 56px;
-      text-align: center;
-      background: linear-gradient(180deg, var(--sand-50) 0%, var(--bg) 100%);
-      overflow: hidden;
-    }
-    .hero::before {
-      content: '';
-      position: absolute;
-      top: -100px; right: -120px;
-      width: 380px; height: 380px;
-      background: radial-gradient(circle, var(--teal-100) 0%, transparent 70%);
-      border-radius: 50%;
-      pointer-events: none;
-    }
-    .hero::after {
-      content: '';
-      position: absolute;
-      bottom: -80px; left: -100px;
-      width: 300px; height: 300px;
-      background: radial-gradient(circle, var(--sand-200) 0%, transparent 70%);
-      border-radius: 50%;
-      pointer-events: none;
-      opacity: .6;
-    }
-    .hero-inner { position: relative; max-width: 760px; margin: 0 auto; }
-    .hero h1 {
-      font-family: var(--font-display);
-      font-size: clamp(34px, 6vw, 52px);
-      font-weight: 600;
-      line-height: 1.1;
-      margin-bottom: 18px;
-      color: var(--teal-900);
-      letter-spacing: -1px;
-    }
-    .hero h1 em { font-style: italic; color: var(--teal-700); }
-    .hero-sub {
-      font-size: 18px;
-      color: var(--text-2);
-      max-width: 560px;
-      margin: 0 auto 28px;
-    }
-    .hero-cta {
-      display: flex;
-      gap: 12px;
-      justify-content: center;
-      flex-wrap: wrap;
-    }
-    .hero-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      background: var(--card);
-      border: 1px solid var(--teal-100);
-      color: var(--teal-700);
-      padding: 6px 12px;
-      border-radius: 100px;
-      font-size: 13px;
-      font-weight: 600;
-      margin-bottom: 20px;
-      box-shadow: var(--shadow-sm);
-    }
+  ensureSheet_(ss, 'AuditLog', [
+    'timestamp', 'level', 'action', 'actor', 'detail'
+  ]);
 
-    /* ============================================================
-       Section régions
-       ============================================================ */
-    .regions {
-      margin-top: 40px;
-    }
-    .regions h2 {
-      font-family: var(--font-display);
-      font-size: 26px;
-      font-weight: 600;
-      margin-bottom: 8px;
-      color: var(--teal-900);
-      text-align: center;
-    }
-    .regions-sub {
-      text-align: center;
-      color: var(--text-2);
-      margin-bottom: 24px;
-    }
-    .regions-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-      gap: 12px;
-      max-width: 900px;
-      margin: 0 auto;
-    }
-    .region-card {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 18px;
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      transition: all .2s ease;
-    }
-    .region-card.active {
-      border-color: var(--teal-600);
-      background: var(--teal-50);
-      cursor: pointer;
-    }
-    .region-card.active:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
-    .region-card.soon { opacity: .9; }
-    .region-card.planned { opacity: .55; }
-    .region-flag {
-      width: 40px; height: 40px;
-      border-radius: 8px;
-      background: var(--sand-100);
-      display: grid;
-      place-items: center;
-      font-size: 22px;
-      flex-shrink: 0;
-    }
-    .region-card.active .region-flag { background: var(--teal-700); }
-    .region-name { font-weight: 700; font-size: 15px; }
-    .region-status {
-      font-size: 11px;
-      color: var(--text-2);
-      margin-top: 2px;
-      text-transform: uppercase;
-      letter-spacing: .5px;
-    }
-    .region-card.soon .region-status { color: var(--warning); font-weight: 700; }
-    .region-card.active .region-status { color: var(--teal-700); font-weight: 700; }
+  // Onglet Prompts modifiables sans toucher au code
+  const promptsSheet = ensureSheet_(ss, 'Prompts', ['key', 'value']);
+  if (promptsSheet.getLastRow() < 2) {
+    promptsSheet.getRange(2, 1, 2, 2).setValues([
+      ['prompt_company', DEFAULT_PROMPT_COMPANY],
+      ['prompt_page',    DEFAULT_PROMPT_PAGE]
+    ]);
+  }
 
-    /* ============================================================
-       How it works
-       ============================================================ */
-    .how {
-      margin-top: 60px;
-      max-width: 900px;
-      margin-left: auto;
-      margin-right: auto;
-    }
-    .how h2 {
-      font-family: var(--font-display);
-      font-size: 26px;
-      font-weight: 600;
-      margin-bottom: 28px;
-      color: var(--teal-900);
-      text-align: center;
-    }
-    .how-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-      gap: 16px;
-    }
-    .how-step {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-lg);
-      padding: 24px;
-    }
-    .how-step-num {
-      width: 36px; height: 36px;
-      border-radius: 50%;
-      background: var(--sand-200);
-      color: var(--teal-800);
-      display: grid;
-      place-items: center;
-      font-weight: 800;
-      font-size: 16px;
-      margin-bottom: 14px;
-    }
-    .how-step h3 {
-      font-size: 17px;
-      margin-bottom: 6px;
-    }
-    .how-step p { color: var(--text-2); font-size: 14px; }
+  // Onglet Config : tout réglage non secret
+  const configSheet = ensureSheet_(ss, 'Config', ['key', 'value']);
+  if (configSheet.getLastRow() < 2) {
+    configSheet.getRange(2, 1, 3, 2).setValues([
+      ['ai_model', 'claude-haiku-4-5'],
+      ['ai_max_tokens', '2000'],
+      ['next_company_seq_MQ', '1']
+    ]);
+  }
 
-    /* ============================================================
-       Forms
-       ============================================================ */
-    .form-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 16px;
-    }
-    @media (max-width: 640px) {
-      .form-grid { grid-template-columns: 1fr; }
-    }
-    .field { margin-bottom: 16px; }
-    .field-full { grid-column: 1 / -1; }
+  Logger.log('Sheets initialisés ✅  URL : ' + ss.getUrl());
+  return ss.getUrl();
+}
 
-    /* ============================================================
-       Toast
-       ============================================================ */
-    #toast-container {
-      position: fixed;
-      top: 80px;
-      right: 20px;
-      z-index: 9999;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      max-width: calc(100vw - 40px);
-    }
-    .toast {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-left: 4px solid var(--teal-600);
-      border-radius: var(--radius);
-      padding: 12px 16px;
-      box-shadow: var(--shadow-lg);
-      animation: toastIn .25s ease;
-      max-width: 380px;
-      font-size: 14px;
-      font-weight: 500;
-    }
-    .toast.success { border-left-color: var(--success); }
-    .toast.error   { border-left-color: var(--error); }
-    .toast.warning { border-left-color: var(--warning); }
-    .toast.info    { border-left-color: var(--info); }
-    @keyframes toastIn {
-      from { opacity: 0; transform: translateY(-8px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
+function ensureSheet_(ss, name, headers) {
+  let sh = ss.getSheetByName(name);
+  if (!sh) sh = ss.insertSheet(name);
+  if (sh.getLastRow() === 0) {
+    sh.getRange(1, 1, 1, headers.length).setValues([headers]);
+    sh.getRange(1, 1, 1, headers.length).setFontWeight('bold').setBackground('#0f766e').setFontColor('#ffffff');
+    sh.setFrozenRows(1);
+  }
+  return sh;
+}
 
-    /* ============================================================
-       Modal
-       ============================================================ */
-    .modal-backdrop {
-      position: fixed;
-      inset: 0;
-      background: rgba(28, 25, 23, .45);
-      backdrop-filter: blur(4px);
-      z-index: 500;
-      display: grid;
-      place-items: center;
-      padding: 16px;
-      animation: fadeIn .15s ease;
-    }
-    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-    .modal {
-      background: var(--card);
-      border-radius: var(--radius-lg);
-      box-shadow: var(--shadow-lg);
-      width: 100%;
-      max-width: 460px;
-      padding: 28px;
-      animation: modalIn .2s ease;
-    }
-    .modal.modal-lg { max-width: 720px; }
-    @keyframes modalIn {
-      from { opacity: 0; transform: translateY(8px) scale(.98); }
-      to   { opacity: 1; transform: translateY(0)   scale(1); }
-    }
-    .modal h2 {
-      font-family: var(--font-display);
-      font-size: 22px;
-      font-weight: 600;
-      margin-bottom: 6px;
-    }
-    .modal .modal-sub { color: var(--text-2); font-size: 14px; margin-bottom: 20px; }
-    .modal-actions {
-      display: flex;
-      gap: 10px;
-      justify-content: flex-end;
-      margin-top: 20px;
-    }
+function getSS_() {
+  const id = PropertiesService.getScriptProperties().getProperty('SHEET_ID');
+  if (!id) throw new Error('SHEET_ID non défini. Exécute initSheets() d\'abord.');
+  return SpreadsheetApp.openById(id);
+}
 
-    /* ============================================================
-       Loader
-       ============================================================ */
-    #loader-overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(255,255,255,.85);
-      backdrop-filter: blur(2px);
-      z-index: 800;
-      display: none;
-      place-items: center;
-    }
-    #loader-overlay.show { display: grid; }
-    .loader-content {
-      background: var(--card);
-      border-radius: var(--radius-lg);
-      padding: 24px 32px;
-      box-shadow: var(--shadow-lg);
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      font-weight: 600;
-    }
-    .spinner {
-      width: 22px; height: 22px;
-      border: 3px solid var(--teal-100);
-      border-top-color: var(--teal-700);
-      border-radius: 50%;
-      animation: spin .8s linear infinite;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
+// ============================================================
+//  HELPERS SHEETS (lecture / écriture / requêtes)
+// ============================================================
 
-    /* ============================================================
-       Demo banner
-       ============================================================ */
-    #demo-badge {
-      position: fixed;
-      top: 78px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: var(--warning);
-      color: #fff;
-      padding: 6px 14px;
-      border-radius: 100px;
-      font-size: 12px;
-      font-weight: 700;
-      letter-spacing: .5px;
-      box-shadow: var(--shadow);
-      z-index: 90;
-      display: none;
-      text-transform: uppercase;
-    }
-    #demo-badge.show { display: block; }
-    @media (max-width: 600px) {
-      #demo-badge { top: 70px; font-size: 11px; padding: 5px 12px; }
-    }
+function sheetToObjects_(sh) {
+  const data = sh.getDataRange().getValues();
+  if (data.length < 2) return [];
+  const headers = data[0];
+  const rows = data.slice(1);
+  return rows.map((row, idx) => {
+    const obj = { _row: idx + 2 };
+    headers.forEach((h, i) => obj[h] = row[i]);
+    return obj;
+  });
+}
 
-    /* ============================================================
-       Pro / Admin dashboard
-       ============================================================ */
-    .dashboard-grid {
-      display: grid;
-      grid-template-columns: 260px 1fr;
-      gap: 24px;
+function findRow_(sh, key, value) {
+  const data = sh.getDataRange().getValues();
+  const headers = data[0];
+  const col = headers.indexOf(key);
+  if (col === -1) return null;
+  for (let i = 1; i < data.length; i++) {
+    if (String(data[i][col]) === String(value)) {
+      const obj = { _row: i + 1 };
+      headers.forEach((h, j) => obj[h] = data[i][j]);
+      return obj;
     }
-    @media (max-width: 900px) {
-      .dashboard-grid { grid-template-columns: 1fr; }
-    }
-    .sidebar {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-lg);
-      padding: 18px;
-      height: fit-content;
-      position: sticky;
-      top: 80px;
-    }
-    @media (max-width: 900px) {
-      .sidebar { position: static; }
-    }
-    .sidebar-user {
-      padding-bottom: 16px;
-      margin-bottom: 16px;
-      border-bottom: 1px solid var(--border);
-    }
-    .sidebar-user-name { font-weight: 700; font-size: 15px; }
-    .sidebar-user-id { font-size: 12px; color: var(--muted); font-family: ui-monospace, monospace; margin-top: 2px; }
-    .sidebar-nav { display: flex; flex-direction: column; gap: 2px; }
-    .sidebar-nav button {
-      text-align: left;
-      padding: 10px 12px;
-      border-radius: var(--radius-sm);
-      font-size: 14px;
-      font-weight: 500;
-      color: var(--text-2);
-      transition: all .12s ease;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    .sidebar-nav button:hover { background: var(--sand-50); color: var(--text); }
-    .sidebar-nav button.active { background: var(--teal-700); color: #fff; }
-    .sidebar-nav .nav-icon { width: 18px; text-align: center; }
+  }
+  return null;
+}
 
-    /* ============================================================
-       Tables
-       ============================================================ */
-    .table-wrap { overflow-x: auto; border-radius: var(--radius); border: 1px solid var(--border); }
-    table.data {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 14px;
-      min-width: 600px;
-    }
-    table.data th {
-      text-align: left;
-      padding: 10px 14px;
-      background: var(--sand-50);
-      font-weight: 700;
-      color: var(--text-2);
-      font-size: 12px;
-      text-transform: uppercase;
-      letter-spacing: .5px;
-      border-bottom: 1px solid var(--border);
-    }
-    table.data td {
-      padding: 12px 14px;
-      border-bottom: 1px solid var(--border);
-    }
-    table.data tr:last-child td { border-bottom: none; }
-    table.data tr:hover { background: var(--sand-50); }
+function writeRow_(sh, headers, obj) {
+  const row = headers.map(h => obj[h] !== undefined ? obj[h] : '');
+  sh.appendRow(row);
+}
 
-    .badge {
-      display: inline-block;
-      padding: 3px 9px;
-      border-radius: 100px;
-      font-size: 11px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: .3px;
-    }
-    .badge.processed { background: #dcfce7; color: #166534; }
-    .badge.pending   { background: #fef3c7; color: #92400e; }
-    .badge.failed    { background: #fee2e2; color: #991b1b; }
-    .badge.actif     { background: #dcfce7; color: #166534; }
-    .badge.archive   { background: #e7e5e4; color: #57534e; }
+function updateRow_(sh, rowNum, patch) {
+  const headers = sh.getRange(1, 1, 1, sh.getLastColumn()).getValues()[0];
+  const currentValues = sh.getRange(rowNum, 1, 1, headers.length).getValues()[0];
+  const newRow = headers.map((h, i) => patch[h] !== undefined ? patch[h] : currentValues[i]);
+  sh.getRange(rowNum, 1, 1, headers.length).setValues([newRow]);
+}
 
-    /* ============================================================
-       Stats
-       ============================================================ */
-    .stats-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-      gap: 14px;
-      margin-bottom: 24px;
-    }
-    .stat-card {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 18px;
-    }
-    .stat-label {
-      font-size: 12px;
-      color: var(--text-2);
-      text-transform: uppercase;
-      letter-spacing: .5px;
-      font-weight: 600;
-      margin-bottom: 4px;
-    }
-    .stat-value {
-      font-family: var(--font-display);
-      font-size: 32px;
-      font-weight: 600;
-      color: var(--teal-800);
-    }
-    .stat-sub { font-size: 12px; color: var(--muted); margin-top: 4px; }
+function deleteRow_(sh, rowNum) {
+  sh.deleteRow(rowNum);
+}
 
-    /* ============================================================
-       Utilities
-       ============================================================ */
-    .flex { display: flex; }
-    .gap-8 { gap: 8px; }
-    .gap-12 { gap: 12px; }
-    .mt-16 { margin-top: 16px; }
-    .mt-24 { margin-top: 24px; }
-    .mb-12 { margin-bottom: 12px; }
-    .mb-16 { margin-bottom: 16px; }
-    .text-muted { color: var(--muted); }
-    .text-sm { font-size: 13px; }
-    .text-xs { font-size: 12px; }
-    .mono { font-family: ui-monospace, 'SF Mono', Monaco, monospace; font-size: 13px; }
-    .row-actions { display: flex; gap: 6px; flex-wrap: wrap; }
-    .hidden { display: none !important; }
+// ============================================================
+//  CONFIG PUBLIQUE (envoyée au frontend)
+// ============================================================
 
-    /* ============================================================
-       Footer
-       ============================================================ */
-    .footer {
-      text-align: center;
-      padding: 32px 20px;
-      color: var(--muted);
-      font-size: 13px;
-      border-top: 1px solid var(--border);
-      margin-top: 60px;
+function getConfig_() {
+  return {
+    ok: true,
+    app: APP_NAME,
+    version: VERSION,
+    regions: REGIONS,
+    sectors: SECTORS,
+    chatling_chatbots: {
+      MQ: PropertiesService.getScriptProperties().getProperty('CHATLING_CHATBOT_MQ') || null,
+      GP: PropertiesService.getScriptProperties().getProperty('CHATLING_CHATBOT_GP') || null
     }
-    .footer a { color: var(--text-2); }
+  };
+}
 
-    /* ============================================================
-       Inscription success
-       ============================================================ */
-    .pin-display {
-      background: var(--sand-100);
-      border: 2px dashed var(--teal-600);
-      border-radius: var(--radius);
-      padding: 24px;
-      text-align: center;
-      margin: 20px 0;
+// ============================================================
+//  INSCRIPTION ENTREPRISE
+// ============================================================
+
+function registerCompany_(data) {
+  // Validation des champs obligatoires
+  const required = ['nom_entreprise', 'secteur', 'telephone', 'email', 'ville', 'description', 'liste_services', 'horaires', 'region'];
+  for (const f of required) {
+    if (!data[f] || String(data[f]).trim() === '') {
+      return { ok: false, error: 'Champ obligatoire manquant : ' + f };
     }
-    .pin-display .pin-label {
-      font-size: 12px;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      color: var(--text-2);
-      font-weight: 700;
-      margin-bottom: 8px;
-    }
-    .pin-display .pin-value {
-      font-family: var(--font-display);
-      font-size: 38px;
-      font-weight: 700;
-      letter-spacing: 8px;
-      color: var(--teal-900);
-    }
-    .pin-display .pin-id {
-      font-family: ui-monospace, monospace;
-      font-size: 13px;
-      color: var(--text-2);
-      margin-top: 8px;
-    }
+  }
 
-    /* ============================================================
-       Markdown preview
-       ============================================================ */
-    .md-preview {
-      background: var(--sand-50);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 16px;
-      font-family: ui-monospace, monospace;
-      font-size: 12.5px;
-      white-space: pre-wrap;
-      max-height: 400px;
-      overflow-y: auto;
-      line-height: 1.5;
-    }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) {
+    return { ok: false, error: 'Email invalide' };
+  }
 
-    /* ============================================================
-       Page header
-       ============================================================ */
-    .page-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 16px;
-      margin-bottom: 24px;
-      flex-wrap: wrap;
-    }
-    .page-header h1 {
-      font-family: var(--font-display);
-      font-size: 28px;
-      font-weight: 600;
-      color: var(--teal-900);
-    }
-  </style>
-</head>
-<body>
+  // Anti-doublon (même email + même région)
+  const ss = getSS_();
+  const sh = ss.getSheetByName('Companies');
+  const all = sheetToObjects_(sh);
+  if (all.find(c => c.email === data.email && c.region === data.region)) {
+    return { ok: false, error: 'Un compte existe déjà pour cet email dans cette région.' };
+  }
 
-  <!-- ====================== HEADER ====================== -->
-  <header class="header">
-    <div class="header-inner">
-      <div class="brand" onclick="navigate('home')" style="cursor:pointer">
-        <div class="brand-logo">Y</div>
-        <span>YOUPI<span class="brand-r">®</span></span>
-      </div>
-      <nav class="header-nav" id="header-nav">
-        <!-- rempli dynamiquement par renderHeader() -->
-      </nav>
-    </div>
-  </header>
+  // Génération de l'ID
+  const id = generateCompanyId_(data.region);
 
-  <div id="demo-badge">🎭 Mode démonstration</div>
+  // Génération automatique d'un PIN à 6 chiffres
+  const pin = generatePIN_();
+  const salt = Utilities.getUuid().slice(0, 8);
+  const pin_hash = hashPIN_(pin, salt);
 
-  <!-- ====================== MAIN ====================== -->
-  <main class="main" id="main"></main>
+  const now = new Date().toISOString();
 
-  <!-- ====================== FOOTER ====================== -->
-  <footer class="footer">
-    <div>YOUPI<span style="color:var(--teal-700)">®</span> — Annuaire intelligent · <span id="footer-version">v0.3 — 2026</span></div>
-    <div class="mt-16 text-xs">Conçu pour les entreprises ultra-marines · Martinique 🇲🇶 · Guadeloupe 🇬🇵 (bientôt)</div>
-  </footer>
-
-  <!-- ====================== TOAST + LOADER + MODAL ZONES ====================== -->
-  <div id="toast-container"></div>
-  <div id="modal-zone"></div>
-  <div id="loader-overlay">
-    <div class="loader-content">
-      <div class="spinner"></div>
-      <span id="loader-text">Chargement…</span>
-    </div>
-  </div>
-
-  <script>
-  /* ============================================================
-     YOUPI® — v0.1 — frontend complet
-     ============================================================ */
-  'use strict';
-
-  const APP = {
-    name: 'YOUPI',
-    version: 'v0.3 — 2026',
-    BACKEND_URL: 'https://script.google.com/macros/s/AKfycbzQNSOAGCJp1QmZU0IE1FYiKmKCcGgTUpqKa3RJG9lwiAND_EC5dGdbh2XCu26ZTMoxtw/exec'
+  const company = {
+    id: id,
+    region: data.region,
+    date_inscription: now,
+    statut: 'actif',
+    nom_entreprise: data.nom_entreprise,
+    secteur: data.secteur,
+    description: data.description,
+    telephone: data.telephone,
+    email: data.email,
+    site_web: data.site_web || '',
+    adresse_complete: data.adresse_complete || '',
+    ville: data.ville,
+    liste_services: data.liste_services,
+    horaires: data.horaires,
+    facebook: data.facebook || '',
+    instagram: data.instagram || '',
+    image_url: data.image_url || '',
+    pin_hash: pin_hash,
+    pin_salt: salt,
+    chatling_status: 'pending',
+    chatling_source_id: '',
+    chatling_processed_at: '',
+    markdown_genere: '',
+    last_updated_at: now,
+    audit_count: 0
   };
 
-  // ------------------------------------------------------------
-  //  STATE
-  // ------------------------------------------------------------
-  const state = {
-    mode: 'real',                  // 'real' | 'demo'
-    view: 'home',
-    user: null,                    // { type: 'company'|'admin', id, token, data }
-    config: null,                  // chargé depuis getConfig
-    demoSnapshot: null             // données démo en mémoire
+  const headers = sh.getRange(1, 1, 1, sh.getLastColumn()).getValues()[0];
+  writeRow_(sh, headers, company);
+
+  log_('INFO', 'registerCompany', id + ' / ' + data.nom_entreprise);
+
+  // Pipeline IA → Chatling (asynchrone "best effort")
+  try {
+    const md = generateMarkdownForCompany_(company);
+    const chatlingResult = pushToChatling_(md, company.region);
+    const updated = {
+      markdown_genere: md,
+      chatling_status: chatlingResult.ok ? 'processed' : 'failed',
+      chatling_source_id: chatlingResult.source_id || '',
+      chatling_processed_at: new Date().toISOString()
+    };
+    const row = findRow_(sh, 'id', id);
+    updateRow_(sh, row._row, updated);
+  } catch (err) {
+    log_('WARN', 'pipeline-register', id + ' : ' + err.message);
+    const row = findRow_(sh, 'id', id);
+    if (row) updateRow_(sh, row._row, { chatling_status: 'failed' });
+  }
+
+  return {
+    ok: true,
+    company_id: id,
+    pin: pin, // ⚠️ renvoyé UNIQUEMENT à l'inscription, jamais ensuite
+    message: 'Inscription réussie. Conserve bien ce PIN, il te servira à te connecter à ton espace pro.'
+  };
+}
+
+function generateCompanyId_(region) {
+  const ss = getSS_();
+  const cfg = ss.getSheetByName('Config');
+  const key = 'next_company_seq_' + region;
+  const row = findRow_(cfg, 'key', key);
+  let seq;
+  if (row) {
+    seq = parseInt(row.value, 10) || 1;
+    updateRow_(cfg, row._row, { key: key, value: seq + 1 });
+  } else {
+    seq = 1;
+    writeRow_(cfg, ['key', 'value'], { key: key, value: 2 });
+  }
+  return 'YPI-' + region + '-' + String(seq).padStart(4, '0');
+}
+
+function generatePIN_() {
+  // PIN à 6 chiffres, exclut les séquences faibles
+  const weak = ['123456','000000','111111','222222','333333','444444','555555','666666','777777','888888','999999','654321','121212'];
+  for (let attempt = 0; attempt < 20; attempt++) {
+    let pin = '';
+    for (let i = 0; i < 6; i++) pin += Math.floor(Math.random() * 10);
+    if (!weak.includes(pin)) return pin;
+  }
+  return '748293'; // fallback safe
+}
+
+function hashPIN_(pin, salt) {
+  const raw = pin + ':' + salt + ':youpi-secret';
+  const digest = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, raw, Utilities.Charset.UTF_8);
+  return digest.map(b => ('0' + (b < 0 ? b + 256 : b).toString(16)).slice(-2)).join('');
+}
+
+// ============================================================
+//  AUTH ENTREPRISE
+// ============================================================
+
+function loginCompany_(data) {
+  if (!data.company_id || !data.pin) return { ok: false, error: 'company_id et pin requis' };
+
+  const ss = getSS_();
+  const sh = ss.getSheetByName('Companies');
+  const company = findRow_(sh, 'id', data.company_id);
+  if (!company) {
+    log_('WARN', 'loginCompany-notfound', data.company_id);
+    return { ok: false, error: 'Identifiant ou PIN incorrect' };
+  }
+
+  const expected = hashPIN_(data.pin, company.pin_salt);
+  if (expected !== company.pin_hash) {
+    log_('WARN', 'loginCompany-badpin', data.company_id);
+    return { ok: false, error: 'Identifiant ou PIN incorrect' };
+  }
+
+  // Token de session simple (à valider côté backend pour chaque action sensible)
+  const token = makeSessionToken_('company', company.id);
+  log_('INFO', 'loginCompany-ok', company.id);
+  return {
+    ok: true,
+    company: sanitizeCompany_(company),
+    token: token
+  };
+}
+
+function sanitizeCompany_(c) {
+  // Retire les champs sensibles avant envoi au frontend
+  const clean = Object.assign({}, c);
+  delete clean.pin_hash;
+  delete clean.pin_salt;
+  delete clean._row;
+  return clean;
+}
+
+function makeSessionToken_(role, id) {
+  // Token simple : <role>.<id>.<timestamp>.<hmac>
+  const ts = Date.now();
+  const payload = role + '.' + id + '.' + ts;
+  const secret = PropertiesService.getScriptProperties().getProperty('ANTHROPIC_API_KEY') || 'fallback';
+  const hmac = Utilities.computeHmacSha256Signature(payload, secret);
+  const hmacHex = hmac.map(b => ('0' + (b < 0 ? b + 256 : b).toString(16)).slice(-2)).join('').slice(0, 16);
+  return payload + '.' + hmacHex;
+}
+
+function verifyToken_(token, expectedRole, expectedId) {
+  if (!token || typeof token !== 'string') return false;
+  const parts = token.split('.');
+  if (parts.length !== 4) return false;
+  const [role, id, ts, hmac] = parts;
+  if (role !== expectedRole) return false;
+  if (expectedId && id !== String(expectedId)) return false;
+  if (Date.now() - parseInt(ts, 10) > 1000 * 60 * 60 * 24 * 30) return false; // 30 jours
+  const secret = PropertiesService.getScriptProperties().getProperty('ANTHROPIC_API_KEY') || 'fallback';
+  const expectedHmac = Utilities.computeHmacSha256Signature(role + '.' + id + '.' + ts, secret);
+  const expectedHex = expectedHmac.map(b => ('0' + (b < 0 ? b + 256 : b).toString(16)).slice(-2)).join('').slice(0, 16);
+  return expectedHex === hmac;
+}
+
+function changePIN_(data) {
+  if (!verifyToken_(data.token, 'company', data.company_id)) {
+    return { ok: false, error: 'Session invalide' };
+  }
+  if (!data.old_pin || !data.new_pin) return { ok: false, error: 'PIN actuel et nouveau requis' };
+  if (!/^[0-9#]{6}$/.test(data.new_pin)) return { ok: false, error: 'Nouveau PIN : 6 caractères (chiffres ou #)' };
+
+  const weak = ['123456','000000','111111','222222','333333','444444','555555','666666','777777','888888','999999','654321','121212'];
+  if (weak.includes(data.new_pin)) return { ok: false, error: 'PIN trop faible' };
+
+  const ss = getSS_();
+  const sh = ss.getSheetByName('Companies');
+  const company = findRow_(sh, 'id', data.company_id);
+  if (!company) return { ok: false, error: 'Entreprise introuvable' };
+  if (hashPIN_(data.old_pin, company.pin_salt) !== company.pin_hash) {
+    return { ok: false, error: 'PIN actuel incorrect' };
+  }
+
+  const newSalt = Utilities.getUuid().slice(0, 8);
+  const newHash = hashPIN_(data.new_pin, newSalt);
+  updateRow_(sh, company._row, { pin_hash: newHash, pin_salt: newSalt });
+  log_('INFO', 'changePIN', data.company_id);
+  return { ok: true };
+}
+
+// ============================================================
+//  ESPACE PRO — DONNÉES ENTREPRISE
+// ============================================================
+
+function getCompanyData_(data) {
+  if (!verifyToken_(data.token, 'company', data.company_id)) {
+    return { ok: false, error: 'Session invalide' };
+  }
+  const ss = getSS_();
+  const sh = ss.getSheetByName('Companies');
+  const company = findRow_(sh, 'id', data.company_id);
+  if (!company) return { ok: false, error: 'Entreprise introuvable' };
+  return { ok: true, company: sanitizeCompany_(company) };
+}
+
+function updateCompany_(data) {
+  if (!verifyToken_(data.token, 'company', data.company_id)) {
+    return { ok: false, error: 'Session invalide' };
+  }
+  const ss = getSS_();
+  const sh = ss.getSheetByName('Companies');
+  const company = findRow_(sh, 'id', data.company_id);
+  if (!company) return { ok: false, error: 'Entreprise introuvable' };
+
+  // Champs modifiables par l'entreprise
+  const editable = ['nom_entreprise','secteur','description','telephone','site_web',
+                    'adresse_complete','ville','liste_services','horaires',
+                    'facebook','instagram','image_url'];
+  const patch = { last_updated_at: new Date().toISOString() };
+  editable.forEach(f => { if (data[f] !== undefined) patch[f] = data[f]; });
+
+  updateRow_(sh, company._row, patch);
+
+  // Régénération markdown + push Chatling (best effort)
+  const updated = findRow_(sh, 'id', data.company_id);
+  try {
+    const md = generateMarkdownForCompany_(updated);
+    const chatlingResult = pushToChatling_(md, updated.region);
+    updateRow_(sh, company._row, {
+      markdown_genere: md,
+      chatling_status: chatlingResult.ok ? 'processed' : 'failed',
+      chatling_source_id: chatlingResult.source_id || updated.chatling_source_id,
+      chatling_processed_at: new Date().toISOString()
+    });
+  } catch (err) {
+    log_('WARN', 'pipeline-update', data.company_id + ' : ' + err.message);
+  }
+
+  log_('INFO', 'updateCompany', data.company_id);
+  return { ok: true };
+}
+
+// ============================================================
+//  PAGES DE SERVICE (formulaire 2)
+// ============================================================
+
+function addServicePage_(data) {
+  if (!verifyToken_(data.token, 'company', data.company_id)) {
+    return { ok: false, error: 'Session invalide' };
+  }
+  if (!data.titre_service || !data.description_detaillee) {
+    return { ok: false, error: 'Titre et description détaillée requis' };
+  }
+
+  const ss = getSS_();
+  const company = findRow_(ss.getSheetByName('Companies'), 'id', data.company_id);
+  if (!company) return { ok: false, error: 'Entreprise introuvable' };
+
+  const sh = ss.getSheetByName('Pages');
+  const id = generatePageId_();
+  const now = new Date().toISOString();
+
+  const page = {
+    id: id,
+    company_id: data.company_id,
+    date_creation: now,
+    statut: 'actif',
+    titre_service: data.titre_service,
+    description_detaillee: data.description_detaillee,
+    image_url: data.image_url || '',
+    chatling_status: 'pending',
+    chatling_source_id: '',
+    chatling_processed_at: '',
+    markdown_genere: '',
+    last_updated_at: now
   };
 
-  // ------------------------------------------------------------
-  //  PWA manifest dynamique
-  // ------------------------------------------------------------
-  (function injectManifest() {
-    const manifest = {
-      name: 'YOUPI® Annuaire intelligent',
-      short_name: 'YOUPI',
-      start_url: '.',
-      display: 'standalone',
-      background_color: '#fafaf9',
-      theme_color: '#0f766e',
-      icons: [{
-        src: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%230f766e'/%3E%3Ctext x='50' y='66' text-anchor='middle' font-family='sans-serif' font-size='52' font-weight='800' fill='%23f5e6d3'%3EY%3C/text%3E%3C/svg%3E",
-        sizes: '512x512',
-        type: 'image/svg+xml'
-      }]
-    };
-    const blob = new Blob([JSON.stringify(manifest)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('link');
-    link.rel = 'manifest';
-    link.href = url;
-    document.head.appendChild(link);
-  })();
+  const headers = sh.getRange(1, 1, 1, sh.getLastColumn()).getValues()[0];
+  writeRow_(sh, headers, page);
 
-  // ------------------------------------------------------------
-  //  LOGGING
-  // ------------------------------------------------------------
-  function log(...args) {
-    console.log('[YOUPI]', ...args);
-  }
-
-  // ------------------------------------------------------------
-  //  API CLIENT
-  // ------------------------------------------------------------
-  async function api(action, data = {}) {
-    // En mode démo, on ne fait JAMAIS de requête réseau modifiante
-    if (state.mode === 'demo') {
-      return demoHandle(action, data);
-    }
-
-    if (APP.BACKEND_URL.includes('REPLACE_WITH')) {
-      toast('error', 'BACKEND_URL non configurée. Édite le fichier HTML.');
-      return { ok: false, error: 'BACKEND_URL non configurée' };
-    }
-
-    // Retry avec backoff
-    const delays = [300, 800, 2000];
-    let lastErr = null;
-    for (let attempt = 0; attempt <= delays.length; attempt++) {
-      try {
-        const resp = await fetch(APP.BACKEND_URL, {
-          method: 'POST',
-          // Apps Script doPost lit e.postData.contents — on envoie en text/plain pour éviter le preflight CORS
-          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-          body: JSON.stringify({ action, data })
-        });
-        const json = await resp.json();
-        log('api', action, json);
-        return json;
-      } catch (err) {
-        lastErr = err;
-        log('api err', action, err);
-        if (attempt < delays.length) await new Promise(r => setTimeout(r, delays[attempt]));
-      }
-    }
-    return { ok: false, error: 'Erreur réseau : ' + (lastErr ? lastErr.message : 'inconnue') };
-  }
-
-  // ------------------------------------------------------------
-  //  TOAST
-  // ------------------------------------------------------------
-  function toast(level, msg, duration = 3500) {
-    const el = document.createElement('div');
-    el.className = 'toast ' + level;
-    el.textContent = msg;
-    document.getElementById('toast-container').appendChild(el);
-    setTimeout(() => {
-      el.style.transition = 'opacity .2s ease';
-      el.style.opacity = '0';
-      setTimeout(() => el.remove(), 200);
-    }, duration);
-  }
-
-  // ------------------------------------------------------------
-  //  LOADER
-  // ------------------------------------------------------------
-  function showLoader(text = 'Chargement…') {
-    document.getElementById('loader-text').textContent = text;
-    document.getElementById('loader-overlay').classList.add('show');
-  }
-  function hideLoader() {
-    document.getElementById('loader-overlay').classList.remove('show');
-  }
-
-  // ------------------------------------------------------------
-  //  MODAL
-  // ------------------------------------------------------------
-  function openModal(html, opts = {}) {
-    const zone = document.getElementById('modal-zone');
-    zone.innerHTML = `
-      <div class="modal-backdrop" id="modal-bd">
-        <div class="modal ${opts.large ? 'modal-lg' : ''}">${html}</div>
-      </div>`;
-    document.getElementById('modal-bd').addEventListener('click', e => {
-      if (e.target.id === 'modal-bd' && !opts.persistent) closeModal();
+  // Pipeline IA → Chatling
+  try {
+    const md = generateMarkdownForPage_(page, company);
+    const chatlingResult = pushToChatling_(md, company.region);
+    const row = findRow_(sh, 'id', id);
+    updateRow_(sh, row._row, {
+      markdown_genere: md,
+      chatling_status: chatlingResult.ok ? 'processed' : 'failed',
+      chatling_source_id: chatlingResult.source_id || '',
+      chatling_processed_at: new Date().toISOString()
     });
-  }
-  function closeModal() {
-    document.getElementById('modal-zone').innerHTML = '';
+  } catch (err) {
+    log_('WARN', 'pipeline-page', id + ' : ' + err.message);
+    const row = findRow_(sh, 'id', id);
+    if (row) updateRow_(sh, row._row, { chatling_status: 'failed' });
   }
 
-  // ------------------------------------------------------------
-  //  HELPERS
-  // ------------------------------------------------------------
-  function esc(s) {
-    if (s === undefined || s === null) return '';
-    return String(s).replace(/[&<>"']/g, c => ({
-      '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
-    }[c]));
+  log_('INFO', 'addServicePage', id + ' / ' + data.titre_service);
+  return { ok: true, page_id: id };
+}
+
+function generatePageId_() {
+  const ss = getSS_();
+  const cfg = ss.getSheetByName('Config');
+  const key = 'next_page_seq';
+  const row = findRow_(cfg, 'key', key);
+  let seq;
+  if (row) {
+    seq = parseInt(row.value, 10) || 1;
+    updateRow_(cfg, row._row, { key: key, value: seq + 1 });
+  } else {
+    seq = 1;
+    writeRow_(cfg, ['key', 'value'], { key: key, value: 2 });
   }
-  function fmtDate(s) {
-    if (!s) return '—';
+  return 'YPI-PAGE-' + String(seq).padStart(5, '0');
+}
+
+function listMyPages_(data) {
+  if (!verifyToken_(data.token, 'company', data.company_id)) {
+    return { ok: false, error: 'Session invalide' };
+  }
+  const ss = getSS_();
+  const sh = ss.getSheetByName('Pages');
+  const all = sheetToObjects_(sh).filter(p => p.company_id === data.company_id && p.statut === 'actif');
+  return { ok: true, pages: all.map(p => { delete p._row; return p; }) };
+}
+
+function deleteMyPage_(data) {
+  if (!verifyToken_(data.token, 'company', data.company_id)) {
+    return { ok: false, error: 'Session invalide' };
+  }
+  const ss = getSS_();
+  const sh = ss.getSheetByName('Pages');
+  const page = findRow_(sh, 'id', data.page_id);
+  if (!page) return { ok: false, error: 'Page introuvable' };
+  if (page.company_id !== data.company_id) return { ok: false, error: 'Accès refusé' };
+  updateRow_(sh, page._row, { statut: 'archive' });
+  log_('INFO', 'deleteMyPage', data.page_id);
+  return { ok: true };
+}
+
+// ============================================================
+//  ADMIN
+// ============================================================
+
+function loginAdmin_(data) {
+  const adminPin = PropertiesService.getScriptProperties().getProperty('ADMIN_PIN');
+  if (!adminPin) return { ok: false, error: 'ADMIN_PIN non configuré côté serveur' };
+  if (data.pin !== adminPin) {
+    log_('WARN', 'loginAdmin-bad', '');
+    return { ok: false, error: 'PIN admin incorrect' };
+  }
+  const token = makeSessionToken_('admin', 'root');
+  log_('INFO', 'loginAdmin-ok', '');
+  return { ok: true, token: token };
+}
+
+function listCompanies_(data) {
+  if (!verifyToken_(data.token, 'admin')) return { ok: false, error: 'Session admin invalide' };
+  const ss = getSS_();
+  const all = sheetToObjects_(ss.getSheetByName('Companies'));
+  return { ok: true, companies: all.map(c => sanitizeCompany_(c)) };
+}
+
+function listAllPages_(data) {
+  if (!verifyToken_(data.token, 'admin')) return { ok: false, error: 'Session admin invalide' };
+  const ss = getSS_();
+  const all = sheetToObjects_(ss.getSheetByName('Pages'));
+  return { ok: true, pages: all.map(p => { delete p._row; return p; }) };
+}
+
+function getStats_(data) {
+  if (!verifyToken_(data.token, 'admin')) return { ok: false, error: 'Session admin invalide' };
+  const ss = getSS_();
+  const companies = sheetToObjects_(ss.getSheetByName('Companies'));
+  const pages = sheetToObjects_(ss.getSheetByName('Pages'));
+
+  const byRegion = {};
+  const bySector = {};
+  const byChatling = { processed: 0, pending: 0, failed: 0 };
+
+  companies.forEach(c => {
+    byRegion[c.region] = (byRegion[c.region] || 0) + 1;
+    bySector[c.secteur] = (bySector[c.secteur] || 0) + 1;
+    if (byChatling[c.chatling_status] !== undefined) byChatling[c.chatling_status]++;
+  });
+
+  // Inscriptions par mois (12 derniers)
+  const byMonth = {};
+  const now = new Date();
+  for (let i = 11; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const key = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+    byMonth[key] = 0;
+  }
+  companies.forEach(c => {
+    if (!c.date_inscription) return;
+    const d = new Date(c.date_inscription);
+    const key = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+    if (byMonth[key] !== undefined) byMonth[key]++;
+  });
+
+  return {
+    ok: true,
+    total_companies: companies.length,
+    total_pages: pages.length,
+    by_region: byRegion,
+    by_sector: bySector,
+    by_chatling_status: byChatling,
+    by_month: byMonth
+  };
+}
+
+function reprocessCompany_(data) {
+  if (!verifyToken_(data.token, 'admin')) return { ok: false, error: 'Session admin invalide' };
+  const ss = getSS_();
+  const sh = ss.getSheetByName('Companies');
+  const company = findRow_(sh, 'id', data.company_id);
+  if (!company) return { ok: false, error: 'Entreprise introuvable' };
+
+  const md = generateMarkdownForCompany_(company);
+  const chatlingResult = pushToChatling_(md, company.region);
+  updateRow_(sh, company._row, {
+    markdown_genere: md,
+    chatling_status: chatlingResult.ok ? 'processed' : 'failed',
+    chatling_source_id: chatlingResult.source_id || company.chatling_source_id,
+    chatling_processed_at: new Date().toISOString()
+  });
+  log_('INFO', 'reprocessCompany', data.company_id);
+  return { ok: true, chatling: chatlingResult, markdown: md };
+}
+
+function reprocessPage_(data) {
+  if (!verifyToken_(data.token, 'admin')) return { ok: false, error: 'Session admin invalide' };
+  const ss = getSS_();
+  const shP = ss.getSheetByName('Pages');
+  const page = findRow_(shP, 'id', data.page_id);
+  if (!page) return { ok: false, error: 'Page introuvable' };
+  const company = findRow_(ss.getSheetByName('Companies'), 'id', page.company_id);
+  if (!company) return { ok: false, error: 'Entreprise liée introuvable' };
+
+  const md = generateMarkdownForPage_(page, company);
+  const chatlingResult = pushToChatling_(md, company.region);
+  updateRow_(shP, page._row, {
+    markdown_genere: md,
+    chatling_status: chatlingResult.ok ? 'processed' : 'failed',
+    chatling_source_id: chatlingResult.source_id || page.chatling_source_id,
+    chatling_processed_at: new Date().toISOString()
+  });
+  log_('INFO', 'reprocessPage', data.page_id);
+  return { ok: true, chatling: chatlingResult, markdown: md };
+}
+
+function updateCompanyAdmin_(data) {
+  if (!verifyToken_(data.token, 'admin')) return { ok: false, error: 'Session admin invalide' };
+  const ss = getSS_();
+  const sh = ss.getSheetByName('Companies');
+  const company = findRow_(sh, 'id', data.company_id);
+  if (!company) return { ok: false, error: 'Entreprise introuvable' };
+
+  const editable = ['nom_entreprise','secteur','description','telephone','email','site_web',
+                    'adresse_complete','ville','liste_services','horaires',
+                    'facebook','instagram','image_url','statut','region'];
+  const patch = { last_updated_at: new Date().toISOString() };
+  editable.forEach(f => { if (data[f] !== undefined) patch[f] = data[f]; });
+  updateRow_(sh, company._row, patch);
+  log_('INFO', 'updateCompanyAdmin', data.company_id);
+  return { ok: true };
+}
+
+function deleteCompany_(data) {
+  if (!verifyToken_(data.token, 'admin')) return { ok: false, error: 'Session admin invalide' };
+  const ss = getSS_();
+  const sh = ss.getSheetByName('Companies');
+  const company = findRow_(sh, 'id', data.company_id);
+  if (!company) return { ok: false, error: 'Entreprise introuvable' };
+  updateRow_(sh, company._row, { statut: 'archive' });
+  log_('INFO', 'deleteCompany', data.company_id);
+  return { ok: true };
+}
+
+function getPrompts_(data) {
+  if (!verifyToken_(data.token, 'admin')) return { ok: false, error: 'Session admin invalide' };
+  const ss = getSS_();
+  const sh = ss.getSheetByName('Prompts');
+  const rows = sheetToObjects_(sh);
+  const out = {};
+  rows.forEach(r => out[r.key] = r.value);
+  return { ok: true, prompts: out };
+}
+
+function updatePrompts_(data) {
+  if (!verifyToken_(data.token, 'admin')) return { ok: false, error: 'Session admin invalide' };
+  const ss = getSS_();
+  const sh = ss.getSheetByName('Prompts');
+  ['prompt_company', 'prompt_page'].forEach(k => {
+    if (data[k] !== undefined) {
+      const row = findRow_(sh, 'key', k);
+      if (row) updateRow_(sh, row._row, { key: k, value: data[k] });
+      else writeRow_(sh, ['key', 'value'], { key: k, value: data[k] });
+    }
+  });
+  log_('INFO', 'updatePrompts', '');
+  return { ok: true };
+}
+
+function getAuditLog_(data) {
+  if (!verifyToken_(data.token, 'admin')) return { ok: false, error: 'Session admin invalide' };
+  const ss = getSS_();
+  const sh = ss.getSheetByName('AuditLog');
+  const all = sheetToObjects_(sh);
+  // Renvoie les 200 dernières lignes
+  const slice = all.slice(-200).reverse();
+  return { ok: true, logs: slice.map(l => { delete l._row; return l; }) };
+}
+
+// ============================================================
+//  PIPELINE IA — GÉNÉRATION DU MARKDOWN
+// ============================================================
+
+function getPrompt_(key) {
+  const ss = getSS_();
+  const sh = ss.getSheetByName('Prompts');
+  const row = findRow_(sh, 'key', key);
+  if (row && row.value) return row.value;
+  return key === 'prompt_company' ? DEFAULT_PROMPT_COMPANY : DEFAULT_PROMPT_PAGE;
+}
+
+function generateMarkdownForCompany_(company) {
+  const tpl = getPrompt_('prompt_company');
+  const prompt = tpl
+    .replace(/{{nom_entreprise}}/g, company.nom_entreprise || '')
+    .replace(/{{secteur}}/g, company.secteur || '')
+    .replace(/{{telephone}}/g, company.telephone || '')
+    .replace(/{{email}}/g, company.email || '')
+    .replace(/{{site_web}}/g, company.site_web || '')
+    .replace(/{{ville}}/g, company.ville || '')
+    .replace(/{{adresse_complete}}/g, company.adresse_complete || '')
+    .replace(/{{description}}/g, company.description || '')
+    .replace(/{{liste_services}}/g, company.liste_services || '')
+    .replace(/{{horaires}}/g, company.horaires || '')
+    .replace(/{{facebook}}/g, company.facebook || '')
+    .replace(/{{instagram}}/g, company.instagram || '')
+    .replace(/{{image_url}}/g, company.image_url || '');
+
+  return callAnthropic_(prompt);
+}
+
+function generateMarkdownForPage_(page, company) {
+  const tpl = getPrompt_('prompt_page');
+  const prompt = tpl
+    .replace(/{{titre_service}}/g, page.titre_service || '')
+    .replace(/{{description_detaillee}}/g, page.description_detaillee || '')
+    .replace(/{{page_image_url}}/g, page.image_url || '')
+    .replace(/{{nom_entreprise}}/g, company.nom_entreprise || '')
+    .replace(/{{secteur}}/g, company.secteur || '')
+    .replace(/{{telephone}}/g, company.telephone || '')
+    .replace(/{{email}}/g, company.email || '')
+    .replace(/{{ville}}/g, company.ville || '')
+    .replace(/{{adresse_complete}}/g, company.adresse_complete || '')
+    .replace(/{{description}}/g, company.description || '')
+    .replace(/{{horaires}}/g, company.horaires || '')
+    .replace(/{{site_web}}/g, company.site_web || '');
+
+  return callAnthropic_(prompt);
+}
+
+function callAnthropic_(prompt) {
+  const apiKey = PropertiesService.getScriptProperties().getProperty('ANTHROPIC_API_KEY');
+  if (!apiKey) throw new Error('ANTHROPIC_API_KEY non configuré');
+
+  const ss = getSS_();
+  const cfg = ss.getSheetByName('Config');
+  const modelRow = findRow_(cfg, 'key', 'ai_model');
+  const tokensRow = findRow_(cfg, 'key', 'ai_max_tokens');
+  const model = (modelRow && modelRow.value) || 'claude-haiku-4-5';
+  const maxTokens = parseInt((tokensRow && tokensRow.value) || '2000', 10);
+
+  const payload = {
+    model: model,
+    max_tokens: maxTokens,
+    messages: [{ role: 'user', content: prompt }]
+  };
+
+  const options = {
+    method: 'post',
+    contentType: 'application/json',
+    headers: {
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01'
+    },
+    payload: JSON.stringify(payload),
+    muteHttpExceptions: true
+  };
+
+  // Retry avec backoff
+  const delays = [300, 800, 2000];
+  let lastErr = null;
+  for (let attempt = 0; attempt <= delays.length; attempt++) {
     try {
-      const d = new Date(s);
-      return d.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' });
-    } catch { return s; }
-  }
-  function saveSession() {
-    try {
-      localStorage.setItem('youpi_session', JSON.stringify(state.user));
-    } catch {}
-  }
-  function loadSession() {
-    try {
-      const raw = localStorage.getItem('youpi_session');
-      if (raw) state.user = JSON.parse(raw);
-    } catch {}
-  }
-  function clearSession() {
-    state.user = null;
-    try { localStorage.removeItem('youpi_session'); } catch {}
-  }
-
-  // ------------------------------------------------------------
-  //  HEADER NAV (dynamique selon mode + user)
-  // ------------------------------------------------------------
-  function renderHeader() {
-    const nav = document.getElementById('header-nav');
-    const u = state.user;
-
-    if (state.mode === 'demo') {
-      nav.innerHTML = `
-        <button class="btn btn-ghost btn-sm" onclick="exitDemo()">Quitter la démo</button>
-      `;
-      return;
-    }
-
-    if (!u) {
-      nav.innerHTML = `
-        <button class="btn btn-ghost btn-sm" onclick="openLoginPro()">Espace pro</button>
-        <button class="btn btn-primary btn-sm" onclick="navigate('register')">+ Inscrire mon entreprise</button>
-        <button class="btn btn-ghost btn-sm" onclick="openLoginAdmin()" title="Admin" style="font-size:11px;opacity:.6">Admin</button>
-      `;
-    } else if (u.type === 'company') {
-      nav.innerHTML = `
-        <span class="text-sm" style="color:var(--text-2);margin-right:6px">${esc(u.data.nom_entreprise)}</span>
-        <button class="btn btn-secondary btn-sm" onclick="navigate('pro-dashboard')">Mon espace</button>
-        <button class="btn btn-ghost btn-sm" onclick="logout()">Déconnexion</button>
-      `;
-    } else if (u.type === 'admin') {
-      nav.innerHTML = `
-        <span class="badge" style="background:var(--teal-700);color:#fff">ADMIN</span>
-        <button class="btn btn-secondary btn-sm" onclick="navigate('admin-dashboard')">Tableau de bord</button>
-        <button class="btn btn-ghost btn-sm" onclick="logout()">Déconnexion</button>
-      `;
-    }
-  }
-
-  function logout() {
-    clearSession();
-    navigate('home');
-    toast('info', 'Déconnexion effectuée.');
-  }
-
-  // ------------------------------------------------------------
-  //  ROUTER
-  // ------------------------------------------------------------
-  function navigate(view, params = {}) {
-    state.view = view;
-    state.viewParams = params;
-    log('navigate', view, params);
-
-    const main = document.getElementById('main');
-    main.scrollTop = 0;
-    window.scrollTo(0, 0);
-
-    switch (view) {
-      case 'home':            renderHome(); break;
-      case 'register':        renderRegisterForm(); break;
-      case 'register-success':renderRegisterSuccess(params); break;
-      case 'pro-dashboard':   renderProDashboard(); break;
-      case 'pro-edit':        renderProEdit(); break;
-      case 'pro-pages':       renderProPages(); break;
-      case 'pro-add-page':    renderProAddPage(); break;
-      case 'pro-settings':    renderProSettings(); break;
-      case 'admin-dashboard': renderAdminDashboard(); break;
-      case 'admin-companies': renderAdminCompanies(); break;
-      case 'admin-pages':     renderAdminPages(); break;
-      case 'admin-prompts':   renderAdminPrompts(); break;
-      case 'admin-logs':      renderAdminLogs(); break;
-      default: renderHome();
-    }
-    renderHeader();
-  }
-
-  // ============================================================
-  //  VIEW : HOME
-  // ============================================================
-  function renderHome() {
-    const regions = (state.config && state.config.regions) || [
-      { code: 'MQ', name: 'Martinique', status: 'active' },
-      { code: 'GP', name: 'Guadeloupe', status: 'soon' }
-    ];
-    const flags = {
-      MQ: '🇲🇶', GP: '🇬🇵', GF: '🇬🇫', RE: '🇷🇪', YT: '🇾🇹', NC: '🇳🇨', PF: '🇵🇫'
-    };
-    const statusLabels = { active: 'Disponible', soon: 'En cours de déploiement', planned: 'Bientôt' };
-
-    document.getElementById('main').innerHTML = `
-      <section class="hero">
-        <div class="hero-inner">
-          <span class="hero-badge">✨ Annuaire IA — 100% gratuit pour les entreprises</span>
-          <h1>L'annuaire intelligent qui trouve la <em>bonne entreprise</em>, juste à côté de chez vous.</h1>
-          <p class="hero-sub">YOUPI<sup>®</sup> répond aux internautes grâce à un agent IA qui connaît les meilleures entreprises locales. Inscrivez votre entreprise gratuitement et soyez recommandé en quelques secondes.</p>
-          <div class="hero-cta">
-            <button class="btn btn-primary btn-lg" onclick="navigate('register')">+ Inscrire mon entreprise</button>
-            <a class="btn btn-secondary btn-lg" href="https://share.chatling.ai/s/Rd2GDW2nq82dfc5" target="_blank" rel="noopener">💬 Essayer l'agent IA</a>
-            <button class="btn btn-ghost btn-lg" onclick="activateDemo()">🎭 Mode démonstration</button>
-          </div>
-        </div>
-      </section>
-
-      <section class="regions">
-        <h2>Disponible dans vos régions</h2>
-        <p class="regions-sub">Choisissez votre région pour commencer.</p>
-        <div class="regions-grid">
-          ${regions.map(r => `
-            <div class="region-card ${r.status}" ${r.status === 'active' ? `onclick="navigate('register', {region: '${r.code}'})"` : ''}>
-              <div class="region-flag">${flags[r.code] || '🌍'}</div>
-              <div>
-                <div class="region-name">${esc(r.name)}</div>
-                <div class="region-status">${statusLabels[r.status] || r.status}</div>
-              </div>
-            </div>
-          `).join('')}
-        </div>
-      </section>
-
-      <section class="how">
-        <h2>Comment ça marche ?</h2>
-        <div class="how-grid">
-          <div class="how-step">
-            <div class="how-step-num">1</div>
-            <h3>Vous vous inscrivez</h3>
-            <p>2 minutes, gratuit, sans engagement. Vous remplissez la fiche de votre entreprise.</p>
-          </div>
-          <div class="how-step">
-            <div class="how-step-num">2</div>
-            <h3>L'IA structure votre fiche</h3>
-            <p>Notre IA transforme vos informations en fiche optimisée et l'intègre à la base de connaissance YOUPI.</p>
-          </div>
-          <div class="how-step">
-            <div class="how-step-num">3</div>
-            <h3>Les internautes vous trouvent</h3>
-            <p>Quand quelqu'un cherche votre type de service, l'agent IA YOUPI vous recommande automatiquement.</p>
-          </div>
-          <div class="how-step">
-            <div class="how-step-num">4</div>
-            <h3>Vous boostez votre visibilité</h3>
-            <p>Depuis votre espace pro, créez des pages dédiées à chacun de vos services pour apparaître sur encore plus de requêtes.</p>
-          </div>
-        </div>
-      </section>
-    `;
-  }
-
-  // ============================================================
-  //  VIEW : REGISTER (formulaire 1)
-  // ============================================================
-  function renderRegisterForm() {
-    const sectors = (state.config && state.config.sectors) || ['Restauration & Cafés','Autre'];
-    const regions = ((state.config && state.config.regions) || [{ code: 'MQ', name: 'Martinique', status: 'active' }])
-      .filter(r => r.status === 'active');
-    const preselectRegion = (state.viewParams && state.viewParams.region) || 'MQ';
-
-    document.getElementById('main').innerHTML = `
-      <div class="container-narrow">
-        <div class="page-header">
-          <h1>Inscrire mon entreprise</h1>
-          <button class="btn btn-ghost btn-sm" onclick="navigate('home')">← Retour</button>
-        </div>
-
-        <div class="card">
-          <p class="subtitle">Tous les champs marqués <span style="color:var(--error)">*</span> sont obligatoires. Vous recevrez un PIN à 6 chiffres pour accéder à votre espace pro.</p>
-
-          <form id="register-form" onsubmit="submitRegister(event)">
-            <div class="form-grid">
-              <div class="field field-full">
-                <label>Région <span class="req">*</span></label>
-                <select name="region" required>
-                  ${regions.map(r => `<option value="${r.code}" ${r.code === preselectRegion ? 'selected' : ''}>${esc(r.name)}</option>`).join('')}
-                </select>
-              </div>
-
-              <div class="field field-full">
-                <label>Nom de l'entreprise <span class="req">*</span></label>
-                <input name="nom_entreprise" required maxlength="120" />
-              </div>
-
-              <div class="field field-full">
-                <label>Secteur d'activité <span class="req">*</span></label>
-                <select name="secteur" required>
-                  <option value="">— Choisir —</option>
-                  ${sectors.map(s => `<option>${esc(s)}</option>`).join('')}
-                </select>
-              </div>
-
-              <div class="field">
-                <label>Téléphone <span class="req">*</span></label>
-                <input name="telephone" type="tel" required placeholder="0596 12 34 56" />
-              </div>
-
-              <div class="field">
-                <label>Email <span class="req">*</span></label>
-                <input name="email" type="email" required placeholder="contact@entreprise.mq" />
-              </div>
-
-              <div class="field">
-                <label>Ville <span class="req">*</span></label>
-                <input name="ville" required placeholder="Fort-de-France" />
-              </div>
-
-              <div class="field">
-                <label>Site web</label>
-                <input name="site_web" type="url" placeholder="https://…" />
-              </div>
-
-              <div class="field field-full">
-                <label>Adresse complète</label>
-                <input name="adresse_complete" placeholder="12 rue Victor Schoelcher, 97200 Fort-de-France" />
-                <div class="hint">Numéro, rue, code postal, ville</div>
-              </div>
-
-              <div class="field field-full">
-                <label>Description de l'entreprise <span class="req">*</span></label>
-                <textarea name="description" required maxlength="800" placeholder="Décrivez votre activité, vos valeurs, votre histoire en quelques lignes…"></textarea>
-              </div>
-
-              <div class="field field-full">
-                <label>Liste des services <span class="req">*</span></label>
-                <textarea name="liste_services" required maxlength="800" placeholder="Listez les services que vous proposez (un par ligne)"></textarea>
-              </div>
-
-              <div class="field field-full">
-                <label>Horaires <span class="req">*</span></label>
-                <textarea name="horaires" required maxlength="400" placeholder="Lun–Ven : 8h–18h&#10;Sam : 9h–13h&#10;Dim : fermé"></textarea>
-              </div>
-
-              <div class="field">
-                <label>Facebook</label>
-                <input name="facebook" placeholder="https://facebook.com/…" />
-              </div>
-
-              <div class="field">
-                <label>Instagram</label>
-                <input name="instagram" placeholder="https://instagram.com/…" />
-              </div>
-
-              <div class="field field-full">
-                <label>URL de votre logo / image</label>
-                <input name="image_url" type="url" placeholder="https://… (URL directe de l'image)" />
-                <div class="hint">Lien direct vers une image hébergée (Dropbox, Cloudinary, votre site…)</div>
-              </div>
-            </div>
-
-            <div class="modal-actions">
-              <button type="button" class="btn btn-ghost" onclick="navigate('home')">Annuler</button>
-              <button type="submit" class="btn btn-primary btn-lg">Valider l'inscription</button>
-            </div>
-          </form>
-        </div>
-      </div>
-    `;
-  }
-
-  async function submitRegister(e) {
-    e.preventDefault();
-    const f = e.target;
-    const data = {};
-    new FormData(f).forEach((v, k) => data[k] = String(v).trim());
-
-    showLoader('Création de votre fiche et envoi à l\'IA…');
-    const res = await api('registerCompany', data);
-    hideLoader();
-
-    if (!res.ok) {
-      toast('error', res.error || 'Erreur lors de l\'inscription');
-      return;
-    }
-    toast('success', 'Inscription réussie ! 🎉');
-    navigate('register-success', { company_id: res.company_id, pin: res.pin });
-  }
-
-  function renderRegisterSuccess(params) {
-    document.getElementById('main').innerHTML = `
-      <div class="container-narrow">
-        <div class="card" style="text-align:center">
-          <div style="font-size:48px;margin-bottom:12px">✅</div>
-          <h2>Bienvenue dans YOUPI® !</h2>
-          <p class="subtitle">Votre entreprise est désormais référencée et notre IA va l'intégrer à la base de connaissance.</p>
-
-          <div class="pin-display">
-            <div class="pin-label">Votre PIN de connexion</div>
-            <div class="pin-value">${esc(params.pin)}</div>
-            <div class="pin-id">Identifiant : ${esc(params.company_id)}</div>
-          </div>
-
-          <p class="text-sm" style="color:var(--text-2)">⚠️ <strong>Notez ces informations</strong>, elles ne seront plus affichées.<br>Elles vous permettent d'accéder à votre espace pro pour modifier vos infos et créer des pages services.</p>
-
-          <div class="modal-actions" style="justify-content:center">
-            <button class="btn btn-secondary" onclick="navigate('home')">Retour à l'accueil</button>
-            <button class="btn btn-primary" onclick="openLoginPro()">Me connecter</button>
-          </div>
-        </div>
-      </div>
-    `;
-  }
-
-  // ============================================================
-  //  LOGIN MODALS
-  // ============================================================
-  function openLoginPro() {
-    openModal(`
-      <h2>Espace pro</h2>
-      <p class="modal-sub">Connectez-vous avec votre identifiant et votre PIN.</p>
-      <form onsubmit="submitLoginPro(event)">
-        <div class="field">
-          <label>Identifiant (YPI-MQ-…)</label>
-          <input name="company_id" required placeholder="YPI-MQ-0001" autocomplete="username" />
-        </div>
-        <div class="field">
-          <label>PIN à 6 chiffres</label>
-          <input name="pin" required maxlength="6" inputmode="numeric" pattern="[0-9#]{6}" placeholder="••••••" autocomplete="current-password" />
-        </div>
-        <div class="modal-actions">
-          <button type="button" class="btn btn-ghost" onclick="closeModal()">Annuler</button>
-          <button type="submit" class="btn btn-primary">Se connecter</button>
-        </div>
-      </form>
-    `);
-  }
-
-  async function submitLoginPro(e) {
-    e.preventDefault();
-    const fd = new FormData(e.target);
-    const company_id = fd.get('company_id').trim().toUpperCase();
-    const pin = fd.get('pin').trim();
-
-    showLoader('Connexion…');
-    const res = await api('loginCompany', { company_id, pin });
-    hideLoader();
-
-    if (!res.ok) {
-      toast('error', res.error || 'Connexion refusée');
-      return;
-    }
-    state.user = { type: 'company', id: company_id, token: res.token, data: res.company };
-    saveSession();
-    closeModal();
-    toast('success', 'Bienvenue ' + (res.company.nom_entreprise || ''));
-    navigate('pro-dashboard');
-  }
-
-  function openLoginAdmin() {
-    openModal(`
-      <h2>Connexion administrateur</h2>
-      <p class="modal-sub">Réservé à l'équipe YOUPI®.</p>
-      <form onsubmit="submitLoginAdmin(event)">
-        <div class="field">
-          <label>PIN administrateur</label>
-          <input name="pin" required maxlength="6" inputmode="numeric" pattern="[0-9#]{6}" placeholder="••••••" autocomplete="current-password" />
-        </div>
-        <div class="modal-actions">
-          <button type="button" class="btn btn-ghost" onclick="closeModal()">Annuler</button>
-          <button type="submit" class="btn btn-primary">Se connecter</button>
-        </div>
-      </form>
-    `);
-  }
-
-  async function submitLoginAdmin(e) {
-    e.preventDefault();
-    const fd = new FormData(e.target);
-    const pin = fd.get('pin').trim();
-
-    showLoader('Connexion admin…');
-    const res = await api('loginAdmin', { pin });
-    hideLoader();
-
-    if (!res.ok) {
-      toast('error', res.error || 'Connexion refusée');
-      return;
-    }
-    state.user = { type: 'admin', id: 'root', token: res.token, data: { nom_entreprise: 'Administrateur YOUPI' } };
-    saveSession();
-    closeModal();
-    toast('success', 'Bienvenue Admin');
-    navigate('admin-dashboard');
-  }
-
-  // ============================================================
-  //  ESPACE PRO
-  // ============================================================
-  function proSidebar(activeView) {
-    const u = state.user.data;
-    const items = [
-      { view: 'pro-dashboard', icon: '🏠', label: 'Tableau de bord' },
-      { view: 'pro-edit',      icon: '✏️', label: 'Modifier ma fiche' },
-      { view: 'pro-pages',     icon: '📄', label: 'Mes pages services' },
-      { view: 'pro-add-page',  icon: '➕', label: 'Ajouter une page' },
-      { view: 'pro-settings',  icon: '⚙️', label: 'Paramètres' }
-    ];
-    return `
-      <aside class="sidebar">
-        <div class="sidebar-user">
-          <div class="sidebar-user-name">${esc(u.nom_entreprise)}</div>
-          <div class="sidebar-user-id">${esc(state.user.id)}</div>
-        </div>
-        <nav class="sidebar-nav">
-          ${items.map(i => `
-            <button class="${activeView === i.view ? 'active' : ''}" onclick="navigate('${i.view}')">
-              <span class="nav-icon">${i.icon}</span>${i.label}
-            </button>
-          `).join('')}
-        </nav>
-      </aside>
-    `;
-  }
-
-  async function renderProDashboard() {
-    if (!state.user || state.user.type !== 'company') return navigate('home');
-    const c = state.user.data;
-    const statusBadge = `<span class="badge ${esc(c.chatling_status || 'pending')}">${esc(c.chatling_status || 'pending')}</span>`;
-
-    document.getElementById('main').innerHTML = `
-      <div class="dashboard-grid">
-        ${proSidebar('pro-dashboard')}
-        <section>
-          <div class="page-header">
-            <h1>Tableau de bord</h1>
-          </div>
-
-          <div class="stats-grid">
-            <div class="stat-card">
-              <div class="stat-label">Statut Chatling</div>
-              <div class="stat-value" style="font-size:20px">${statusBadge}</div>
-              <div class="stat-sub">Dernier push : ${fmtDate(c.chatling_processed_at)}</div>
-            </div>
-            <div class="stat-card">
-              <div class="stat-label">Pages services</div>
-              <div class="stat-value" id="stat-pages-count">…</div>
-              <div class="stat-sub">Créées par vous</div>
-            </div>
-            <div class="stat-card">
-              <div class="stat-label">Inscrite le</div>
-              <div class="stat-value" style="font-size:18px">${fmtDate(c.date_inscription)}</div>
-            </div>
-          </div>
-
-          <div class="card">
-            <h2>Mes informations</h2>
-            <div class="form-grid">
-              <div><label>Nom</label><div>${esc(c.nom_entreprise)}</div></div>
-              <div><label>Secteur</label><div>${esc(c.secteur)}</div></div>
-              <div><label>Téléphone</label><div>${esc(c.telephone)}</div></div>
-              <div><label>Email</label><div>${esc(c.email)}</div></div>
-              <div><label>Ville</label><div>${esc(c.ville)}</div></div>
-              <div><label>Site web</label><div>${c.site_web ? `<a href="${esc(c.site_web)}" target="_blank">${esc(c.site_web)}</a>` : '—'}</div></div>
-              <div class="field-full"><label>Adresse</label><div>${esc(c.adresse_complete) || '—'}</div></div>
-              <div class="field-full"><label>Description</label><div>${esc(c.description)}</div></div>
-              <div class="field-full"><label>Services</label><div style="white-space:pre-wrap">${esc(c.liste_services)}</div></div>
-              <div class="field-full"><label>Horaires</label><div style="white-space:pre-wrap">${esc(c.horaires)}</div></div>
-            </div>
-            <div class="modal-actions">
-              <button class="btn btn-primary" onclick="navigate('pro-edit')">Modifier mes infos</button>
-            </div>
-          </div>
-
-          ${c.markdown_genere ? `
-          <div class="card">
-            <h2>Aperçu de votre fiche IA</h2>
-            <p class="subtitle">Voici comment l'agent IA YOUPI vous connaît.</p>
-            <div class="md-preview">${esc(c.markdown_genere)}</div>
-          </div>` : ''}
-        </section>
-      </div>
-    `;
-
-    // Charger le compte de pages
-    const r = await api('listMyPages', { company_id: state.user.id, token: state.user.token });
-    if (r.ok) {
-      const el = document.getElementById('stat-pages-count');
-      if (el) el.textContent = r.pages.length;
-    }
-  }
-
-  function renderProEdit() {
-    if (!state.user || state.user.type !== 'company') return navigate('home');
-    const c = state.user.data;
-    const sectors = (state.config && state.config.sectors) || [c.secteur];
-
-    document.getElementById('main').innerHTML = `
-      <div class="dashboard-grid">
-        ${proSidebar('pro-edit')}
-        <section>
-          <div class="page-header"><h1>Modifier ma fiche</h1></div>
-          <div class="card">
-            <p class="subtitle">Vos modifications seront automatiquement repoussées dans la base de connaissance IA.</p>
-            <form onsubmit="submitProEdit(event)">
-              <div class="form-grid">
-                <div class="field field-full"><label>Nom</label><input name="nom_entreprise" value="${esc(c.nom_entreprise)}" required /></div>
-                <div class="field field-full"><label>Secteur</label>
-                  <select name="secteur" required>
-                    ${sectors.map(s => `<option ${s === c.secteur ? 'selected' : ''}>${esc(s)}</option>`).join('')}
-                  </select>
-                </div>
-                <div class="field"><label>Téléphone</label><input name="telephone" value="${esc(c.telephone)}" /></div>
-                <div class="field"><label>Site web</label><input name="site_web" value="${esc(c.site_web)}" /></div>
-                <div class="field"><label>Ville</label><input name="ville" value="${esc(c.ville)}" /></div>
-                <div class="field"><label>Adresse complète</label><input name="adresse_complete" value="${esc(c.adresse_complete)}" /></div>
-                <div class="field field-full"><label>Description</label><textarea name="description" required>${esc(c.description)}</textarea></div>
-                <div class="field field-full"><label>Services</label><textarea name="liste_services" required>${esc(c.liste_services)}</textarea></div>
-                <div class="field field-full"><label>Horaires</label><textarea name="horaires" required>${esc(c.horaires)}</textarea></div>
-                <div class="field"><label>Facebook</label><input name="facebook" value="${esc(c.facebook)}" /></div>
-                <div class="field"><label>Instagram</label><input name="instagram" value="${esc(c.instagram)}" /></div>
-                <div class="field field-full"><label>Image (URL)</label><input name="image_url" value="${esc(c.image_url)}" /></div>
-              </div>
-              <div class="modal-actions">
-                <button type="button" class="btn btn-ghost" onclick="navigate('pro-dashboard')">Annuler</button>
-                <button type="submit" class="btn btn-primary">Enregistrer</button>
-              </div>
-            </form>
-          </div>
-        </section>
-      </div>
-    `;
-  }
-
-  async function submitProEdit(e) {
-    e.preventDefault();
-    const fd = new FormData(e.target);
-    const patch = { company_id: state.user.id, token: state.user.token };
-    fd.forEach((v, k) => patch[k] = String(v).trim());
-
-    showLoader('Mise à jour + régénération IA…');
-    const r = await api('updateCompany', patch);
-    hideLoader();
-    if (!r.ok) return toast('error', r.error || 'Erreur');
-
-    // Rafraîchir
-    const g = await api('getCompanyData', { company_id: state.user.id, token: state.user.token });
-    if (g.ok) {
-      state.user.data = g.company;
-      saveSession();
-    }
-    toast('success', 'Fiche mise à jour ✅');
-    navigate('pro-dashboard');
-  }
-
-  async function renderProPages() {
-    if (!state.user || state.user.type !== 'company') return navigate('home');
-
-    document.getElementById('main').innerHTML = `
-      <div class="dashboard-grid">
-        ${proSidebar('pro-pages')}
-        <section>
-          <div class="page-header">
-            <h1>Mes pages services</h1>
-            <button class="btn btn-primary" onclick="navigate('pro-add-page')">+ Ajouter une page</button>
-          </div>
-          <div id="pages-list" class="card"><p class="text-muted">Chargement…</p></div>
-        </section>
-      </div>
-    `;
-
-    const r = await api('listMyPages', { company_id: state.user.id, token: state.user.token });
-    const wrap = document.getElementById('pages-list');
-    if (!r.ok) { wrap.innerHTML = `<p class="text-muted">${esc(r.error)}</p>`; return; }
-    if (r.pages.length === 0) {
-      wrap.innerHTML = `
-        <p class="subtitle">Vous n'avez pas encore créé de page service. Les pages permettent à l'IA YOUPI de vous recommander sur des requêtes plus précises.</p>
-        <button class="btn btn-primary" onclick="navigate('pro-add-page')">+ Créer ma première page</button>`;
-      return;
-    }
-    wrap.innerHTML = `
-      <div class="table-wrap">
-        <table class="data">
-          <thead><tr><th>Titre</th><th>Statut IA</th><th>Créée le</th><th></th></tr></thead>
-          <tbody>
-            ${r.pages.map(p => `
-              <tr>
-                <td><strong>${esc(p.titre_service)}</strong><br><span class="text-xs text-muted">${esc(p.id)}</span></td>
-                <td><span class="badge ${esc(p.chatling_status)}">${esc(p.chatling_status)}</span></td>
-                <td>${fmtDate(p.date_creation)}</td>
-                <td class="row-actions">
-                  <button class="btn btn-ghost btn-sm" onclick="viewPagePreview('${esc(p.id)}')">Voir</button>
-                  <button class="btn btn-ghost btn-sm" style="color:var(--error)" onclick="deleteMyPage('${esc(p.id)}')">Supprimer</button>
-                </td>
-              </tr>
-            `).join('')}
-          </tbody>
-        </table>
-      </div>
-    `;
-  }
-
-  async function viewPagePreview(pageId) {
-    const r = await api('listMyPages', { company_id: state.user.id, token: state.user.token });
-    if (!r.ok) return toast('error', r.error);
-    const p = r.pages.find(x => x.id === pageId);
-    if (!p) return toast('error', 'Page introuvable');
-    openModal(`
-      <h2>${esc(p.titre_service)}</h2>
-      <p class="modal-sub">${esc(p.id)} · ${fmtDate(p.date_creation)} · <span class="badge ${esc(p.chatling_status)}">${esc(p.chatling_status)}</span></p>
-      <h3 style="font-size:14px;margin-top:16px;margin-bottom:6px">Description fournie</h3>
-      <div class="md-preview" style="max-height:120px">${esc(p.description_detaillee)}</div>
-      <h3 style="font-size:14px;margin-top:16px;margin-bottom:6px">Markdown généré par l'IA</h3>
-      <div class="md-preview">${esc(p.markdown_genere || '(en cours…)')}</div>
-      <div class="modal-actions"><button class="btn btn-primary" onclick="closeModal()">Fermer</button></div>
-    `, { large: true });
-  }
-
-  async function deleteMyPage(pageId) {
-    if (!confirm('Supprimer cette page ?')) return;
-    showLoader('Suppression…');
-    const r = await api('deleteMyPage', { company_id: state.user.id, token: state.user.token, page_id: pageId });
-    hideLoader();
-    if (!r.ok) return toast('error', r.error);
-    toast('success', 'Page supprimée');
-    renderProPages();
-  }
-
-  function renderProAddPage() {
-    if (!state.user || state.user.type !== 'company') return navigate('home');
-
-    document.getElementById('main').innerHTML = `
-      <div class="dashboard-grid">
-        ${proSidebar('pro-add-page')}
-        <section>
-          <div class="page-header"><h1>Ajouter une page service</h1></div>
-          <div class="card">
-            <p class="subtitle">Mettez en avant un service spécifique de votre entreprise. L'IA YOUPI utilisera cette page pour vous recommander sur des requêtes ciblées.</p>
-            <form onsubmit="submitAddPage(event)">
-              <div class="field">
-                <label>Quel service ou sujet précis souhaitez-vous mettre en avant ? <span class="req">*</span></label>
-                <input name="titre_service" required maxlength="120" placeholder="Ex : Vidange et entretien voiture diesel" />
-              </div>
-              <div class="field">
-                <label>Décrivez ce service en détail pour guider l'IA <span class="req">*</span></label>
-                <textarea name="description_detaillee" required maxlength="2500" rows="8" placeholder="Décrivez le service, à qui il s'adresse, ce qu'il comprend, comment vous le réalisez, vos atouts spécifiques, vos prix indicatifs si pertinent…"></textarea>
-                <div class="hint">Plus c'est détaillé, mieux l'IA pourra vous recommander.</div>
-              </div>
-              <div class="field">
-                <label>URL d'une image illustrant ce service</label>
-                <input name="image_url" type="url" placeholder="https://…" />
-              </div>
-              <div class="modal-actions">
-                <button type="button" class="btn btn-ghost" onclick="navigate('pro-pages')">Annuler</button>
-                <button type="submit" class="btn btn-primary btn-lg">Créer la page</button>
-              </div>
-            </form>
-          </div>
-        </section>
-      </div>
-    `;
-  }
-
-  async function submitAddPage(e) {
-    e.preventDefault();
-    const fd = new FormData(e.target);
-    const data = { company_id: state.user.id, token: state.user.token };
-    fd.forEach((v, k) => data[k] = String(v).trim());
-
-    showLoader('Génération IA + envoi à Chatling…');
-    const r = await api('addServicePage', data);
-    hideLoader();
-    if (!r.ok) return toast('error', r.error || 'Erreur');
-    toast('success', 'Page créée ✅');
-    navigate('pro-pages');
-  }
-
-  function renderProSettings() {
-    if (!state.user || state.user.type !== 'company') return navigate('home');
-
-    document.getElementById('main').innerHTML = `
-      <div class="dashboard-grid">
-        ${proSidebar('pro-settings')}
-        <section>
-          <div class="page-header"><h1>Paramètres</h1></div>
-          <div class="card">
-            <h2>Changer mon PIN</h2>
-            <p class="subtitle">PIN à 6 caractères (chiffres ou #).</p>
-            <form onsubmit="submitChangePIN(event)">
-              <div class="field">
-                <label>PIN actuel</label>
-                <input name="old_pin" required maxlength="6" pattern="[0-9#]{6}" inputmode="numeric" />
-              </div>
-              <div class="field">
-                <label>Nouveau PIN</label>
-                <input name="new_pin" required maxlength="6" pattern="[0-9#]{6}" inputmode="numeric" />
-              </div>
-              <div class="modal-actions">
-                <button type="submit" class="btn btn-primary">Mettre à jour</button>
-              </div>
-            </form>
-          </div>
-        </section>
-      </div>
-    `;
-  }
-
-  async function submitChangePIN(e) {
-    e.preventDefault();
-    const fd = new FormData(e.target);
-    const data = {
-      company_id: state.user.id,
-      token: state.user.token,
-      old_pin: fd.get('old_pin'),
-      new_pin: fd.get('new_pin')
-    };
-    showLoader('Mise à jour du PIN…');
-    const r = await api('changePIN', data);
-    hideLoader();
-    if (!r.ok) return toast('error', r.error);
-    toast('success', 'PIN mis à jour. Reconnectez-vous.');
-    setTimeout(() => { clearSession(); navigate('home'); }, 1500);
-  }
-
-  // ============================================================
-  //  ESPACE ADMIN
-  // ============================================================
-  function adminSidebar(activeView) {
-    const items = [
-      { view: 'admin-dashboard', icon: '📊', label: 'Tableau de bord' },
-      { view: 'admin-companies', icon: '🏢', label: 'Entreprises' },
-      { view: 'admin-pages',     icon: '📄', label: 'Pages services' },
-      { view: 'admin-prompts',   icon: '🤖', label: 'Prompts IA' },
-      { view: 'admin-logs',      icon: '📋', label: 'Journal d\'audit' }
-    ];
-    return `
-      <aside class="sidebar">
-        <div class="sidebar-user">
-          <div class="sidebar-user-name">Administration</div>
-          <div class="sidebar-user-id">YOUPI® v0.1</div>
-        </div>
-        <nav class="sidebar-nav">
-          ${items.map(i => `
-            <button class="${activeView === i.view ? 'active' : ''}" onclick="navigate('${i.view}')">
-              <span class="nav-icon">${i.icon}</span>${i.label}
-            </button>
-          `).join('')}
-        </nav>
-      </aside>
-    `;
-  }
-
-  async function renderAdminDashboard() {
-    if (!state.user || state.user.type !== 'admin') return navigate('home');
-
-    document.getElementById('main').innerHTML = `
-      <div class="dashboard-grid">
-        ${adminSidebar('admin-dashboard')}
-        <section>
-          <div class="page-header"><h1>Vue d'ensemble</h1></div>
-          <div id="admin-stats"><p class="text-muted">Chargement…</p></div>
-        </section>
-      </div>
-    `;
-
-    const r = await api('getStats', { token: state.user.token });
-    if (!r.ok) { document.getElementById('admin-stats').innerHTML = `<p>${esc(r.error)}</p>`; return; }
-
-    const sectorsRows = Object.entries(r.by_sector || {}).sort((a,b) => b[1] - a[1]).slice(0, 10);
-    const regionsRows = Object.entries(r.by_region || {}).sort((a,b) => b[1] - a[1]);
-    const monthRows = Object.entries(r.by_month || {});
-
-    document.getElementById('admin-stats').innerHTML = `
-      <div class="stats-grid">
-        <div class="stat-card">
-          <div class="stat-label">Entreprises</div>
-          <div class="stat-value">${r.total_companies}</div>
-          <div class="stat-sub">Inscrites au total</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">Pages services</div>
-          <div class="stat-value">${r.total_pages}</div>
-          <div class="stat-sub">Créées par les pros</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">Chatling : ok</div>
-          <div class="stat-value" style="color:var(--success)">${r.by_chatling_status.processed || 0}</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">Chatling : échec</div>
-          <div class="stat-value" style="color:var(--error)">${r.by_chatling_status.failed || 0}</div>
-        </div>
-      </div>
-
-      <div class="card">
-        <h2>Inscriptions par région</h2>
-        <div class="table-wrap"><table class="data">
-          <thead><tr><th>Région</th><th>Entreprises</th></tr></thead>
-          <tbody>${regionsRows.map(([k,v]) => `<tr><td>${esc(k)}</td><td>${v}</td></tr>`).join('') || '<tr><td colspan="2">—</td></tr>'}</tbody>
-        </table></div>
-      </div>
-
-      <div class="card">
-        <h2>Top secteurs</h2>
-        <div class="table-wrap"><table class="data">
-          <thead><tr><th>Secteur</th><th>Entreprises</th></tr></thead>
-          <tbody>${sectorsRows.map(([k,v]) => `<tr><td>${esc(k)}</td><td>${v}</td></tr>`).join('') || '<tr><td colspan="2">—</td></tr>'}</tbody>
-        </table></div>
-      </div>
-
-      <div class="card">
-        <h2>Inscriptions des 12 derniers mois</h2>
-        <div class="table-wrap"><table class="data">
-          <thead><tr><th>Mois</th><th>Inscriptions</th></tr></thead>
-          <tbody>${monthRows.map(([k,v]) => `<tr><td>${esc(k)}</td><td>${v}</td></tr>`).join('')}</tbody>
-        </table></div>
-      </div>
-    `;
-  }
-
-  async function renderAdminCompanies() {
-    if (!state.user || state.user.type !== 'admin') return navigate('home');
-
-    document.getElementById('main').innerHTML = `
-      <div class="dashboard-grid">
-        ${adminSidebar('admin-companies')}
-        <section>
-          <div class="page-header">
-            <h1>Entreprises</h1>
-            <button class="btn btn-secondary btn-sm" onclick="renderAdminCompanies()">↻ Rafraîchir</button>
-          </div>
-          <div class="card">
-            <div class="form-grid mb-12">
-              <div><label>Filtrer par région</label><select id="filter-region"><option value="">Toutes</option></select></div>
-              <div><label>Filtrer par statut Chatling</label><select id="filter-chatling">
-                <option value="">Tous</option><option>processed</option><option>pending</option><option>failed</option>
-              </select></div>
-            </div>
-            <div id="companies-table"><p class="text-muted">Chargement…</p></div>
-          </div>
-        </section>
-      </div>
-    `;
-
-    const r = await api('listCompanies', { token: state.user.token });
-    if (!r.ok) { document.getElementById('companies-table').innerHTML = `<p>${esc(r.error)}</p>`; return; }
-    window._adminCompanies = r.companies;
-
-    // Remplir filtre régions
-    const regions = [...new Set(r.companies.map(c => c.region))];
-    document.getElementById('filter-region').innerHTML = '<option value="">Toutes</option>' + regions.map(r => `<option>${esc(r)}</option>`).join('');
-    document.getElementById('filter-region').onchange = renderCompaniesTable;
-    document.getElementById('filter-chatling').onchange = renderCompaniesTable;
-
-    renderCompaniesTable();
-  }
-
-  function renderCompaniesTable() {
-    const rf = document.getElementById('filter-region').value;
-    const cf = document.getElementById('filter-chatling').value;
-    let list = window._adminCompanies || [];
-    if (rf) list = list.filter(c => c.region === rf);
-    if (cf) list = list.filter(c => c.chatling_status === cf);
-
-    const html = `
-      <div class="table-wrap"><table class="data">
-        <thead><tr>
-          <th>ID</th><th>Entreprise</th><th>Secteur</th><th>Région</th><th>Chatling</th><th>Inscrite</th><th>Statut</th><th></th>
-        </tr></thead>
-        <tbody>
-          ${list.map(c => `
-            <tr>
-              <td class="mono">${esc(c.id)}</td>
-              <td><strong>${esc(c.nom_entreprise)}</strong><br><span class="text-xs text-muted">${esc(c.ville)} · ${esc(c.email)}</span></td>
-              <td>${esc(c.secteur)}</td>
-              <td>${esc(c.region)}</td>
-              <td><span class="badge ${esc(c.chatling_status)}">${esc(c.chatling_status)}</span></td>
-              <td>${fmtDate(c.date_inscription)}</td>
-              <td><span class="badge ${esc(c.statut)}">${esc(c.statut)}</span></td>
-              <td class="row-actions">
-                <button class="btn btn-ghost btn-sm" onclick="adminViewCompany('${esc(c.id)}')">Voir</button>
-                <button class="btn btn-secondary btn-sm" onclick="adminReprocess('${esc(c.id)}')">↻ IA</button>
-              </td>
-            </tr>
-          `).join('')}
-          ${list.length === 0 ? '<tr><td colspan="8" style="text-align:center;padding:24px">Aucune entreprise.</td></tr>' : ''}
-        </tbody>
-      </table></div>
-    `;
-    document.getElementById('companies-table').innerHTML = html;
-  }
-
-  function adminViewCompany(id) {
-    const c = (window._adminCompanies || []).find(x => x.id === id);
-    if (!c) return;
-    openModal(`
-      <h2>${esc(c.nom_entreprise)}</h2>
-      <p class="modal-sub">${esc(c.id)} · ${esc(c.region)}</p>
-      <div class="form-grid">
-        <div><label>Secteur</label><div>${esc(c.secteur)}</div></div>
-        <div><label>Ville</label><div>${esc(c.ville)}</div></div>
-        <div><label>Téléphone</label><div>${esc(c.telephone)}</div></div>
-        <div><label>Email</label><div>${esc(c.email)}</div></div>
-        <div class="field-full"><label>Description</label><div>${esc(c.description)}</div></div>
-      </div>
-      <h3 style="margin-top:20px">Markdown IA</h3>
-      <div class="md-preview">${esc(c.markdown_genere || '(non généré)')}</div>
-      <div class="modal-actions">
-        <button class="btn btn-secondary" onclick="adminReprocess('${esc(c.id)}')">↻ Rejouer IA + Chatling</button>
-        <button class="btn btn-primary" onclick="closeModal()">Fermer</button>
-      </div>
-    `, { large: true });
-  }
-
-  async function adminReprocess(id) {
-    if (!confirm('Régénérer le markdown IA et le repousser sur Chatling pour ' + id + ' ?')) return;
-    showLoader('Régénération…');
-    const r = await api('reprocessCompany', { token: state.user.token, company_id: id });
-    hideLoader();
-    if (!r.ok) return toast('error', r.error);
-    toast('success', 'Markdown régénéré et poussé sur Chatling');
-    closeModal();
-    renderAdminCompanies();
-  }
-
-  async function renderAdminPages() {
-    if (!state.user || state.user.type !== 'admin') return navigate('home');
-
-    document.getElementById('main').innerHTML = `
-      <div class="dashboard-grid">
-        ${adminSidebar('admin-pages')}
-        <section>
-          <div class="page-header"><h1>Pages services</h1></div>
-          <div id="admin-pages-table" class="card"><p class="text-muted">Chargement…</p></div>
-        </section>
-      </div>
-    `;
-
-    const r = await api('listAllPages', { token: state.user.token });
-    if (!r.ok) { document.getElementById('admin-pages-table').innerHTML = `<p>${esc(r.error)}</p>`; return; }
-
-    document.getElementById('admin-pages-table').innerHTML = `
-      <div class="table-wrap"><table class="data">
-        <thead><tr><th>ID</th><th>Titre</th><th>Entreprise</th><th>Chatling</th><th>Date</th><th></th></tr></thead>
-        <tbody>
-          ${r.pages.map(p => `
-            <tr>
-              <td class="mono">${esc(p.id)}</td>
-              <td><strong>${esc(p.titre_service)}</strong></td>
-              <td class="mono">${esc(p.company_id)}</td>
-              <td><span class="badge ${esc(p.chatling_status)}">${esc(p.chatling_status)}</span></td>
-              <td>${fmtDate(p.date_creation)}</td>
-              <td><button class="btn btn-secondary btn-sm" onclick="adminReprocessPage('${esc(p.id)}')">↻ IA</button></td>
-            </tr>
-          `).join('')}
-          ${r.pages.length === 0 ? '<tr><td colspan="6" style="text-align:center;padding:24px">Aucune page.</td></tr>' : ''}
-        </tbody>
-      </table></div>
-    `;
-  }
-
-  async function adminReprocessPage(id) {
-    if (!confirm('Régénérer le markdown IA pour ' + id + ' ?')) return;
-    showLoader('Régénération…');
-    const r = await api('reprocessPage', { token: state.user.token, page_id: id });
-    hideLoader();
-    if (!r.ok) return toast('error', r.error);
-    toast('success', 'Page régénérée');
-    renderAdminPages();
-  }
-
-  async function renderAdminPrompts() {
-    if (!state.user || state.user.type !== 'admin') return navigate('home');
-
-    document.getElementById('main').innerHTML = `
-      <div class="dashboard-grid">
-        ${adminSidebar('admin-prompts')}
-        <section>
-          <div class="page-header"><h1>Prompts IA</h1></div>
-          <div class="card">
-            <p class="subtitle">Modifiez les prompts utilisés par Claude pour générer le markdown. Les variables disponibles sont entre <code>{{ }}</code>.</p>
-            <div id="prompts-zone"><p class="text-muted">Chargement…</p></div>
-          </div>
-        </section>
-      </div>
-    `;
-
-    const r = await api('getPrompts', { token: state.user.token });
-    if (!r.ok) { document.getElementById('prompts-zone').innerHTML = `<p>${esc(r.error)}</p>`; return; }
-
-    document.getElementById('prompts-zone').innerHTML = `
-      <form onsubmit="submitPrompts(event)">
-        <div class="field">
-          <label>Prompt — Inscription entreprise (formulaire 1)</label>
-          <textarea name="prompt_company" rows="20" style="font-family:ui-monospace,monospace;font-size:13px">${esc(r.prompts.prompt_company || '')}</textarea>
-          <div class="hint">Variables : nom_entreprise, secteur, telephone, email, site_web, ville, adresse_complete, description, liste_services, horaires, facebook, instagram, image_url</div>
-        </div>
-        <div class="field">
-          <label>Prompt — Création page service (formulaire 2)</label>
-          <textarea name="prompt_page" rows="20" style="font-family:ui-monospace,monospace;font-size:13px">${esc(r.prompts.prompt_page || '')}</textarea>
-          <div class="hint">Variables : titre_service, description_detaillee, page_image_url, nom_entreprise, secteur, telephone, email, ville, adresse_complete, description, horaires, site_web</div>
-        </div>
-        <div class="modal-actions">
-          <button type="submit" class="btn btn-primary">Enregistrer les prompts</button>
-        </div>
-      </form>
-    `;
-  }
-
-  async function submitPrompts(e) {
-    e.preventDefault();
-    const fd = new FormData(e.target);
-    showLoader('Sauvegarde…');
-    const r = await api('updatePrompts', {
-      token: state.user.token,
-      prompt_company: fd.get('prompt_company'),
-      prompt_page: fd.get('prompt_page')
-    });
-    hideLoader();
-    if (!r.ok) return toast('error', r.error);
-    toast('success', 'Prompts sauvegardés ✅');
-  }
-
-  async function renderAdminLogs() {
-    if (!state.user || state.user.type !== 'admin') return navigate('home');
-
-    document.getElementById('main').innerHTML = `
-      <div class="dashboard-grid">
-        ${adminSidebar('admin-logs')}
-        <section>
-          <div class="page-header">
-            <h1>Journal d'audit</h1>
-            <button class="btn btn-secondary btn-sm" onclick="renderAdminLogs()">↻ Rafraîchir</button>
-          </div>
-          <div class="card" id="logs-zone"><p class="text-muted">Chargement…</p></div>
-        </section>
-      </div>
-    `;
-
-    const r = await api('getAuditLog', { token: state.user.token });
-    if (!r.ok) { document.getElementById('logs-zone').innerHTML = `<p>${esc(r.error)}</p>`; return; }
-
-    document.getElementById('logs-zone').innerHTML = `
-      <div class="table-wrap"><table class="data">
-        <thead><tr><th>Date</th><th>Niveau</th><th>Action</th><th>Détail</th></tr></thead>
-        <tbody>
-          ${r.logs.map(l => `
-            <tr>
-              <td class="mono text-xs">${esc(l.timestamp)}</td>
-              <td><span class="badge" style="background:${l.level === 'ERROR' ? '#fee2e2' : l.level === 'WARN' ? '#fef3c7' : '#e0f2fe'};color:#000">${esc(l.level)}</span></td>
-              <td class="mono">${esc(l.action)}</td>
-              <td class="text-sm">${esc(l.detail)}</td>
-            </tr>
-          `).join('')}
-          ${r.logs.length === 0 ? '<tr><td colspan="4" style="text-align:center;padding:24px">Aucun log.</td></tr>' : ''}
-        </tbody>
-      </table></div>
-    `;
-  }
-
-  // ============================================================
-  //  MODE DÉMO
-  // ============================================================
-  function activateDemo() {
-    state.mode = 'demo';
-    loadDemoData();
-    // Connecte directement avec une entreprise fictive pour voir l'espace pro
-    const demoCompany = demoSnapshot.companies[0];
-    state.user = {
-      type: 'company',
-      id: demoCompany.id,
-      token: 'demo-token',
-      data: demoCompany
-    };
-    document.getElementById('demo-badge').classList.add('show');
-    toast('info', '🎭 Mode démonstration activé · données fictives en mémoire');
-    navigate('pro-dashboard');
-  }
-
-  function exitDemo() {
-    state.mode = 'real';
-    demoSnapshot = null;
-    state.user = null;
-    document.getElementById('demo-badge').classList.remove('show');
-    toast('info', 'Sortie de la démo · données effacées');
-    navigate('home');
-  }
-
-  let demoSnapshot = null;
-
-  function loadDemoData() {
-    demoSnapshot = {
-      companies: [
-        {
-          id: 'YPI-MQ-0001', region: 'MQ', date_inscription: '2026-03-12T10:00:00Z', statut: 'actif',
-          nom_entreprise: 'Ti Resto Lakou', secteur: 'Restauration & Cafés',
-          description: 'Restaurant créole familial à Fort-de-France, spécialiste du poisson frais et des plats traditionnels martiniquais.',
-          telephone: '0596 73 12 45', email: 'contact@tirestolakou.mq', site_web: 'https://tirestolakou.mq',
-          adresse_complete: '12 rue Schoelcher, 97200 Fort-de-France', ville: 'Fort-de-France',
-          liste_services: 'Restaurant créole\nPlats à emporter\nLivraison sur Fort-de-France\nMenu enfant\nMenu végétarien',
-          horaires: 'Mar–Sam : 11h30–14h30 / 19h–22h\nDim : 11h30–15h\nLun : fermé',
-          facebook: 'https://facebook.com/tirestolakou', instagram: 'https://instagram.com/tirestolakou',
-          image_url: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=800',
-          chatling_status: 'processed', chatling_processed_at: '2026-03-12T10:01:00Z',
-          markdown_genere: 'Ti Resto Lakou\n\n## META-TAGS\n\n### Catégorisation\n- Restaurant créole\n- Cuisine traditionnelle martiniquaise\n\n### Public cible\n- Familles\n- Touristes\n- Habitants de Fort-de-France\n\n### Mots-clés recherche\n- restaurant créole Fort-de-France\n- poisson frais Martinique\n- plats traditionnels\n\n## COORDONNÉES\n- Adresse : 12 rue Schoelcher, 97200 Fort-de-France\n- Téléphone : 0596 73 12 45\n- Email : contact@tirestolakou.mq\n\n## DESCRIPTION\n\nRestaurant familial proposant une cuisine créole authentique au cœur de Fort-de-France.\n\n## AVANTAGES ET BÉNÉFICES\n- Poisson frais quotidien\n- Ambiance familiale\n- Livraison sur Fort-de-France\n\n## LIENS IMPORTANTS\n- Site : https://tirestolakou.mq\n- Image : https://images.unsplash.com/...'
-        },
-        {
-          id: 'YPI-MQ-0002', region: 'MQ', date_inscription: '2026-03-15T09:00:00Z', statut: 'actif',
-          nom_entreprise: 'Karaib Auto', secteur: 'Auto & Mécanique',
-          description: 'Garage spécialisé dans la mécanique générale et la révision de véhicules importés. Equipe certifiée, intervention rapide.',
-          telephone: '0596 65 89 23', email: 'karaibauto@gmail.com', site_web: '',
-          adresse_complete: 'ZI La Lézarde, 97232 Le Lamentin', ville: 'Le Lamentin',
-          liste_services: 'Révision constructeur\nVidange\nFreinage\nClimatisation\nDiagnostic électronique',
-          horaires: 'Lun–Ven : 7h30–12h / 14h–17h30\nSam : 8h–12h',
-          facebook: '', instagram: '', image_url: '',
-          chatling_status: 'processed', chatling_processed_at: '2026-03-15T09:01:00Z',
-          markdown_genere: 'Karaib Auto\n\n## META-TAGS\n…'
-        },
-        {
-          id: 'YPI-MQ-0003', region: 'MQ', date_inscription: '2026-04-02T14:20:00Z', statut: 'actif',
-          nom_entreprise: 'Bel Antan Spa', secteur: 'Beauté & Bien-être',
-          description: 'Institut de massage et de bien-être inspiré des traditions caribéennes. Soins corps, visage, mariage.',
-          telephone: '0696 14 78 92', email: 'hello@belantan.mq', site_web: 'https://belantan.mq',
-          adresse_complete: '5 chemin des Hibiscus, 97228 Sainte-Luce', ville: 'Sainte-Luce',
-          liste_services: 'Massage relaxant\nMassage prénatal\nSoin du visage\nForfait mariage\nÉpilation',
-          horaires: 'Mar–Sam : 9h–19h\nDim–Lun : fermé',
-          facebook: 'https://facebook.com/belantanspa', instagram: 'https://instagram.com/belantan_spa',
-          image_url: 'https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=800',
-          chatling_status: 'pending', chatling_processed_at: '',
-          markdown_genere: ''
-        },
-        {
-          id: 'YPI-MQ-0004', region: 'MQ', date_inscription: '2026-04-08T11:00:00Z', statut: 'actif',
-          nom_entreprise: 'BatiKaraibes', secteur: 'BTP & Travaux',
-          description: 'Entreprise de gros œuvre et rénovation. Constructions individuelles, extensions, rénovation énergétique.',
-          telephone: '0596 51 32 88', email: 'devis@batikaraibes.fr', site_web: 'https://batikaraibes.fr',
-          adresse_complete: '14 rue de la Liberté, 97224 Ducos', ville: 'Ducos',
-          liste_services: 'Construction neuve\nExtension\nRénovation\nIsolation\nÉtude thermique',
-          horaires: 'Lun–Ven : 7h–16h',
-          facebook: '', instagram: '', image_url: '',
-          chatling_status: 'failed', chatling_processed_at: '2026-04-08T11:05:00Z',
-          markdown_genere: 'BatiKaraibes\n\n…'
-        },
-        {
-          id: 'YPI-MQ-0005', region: 'MQ', date_inscription: '2026-04-22T16:00:00Z', statut: 'actif',
-          nom_entreprise: 'Lékol Kreyòl', secteur: 'Éducation & Formation',
-          description: 'École de langue proposant des cours de créole martiniquais pour tous niveaux. Cours en groupe ou en individuel.',
-          telephone: '0596 80 22 11', email: 'inscription@lekolkreyol.mq', site_web: 'https://lekolkreyol.mq',
-          adresse_complete: '8 av. Maurice Bishop, 97200 Fort-de-France', ville: 'Fort-de-France',
-          liste_services: 'Cours débutant\nCours intermédiaire\nCours avancé\nStage intensif\nCours pour entreprises',
-          horaires: 'Lun–Ven : 9h–20h\nSam : 9h–13h',
-          facebook: 'https://facebook.com/lekolkreyol', instagram: '', image_url: '',
-          chatling_status: 'processed', chatling_processed_at: '2026-04-22T16:02:00Z',
-          markdown_genere: 'Lékol Kreyòl\n\n…'
-        },
-        {
-          id: 'YPI-MQ-0006', region: 'MQ', date_inscription: '2026-05-01T08:30:00Z', statut: 'actif',
-          nom_entreprise: 'Anse Plongée', secteur: 'Tourisme & Loisirs',
-          description: 'Centre de plongée sous-marine à Sainte-Anne. Baptêmes, formations PADI, sorties à la journée.',
-          telephone: '0696 47 38 11', email: 'reservation@anseplongee.com', site_web: 'https://anseplongee.com',
-          adresse_complete: 'Plage des Salines, 97227 Sainte-Anne', ville: 'Sainte-Anne',
-          liste_services: 'Baptême de plongée\nFormation Open Water\nFormation Advanced\nSortie épaves\nLocation matériel',
-          horaires: 'Tous les jours : 7h–18h (sur réservation)',
-          facebook: 'https://facebook.com/anseplongee', instagram: 'https://instagram.com/anseplongee',
-          image_url: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=800',
-          chatling_status: 'processed', chatling_processed_at: '2026-05-01T08:32:00Z',
-          markdown_genere: 'Anse Plongée\n\n…'
+      const resp = UrlFetchApp.fetch('https://api.anthropic.com/v1/messages', options);
+      const code = resp.getResponseCode();
+      const text = resp.getContentText();
+      if (code >= 200 && code < 300) {
+        const obj = JSON.parse(text);
+        if (obj && obj.content && obj.content[0] && obj.content[0].text) {
+          return obj.content[0].text;
         }
-      ],
-      pages: [
-        {
-          id: 'YPI-PAGE-00001', company_id: 'YPI-MQ-0001', date_creation: '2026-03-14T10:00:00Z', statut: 'actif',
-          titre_service: 'Menu végétarien créole', description_detaillee: 'Notre carte végétarienne met à l\'honneur les légumes pays : ti-nain, christophine, dachine, fruit à pain, accompagnés de sauces créoles maison.',
-          image_url: '', chatling_status: 'processed', chatling_processed_at: '2026-03-14T10:02:00Z',
-          markdown_genere: '### Menu végétarien créole\n\n…'
-        },
-        {
-          id: 'YPI-PAGE-00002', company_id: 'YPI-MQ-0001', date_creation: '2026-03-20T14:00:00Z', statut: 'actif',
-          titre_service: 'Livraison de plats à domicile sur Fort-de-France',
-          description_detaillee: 'Nous livrons nos plats créoles à domicile dans toute l\'agglomération de Fort-de-France de 11h30 à 14h et de 19h à 22h.',
-          image_url: '', chatling_status: 'processed', chatling_processed_at: '2026-03-20T14:01:00Z',
-          markdown_genere: '### Livraison\n\n…'
-        },
-        {
-          id: 'YPI-PAGE-00003', company_id: 'YPI-MQ-0002', date_creation: '2026-03-18T09:00:00Z', statut: 'actif',
-          titre_service: 'Vidange véhicule diesel toutes marques',
-          description_detaillee: 'Vidange complète sur véhicules diesel : moteur, filtre à huile, filtre à gasoil, filtre à air, contrôle des niveaux. Intervention en 1h.',
-          image_url: '', chatling_status: 'processed', chatling_processed_at: '2026-03-18T09:01:00Z',
-          markdown_genere: '### Vidange diesel\n\n…'
-        },
-        {
-          id: 'YPI-PAGE-00004', company_id: 'YPI-MQ-0003', date_creation: '2026-04-10T11:00:00Z', statut: 'actif',
-          titre_service: 'Forfait mariage 4 mains',
-          description_detaillee: 'Soin complet pour la mariée : modelage, soin visage, manucure et pédicure simultanés par 2 esthéticiennes. Durée 2h30.',
-          image_url: '', chatling_status: 'pending', chatling_processed_at: '',
-          markdown_genere: ''
-        },
-        {
-          id: 'YPI-PAGE-00005', company_id: 'YPI-MQ-0006', date_creation: '2026-05-03T10:00:00Z', statut: 'actif',
-          titre_service: 'Plongée sur épave du Roraïma',
-          description_detaillee: 'Plongée à 25m sur l\'épave du Roraïma en baie de Saint-Pierre, réservée aux plongeurs niveau 2+ (Advanced Open Water).',
-          image_url: '', chatling_status: 'processed', chatling_processed_at: '2026-05-03T10:01:00Z',
-          markdown_genere: '### Plongée Roraïma\n\n…'
-        }
-      ]
-    };
-  }
-
-  // Mode démo : intercepte toutes les actions API et renvoie des données fictives sans réseau
-  function demoHandle(action, data) {
-    log('demo', action, data);
-    const sleep = () => new Promise(r => setTimeout(r, 200 + Math.random() * 300));
-    return sleep().then(() => {
-      switch (action) {
-        case 'getConfig': return {
-          ok: true,
-          sectors: ['Restauration & Cafés','Auto & Mécanique','Beauté & Bien-être','BTP & Travaux','Éducation & Formation','Tourisme & Loisirs','Autre'],
-          regions: [
-            { code: 'MQ', name: 'Martinique', status: 'active' },
-            { code: 'GP', name: 'Guadeloupe', status: 'soon' },
-            { code: 'GF', name: 'Guyane', status: 'planned' },
-            { code: 'RE', name: 'La Réunion', status: 'planned' }
-          ]
-        };
-        case 'registerCompany':
-          // En démo : on simule mais on n'écrit nulle part
-          return { ok: true, company_id: 'YPI-MQ-9999', pin: '482917', message: 'Démo : aucune donnée n\'a été enregistrée.' };
-        case 'loginCompany':
-          const c = demoSnapshot.companies.find(x => x.id === data.company_id);
-          if (!c) return { ok: false, error: 'Compte démo introuvable' };
-          return { ok: true, company: c, token: 'demo-token' };
-        case 'getCompanyData':
-          return { ok: true, company: demoSnapshot.companies.find(x => x.id === data.company_id) };
-        case 'updateCompany':
-          const idx = demoSnapshot.companies.findIndex(x => x.id === data.company_id);
-          if (idx >= 0) {
-            Object.assign(demoSnapshot.companies[idx], data);
-            demoSnapshot.companies[idx].last_updated_at = new Date().toISOString();
-          }
-          return { ok: true };
-        case 'changePIN': return { ok: true };
-        case 'addServicePage':
-          const newPage = {
-            id: 'YPI-PAGE-' + String(90000 + Math.floor(Math.random() * 9999)),
-            company_id: data.company_id, date_creation: new Date().toISOString(), statut: 'actif',
-            titre_service: data.titre_service, description_detaillee: data.description_detaillee,
-            image_url: data.image_url || '', chatling_status: 'processed',
-            chatling_processed_at: new Date().toISOString(),
-            markdown_genere: '### ' + data.titre_service + '\n\n' + data.description_detaillee + '\n\n_(markdown simulé en mode démo)_'
-          };
-          demoSnapshot.pages.push(newPage);
-          return { ok: true, page_id: newPage.id };
-        case 'listMyPages':
-          return { ok: true, pages: demoSnapshot.pages.filter(p => p.company_id === data.company_id && p.statut === 'actif') };
-        case 'deleteMyPage':
-          const pi = demoSnapshot.pages.findIndex(p => p.id === data.page_id);
-          if (pi >= 0) demoSnapshot.pages[pi].statut = 'archive';
-          return { ok: true };
-        case 'loginAdmin':
-          return { ok: true, token: 'demo-admin-token' };
-        case 'listCompanies':
-          return { ok: true, companies: demoSnapshot.companies };
-        case 'listAllPages':
-          return { ok: true, pages: demoSnapshot.pages };
-        case 'getStats':
-          const byRegion = {}, bySector = {}, byChatling = { processed:0, pending:0, failed:0 };
-          demoSnapshot.companies.forEach(c => {
-            byRegion[c.region] = (byRegion[c.region] || 0) + 1;
-            bySector[c.secteur] = (bySector[c.secteur] || 0) + 1;
-            if (byChatling[c.chatling_status] !== undefined) byChatling[c.chatling_status]++;
-          });
-          const byMonth = { '2026-01': 0, '2026-02': 1, '2026-03': 2, '2026-04': 2, '2026-05': 1 };
-          return {
-            ok: true, total_companies: demoSnapshot.companies.length, total_pages: demoSnapshot.pages.length,
-            by_region: byRegion, by_sector: bySector, by_chatling_status: byChatling, by_month: byMonth
-          };
-        case 'reprocessCompany': case 'reprocessPage':
-          return { ok: true, chatling: { ok: true }, markdown: '(markdown régénéré en démo)' };
-        case 'updateCompanyAdmin': case 'deleteCompany': return { ok: true };
-        case 'getPrompts': return { ok: true, prompts: { prompt_company: '(prompt démo entreprise)', prompt_page: '(prompt démo page)' } };
-        case 'updatePrompts': return { ok: true };
-        case 'getAuditLog':
-          return { ok: true, logs: [
-            { timestamp: '2026-05-13T10:00:00Z', level: 'INFO', action: 'demo-mode', actor: '', detail: 'Mode démonstration activé' },
-            { timestamp: '2026-05-01T08:30:00Z', level: 'INFO', action: 'registerCompany', actor: '', detail: 'YPI-MQ-0006 / Anse Plongée' },
-            { timestamp: '2026-04-22T16:00:00Z', level: 'INFO', action: 'registerCompany', actor: '', detail: 'YPI-MQ-0005 / Lékol Kreyòl' }
-          ]};
-        default: return { ok: false, error: 'Action démo non simulée : ' + action };
+        throw new Error('Réponse Anthropic mal formée');
       }
-    });
+      if (code === 429 || code >= 500) {
+        lastErr = new Error('Anthropic HTTP ' + code + ' : ' + text.slice(0, 200));
+      } else {
+        throw new Error('Anthropic HTTP ' + code + ' : ' + text.slice(0, 200));
+      }
+    } catch (err) {
+      lastErr = err;
+    }
+    if (attempt < delays.length) Utilities.sleep(delays[attempt]);
+  }
+  throw lastErr || new Error('Anthropic : échec après retries');
+}
+
+// ============================================================
+//  PIPELINE CHATLING — INGESTION KNOWLEDGE BASE
+// ============================================================
+
+function pushToChatling_(markdown, region) {
+  const apiKey = PropertiesService.getScriptProperties().getProperty('CHATLING_API_KEY');
+  if (!apiKey) {
+    log_('WARN', 'chatling', 'CHATLING_API_KEY non configuré');
+    return { ok: false, error: 'CHATLING_API_KEY manquant' };
   }
 
-  // ============================================================
-  //  BOOT
-  // ============================================================
-  async function boot() {
-    document.getElementById('footer-version').textContent = APP.version;
-
-    // Charger la session si présente
-    loadSession();
-
-    // Charger la config publique (régions + secteurs)
-    const cfg = await api('getConfig');
-    if (cfg && cfg.ok) {
-      state.config = cfg;
-    } else {
-      // Fallback offline
-      state.config = {
-        sectors: ['Restauration & Cafés','Auto & Mécanique','Beauté & Bien-être','BTP & Travaux','Tourisme & Loisirs','Santé & Paramédical','Services à la personne','Commerce & Boutiques','Numérique & Tech','Autre'],
-        regions: [
-          { code: 'MQ', name: 'Martinique', status: 'active' },
-          { code: 'GP', name: 'Guadeloupe', status: 'soon' }
-        ]
-      };
-    }
-
-    // Si user en session, on essaie de rafraîchir ses données
-    if (state.user && state.user.type === 'company') {
-      const r = await api('getCompanyData', { company_id: state.user.id, token: state.user.token });
-      if (r && r.ok) { state.user.data = r.company; saveSession(); }
-      else { clearSession(); }
-    }
-
-    // Vue initiale
-    if (state.user && state.user.type === 'company') navigate('pro-dashboard');
-    else if (state.user && state.user.type === 'admin') navigate('admin-dashboard');
-    else navigate('home');
+  const chatbotId = PropertiesService.getScriptProperties().getProperty('CHATLING_CHATBOT_' + region);
+  if (!chatbotId) {
+    log_('WARN', 'chatling', 'Pas de chatbot pour la région ' + region);
+    return { ok: false, error: 'Chatbot non configuré pour la région ' + region };
   }
 
-  // Démarrage
-  boot();
-  </script>
-</body>
-</html>
+  const url = 'https://api.chatling.ai/v2/chatbots/' + chatbotId + '/knowledge-base/data-sources/texts';
+  const options = {
+    method: 'post',
+    contentType: 'application/json',
+    headers: { 'Authorization': 'Bearer ' + apiKey },
+    payload: JSON.stringify({ texts: [markdown] }),
+    muteHttpExceptions: true
+  };
+
+  const delays = [300, 800, 2000];
+  let lastErr = null;
+  for (let attempt = 0; attempt <= delays.length; attempt++) {
+    try {
+      const resp = UrlFetchApp.fetch(url, options);
+      const code = resp.getResponseCode();
+      const text = resp.getContentText();
+      if (code >= 200 && code < 300) {
+        const obj = JSON.parse(text);
+        return { ok: true, source_id: (obj.data && obj.data.id) || '', texts_added: (obj.data && obj.data.texts_added) || 1 };
+      }
+      if (code === 429 || code >= 500) {
+        lastErr = new Error('Chatling HTTP ' + code + ' : ' + text.slice(0, 200));
+      } else {
+        return { ok: false, error: 'Chatling HTTP ' + code + ' : ' + text.slice(0, 200) };
+      }
+    } catch (err) {
+      lastErr = err;
+    }
+    if (attempt < delays.length) Utilities.sleep(delays[attempt]);
+  }
+  return { ok: false, error: lastErr ? lastErr.message : 'Échec Chatling' };
+}
+
+// ============================================================
+//  AUDIT LOG
+// ============================================================
+
+function log_(level, action, detail) {
+  try {
+    const ss = getSS_();
+    const sh = ss.getSheetByName('AuditLog');
+    sh.appendRow([new Date().toISOString(), level, action, '', detail || '']);
+  } catch (err) {
+    Logger.log('[log_ fail] ' + err.message);
+  }
+}
+
+// ============================================================
+//  PROMPTS PAR DÉFAUT (modifiables ensuite depuis l'onglet Prompts)
+// ============================================================
+
+const DEFAULT_PROMPT_COMPANY = `Tu es un expert en rédaction SEO locale et en structuration de fiches entreprises pour annuaire intelligent.
+
+Ta mission :
+À partir des informations du formulaire ci-dessous, génère une fiche entreprise optimisée, claire, professionnelle et parfaitement exploitable par un agent IA.
+
+Objectifs :
+- Maximiser la compréhension par un agent IA (chunking, retrieval).
+- Garantir une lecture fluide et rapide pour un humain.
+- Structurer les informations de manière claire et exploitable.
+
+Consignes :
+- N'invente aucune information factuelle non fournie.
+- Reformule et structure proprement les informations.
+- Génère des META-TAGS pertinents.
+- Génère des avantages et bénéfices cohérents.
+- Affiche uniquement les liens dont la valeur est non vide.
+- Dans la section LIENS IMPORTANTS, ajoute systématiquement l'URL de l'image fournie dans le champ Image.
+- N'utilise pas de bloc de code.
+- N'utilise pas de guillemets doubles.
+- N'ajoute aucun caractère invisible.
+- N'utilise pas de balises HTML.
+
+Lisibilité et structure :
+- Insère une ligne vide après chaque titre.
+- Insère une ligne vide entre chaque section.
+- Utilise des listes à puces avec un élément par ligne.
+- Limite chaque liste à 3 à 5 éléments maximum.
+- Chaque élément doit être court, clair et informatif.
+- Ne compacte jamais plusieurs informations sur une seule ligne.
+- Évite les paragraphes longs (max 3 lignes).
+- Chaque section doit pouvoir être comprise indépendamment.
+
+Optimisation IA :
+- Utilise des mots-clés naturels dans chaque section.
+- Reformule légèrement les informations importantes si utile pour la compréhension.
+- Priorise une structure facilement découpable (chunk-friendly).
+
+Informations :
+Nom de l'entreprise : {{nom_entreprise}}
+Secteur d'activité : {{secteur}}
+Téléphone : {{telephone}}
+Email : {{email}}
+Site web : {{site_web}}
+Ville : {{ville}}
+Adresse complète : {{adresse_complete}}
+Description entreprise : {{description}}
+Services : {{liste_services}}
+Horaires : {{horaires}}
+Facebook : {{facebook}}
+Instagram : {{instagram}}
+Image : {{image_url}}
+
+Structure obligatoire :
+
+{{nom_entreprise}}
+
+## META-TAGS
+
+### Catégorisation
+
+### Public cible
+
+### Mots-clés recherche
+
+## COORDONNÉES
+
+## DESCRIPTION
+
+## AVANTAGES ET BÉNÉFICES
+
+## LIENS IMPORTANTS
+(ajoute ici toujours le lien de l'image provenant du champ Image, ainsi que site web, Facebook, Instagram si fournis)`;
+
+const DEFAULT_PROMPT_PAGE = `Rédige un contenu en Markdown destiné à alimenter la base de connaissance d'un agent IA.
+
+Le but est de produire un texte très structuré, clair, factuel et facilement exploitable par une IA pour répondre à des questions sur le thème fourni.
+
+Tu dois créer un article à partir des informations ci-dessous :
+- Quel service ou sujet précis souhaitez-vous mettre en avant : {{titre_service}}
+- Décrivez ce service en détail pour guider l'IA : {{description_detaillee}}
+
+Tu dois intégrer dans le contenu les informations suivantes :
+- Nom de l'entreprise : {{nom_entreprise}}
+- Secteur d'activité : {{secteur}}
+- Adresse : {{adresse_complete}}
+- Ville : {{ville}}
+- Téléphone : {{telephone}}
+- Horaires : {{horaires}}
+- Description de l'entreprise : {{description}}
+- Site web : {{site_web}}
+- Image : {{page_image_url}}
+
+## Consignes de rédaction
+
+- Rédige en français.
+- Adopte un ton professionnel, clair, informatif et concis.
+- Le contenu doit être optimisé pour une base de connaissance IA, pas pour un article de blog classique.
+- Évite les tournures trop marketing ou trop littéraires.
+- Privilégie des phrases courtes, des paragraphes compacts et des listes à puces.
+- Ajoute une ligne vide entre chaque section et sous-section.
+- Chaque section doit être autonome.
+- Utilise des titres explicites et des sections bien séparées.
+- Ne répète pas inutilement les mêmes idées.
+- Si une information est inconnue ou non fournie, ne l'invente pas.
+- N'ajoute aucun commentaire ou méta-explication en dehors de l'article.
+
+## Structure attendue
+
+### 1. Titre
+### 2. Résumé (3 à 5 phrases)
+### 3. META-TAGS
+#### Catégorisation
+#### Public cible
+#### Mots-clés recherche
+### 4. DESCRIPTION
+### 5. AVANTAGES & BÉNÉFICES
+### 6. CAS D'USAGE
+### 7. COORDONNÉES
+### 8. LIENS IMPORTANTS
+### 9. IMAGE
+Intègre l'image en Markdown : ![Illustration]({{page_image_url}}) si l'URL est disponible.
+### 10. CONCLUSION
+
+## Format final
+- Markdown propre.
+- Ligne vide entre les sections.
+- Texte prêt à être ingéré tel quel.
+- Aucun commentaire autour du contenu.`;
