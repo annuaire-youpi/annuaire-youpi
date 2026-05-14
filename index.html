@@ -1753,6 +1753,311 @@
     }
 
     /* ============================================================
+       v0.20 — Dashboard IA (Configuration IA admin)
+       ============================================================ */
+    .ai-models-grid {
+      display: grid;
+      gap: 12px;
+      margin-top: 12px;
+    }
+    .ai-model-row {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px;
+    }
+    .ai-model-row-head {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      margin-bottom: 10px;
+    }
+    .ai-model-icon {
+      font-size: 24px;
+      line-height: 1;
+      flex-shrink: 0;
+    }
+    .ai-model-title {
+      font-weight: 600;
+      font-size: 15px;
+      color: var(--text);
+    }
+    .ai-model-desc {
+      font-size: 12px;
+      color: var(--text-2);
+      margin-top: 2px;
+    }
+    .ai-model-controls {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .ai-model-select {
+      flex: 1 1 320px;
+      min-width: 0;
+      padding: 8px 10px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: #fff;
+      font-size: 13px;
+      font-family: inherit;
+    }
+    .ai-test-result:empty {
+      display: none;
+    }
+    .ai-test-result {
+      margin-top: 10px;
+    }
+    .ai-test-ok, .ai-test-fail {
+      background: var(--card);
+      border-radius: 6px;
+      padding: 10px 12px;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+    .ai-test-ok {
+      border-left: 3px solid #10b981;
+    }
+    .ai-test-fail {
+      border-left: 3px solid #ef4444;
+      color: #991b1b;
+    }
+    .ai-test-reply {
+      margin-top: 6px;
+      padding: 8px 10px;
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      font-family: ui-monospace, monospace;
+      font-size: 12px;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .ai-models-help {
+      margin-top: 16px;
+    }
+    .ai-models-help summary {
+      cursor: pointer;
+      padding: 8px 12px;
+      background: var(--card);
+      border-radius: 6px;
+      font-weight: 600;
+      font-size: 13px;
+      user-select: none;
+    }
+    .ai-models-table {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 10px;
+      margin-top: 12px;
+    }
+    .ai-model-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px;
+    }
+    .ai-model-card-tier-flagship { border-left: 3px solid #7c3aed; }
+    .ai-model-card-tier-balanced { border-left: 3px solid #2563eb; }
+    .ai-model-card-tier-fast     { border-left: 3px solid #10b981; }
+    .ai-model-card-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+    }
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .badge-flagship { background: #ede9fe; color: #6d28d9; }
+    .badge-balanced { background: #dbeafe; color: #1d4ed8; }
+    .badge-fast     { background: #d1fae5; color: #047857; }
+    .ai-model-stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+      margin-top: 8px;
+      font-size: 11px;
+    }
+    .ai-model-stats > div {
+      display: flex;
+      flex-direction: column;
+      background: #fff;
+      padding: 4px 8px;
+      border-radius: 4px;
+    }
+    .ai-model-stats span {
+      color: var(--text-2);
+      font-size: 10px;
+    }
+    .ai-model-stats strong {
+      color: var(--text);
+      font-size: 12px;
+    }
+
+    /* Paramètres avancés */
+    .ai-advanced-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      margin-top: 12px;
+    }
+    @media (max-width: 700px) {
+      .ai-advanced-row { grid-template-columns: 1fr; }
+    }
+    .ai-advanced-row label { display: block; margin-bottom: 6px; }
+    .ai-advanced-row input[type="number"] {
+      width: 100%;
+      padding: 8px 10px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 14px;
+    }
+    .ai-temp-row {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+    .ai-temp-row input[type="range"] {
+      flex: 1;
+    }
+    .ai-temp-display {
+      min-width: 36px;
+      text-align: center;
+      font-weight: 700;
+      font-size: 16px;
+      color: #2563eb;
+      background: #eff6ff;
+      padding: 4px 8px;
+      border-radius: 4px;
+    }
+    .ai-temp-presets {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-top: 8px;
+    }
+    .ai-advanced-row .hint {
+      margin-top: 6px;
+      font-size: 12px;
+      color: var(--text-2);
+    }
+
+    /* Liens vers la console */
+    .ai-links-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 10px;
+      margin-top: 12px;
+    }
+    .ai-link-card {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      padding: 14px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      text-decoration: none;
+      color: var(--text);
+      transition: all 0.15s;
+    }
+    .ai-link-card:hover {
+      border-color: #2563eb;
+      background: #eff6ff;
+      transform: translateY(-1px);
+    }
+    .ai-link-icon { font-size: 28px; line-height: 1; flex-shrink: 0; }
+    .ai-link-card strong { display: block; font-size: 14px; }
+    .ai-link-card span   { display: block; font-size: 12px; color: var(--text-2); margin-top: 2px; }
+
+    /* Statistiques */
+    .ai-stats-summary {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      gap: 10px;
+      margin-top: 12px;
+    }
+    .ai-stat-tile {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 12px 14px;
+    }
+    .ai-stat-label {
+      font-size: 11px;
+      color: var(--text-2);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      font-weight: 600;
+    }
+    .ai-stat-value {
+      font-size: 24px;
+      font-weight: 700;
+      color: #2563eb;
+      margin-top: 4px;
+      line-height: 1.1;
+      word-break: break-all;
+    }
+    .ai-stat-sub {
+      font-size: 11px;
+      color: var(--text-2);
+      margin-top: 4px;
+    }
+    .ai-chart-wrapper {
+      background: var(--card);
+      border-radius: var(--radius);
+      padding: 12px;
+      margin-top: 8px;
+    }
+    .ai-breakdown {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-top: 8px;
+    }
+    .ai-breakdown-row {
+      display: grid;
+      grid-template-columns: 200px 1fr 150px;
+      gap: 10px;
+      align-items: center;
+      font-size: 13px;
+    }
+    @media (max-width: 600px) {
+      .ai-breakdown-row {
+        grid-template-columns: 1fr;
+        gap: 4px;
+      }
+    }
+    .ai-breakdown-label { font-weight: 500; }
+    .ai-breakdown-bar {
+      background: var(--card);
+      border-radius: 4px;
+      height: 18px;
+      overflow: hidden;
+    }
+    .ai-breakdown-bar > div {
+      height: 100%;
+      background: linear-gradient(90deg, #2563eb, #3b82f6);
+      transition: width 0.3s;
+    }
+    .ai-breakdown-value {
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+      font-size: 12px;
+    }
+    .ai-breakdown-value small {
+      color: var(--text-2);
+    }
+
+    /* ============================================================
        v0.19 — Duration cards (durée de visibilité dans le formulaire)
        ============================================================ */
     .duration-cards {
@@ -1884,7 +2189,7 @@
 
   const APP = {
     name: 'Annuaire YOUPI',
-    version: 'v0.19 — 2026',
+    version: 'v0.20 — 2026',
     BACKEND_URL: 'https://script.google.com/macros/s/AKfycbzQNSOAGCJp1QmZU0IE1FYiKmKCcGgTUpqKa3RJG9lwiAND_EC5dGdbh2XCu26ZTMoxtw/exec'
   };
 
@@ -2163,7 +2468,8 @@
       case 'admin-companies':     renderAdminCompanies(); break;
       case 'admin-company-detail':renderAdminCompanyDetail(params); break;
       case 'admin-pages':         renderAdminPages(); break;
-      case 'admin-prompts':       renderAdminPrompts(); break;
+      case 'admin-prompts':       navigate('admin-ai'); return;
+      case 'admin-ai':            renderAdminAiDashboard(); break;
       case 'admin-logs':          renderAdminLogs(); break;
       default: renderHome();
     }
@@ -3332,7 +3638,7 @@
       { view: 'admin-dashboard', icon: '📊', label: 'Tableau de bord' },
       { view: 'admin-companies', icon: '🏢', label: 'Entreprises' },
       { view: 'admin-pages',     icon: '📄', label: 'Pages services' },
-      { view: 'admin-prompts',   icon: '🤖', label: 'Prompts IA' },
+      { view: 'admin-ai',        icon: '🤖', label: 'Configuration IA' },
       { view: 'admin-logs',      icon: '📋', label: 'Journal d\'audit' }
     ];
     return `
@@ -3901,93 +4207,416 @@
     renderAdminPages();
   }
 
-  async function renderAdminPrompts() {
+  // ============================================================
+  //  CONFIGURATION IA — Dashboard admin
+  // ============================================================
+  // Variables d'état du dashboard IA (recharge en mémoire)
+  let _aiDashboard = null;
+
+  async function renderAdminAiDashboard() {
     if (!state.user || state.user.type !== 'admin') return navigate('home');
 
     document.getElementById('main').innerHTML = `
       <div class="dashboard-grid">
-        ${adminSidebar('admin-prompts')}
+        ${adminSidebar('admin-ai')}
         <section>
           <div class="page-header">
-            <h1>Prompts IA</h1>
-            <button class="btn btn-secondary btn-sm" onclick="resetPromptsToDefault()">↻ Restaurer valeurs par défaut</button>
+            <h1>🤖 Configuration IA</h1>
+            <button class="btn btn-secondary btn-sm" onclick="renderAdminAiDashboard()">↻ Rafraîchir</button>
           </div>
-          <div class="card">
-            <p class="subtitle">Personnalisez les prompts utilisés par Claude pour générer le markdown. Chaque type de contenu utilise son propre prompt.</p>
-            <div id="prompts-zone"><p class="text-muted">Chargement…</p></div>
-          </div>
+          <p class="subtitle">Pilote complet de l'IA Anthropic : choix des modèles, paramètres, suivi des coûts, prompts.</p>
+          <div id="ai-zone"><p class="text-muted">Chargement du tableau de bord IA…</p></div>
         </section>
       </div>
     `;
 
-    const r = await api('getPrompts', { token: state.user.token });
-    if (!r.ok) { document.getElementById('prompts-zone').innerHTML = `<p>${esc(r.error)}</p>`; return; }
+    showLoader('Chargement IA…');
+    const [dashR, promptsR] = await Promise.all([
+      api('getAiDashboard', { token: state.user.token }),
+      api('getPrompts',     { token: state.user.token })
+    ]);
+    hideLoader();
 
-    const promptCards = [
-      {
-        key: 'prompt_company',
-        title: '🏢 Inscription entreprise',
-        desc: "Génère le markdown de présentation de l'entreprise au moment de son inscription.",
-        vars: 'nom_entreprise, secteur, telephone, email, site_web, ville, adresse_complete, description, liste_services, horaires, facebook, instagram, image_url (format {{variable}})'
-      },
-      {
-        key: 'prompt_service',
-        title: '🛠️ Création contenu — Service',
-        desc: "Génère le markdown pour une prestation/service.",
-        vars: '{titre}, {description}, {prix}, {lien_externe}, {image_url}, {company_nom}, {company_telephone}, {company_adresse}, {company_horaires}, {company_description}, {company_secteur}, {company_email}, {company_ville}, {company_site}'
-      },
-      {
-        key: 'prompt_article',
-        title: '🛍️ Création contenu — Article (Boutique en ligne)',
-        desc: "Génère le markdown e-commerce pour un produit de boutique.",
-        vars: '{titre}, {description}, {prix}, {lien_externe}, {image_url}, {company_nom}, {company_telephone}, {company_adresse}, {company_horaires}, {company_description}'
-      },
-      {
-        key: 'prompt_instagram',
-        title: '📸 Création contenu — Instagram',
-        desc: "Génère le markdown pour une publication Instagram à mettre en vitrine.",
-        vars: '{titre}, {description}, {lien_externe}, {image_url}, {company_nom}, {company_telephone}, {company_adresse}, {company_horaires}, {company_description}'
-      },
-      {
-        key: 'prompt_immobilier',
-        title: '🏠 Création contenu — Immobilier',
-        desc: "Génère la fiche immobilière (vente ou location) à partir d'une annonce.",
-        vars: '{titre}, {description}, {prix}, {lien_externe}, {image_url}, {company_nom}, {company_telephone}, {company_adresse}, {company_horaires}, {company_description}'
-      }
+    if (!dashR.ok)    { document.getElementById('ai-zone').innerHTML = `<p>${esc(dashR.error)}</p>`; return; }
+    if (!promptsR.ok) { document.getElementById('ai-zone').innerHTML = `<p>${esc(promptsR.error)}</p>`; return; }
+
+    _aiDashboard = dashR;
+    _aiDashboard.prompts = promptsR.prompts;
+
+    renderAiDashboardContent();
+  }
+
+  function renderAiDashboardContent() {
+    const d = _aiDashboard;
+    if (!d) return;
+    const s = d.settings;
+    const stats = d.stats;
+    const models = d.available_models;
+    const links = d.console_links;
+
+    // Helper : label visuel d'un modèle par son id
+    const modelLabel = (id) => {
+      const m = models.find(x => x.id === id);
+      return m ? m.name : id;
+    };
+
+    // 5 types de contenu pilotables
+    const contentTypes = [
+      { key: 'company',    icon: '🏢', label: 'Inscription entreprise', desc: 'Fiche générée à l\'inscription d\'une nouvelle entreprise.' },
+      { key: 'service',    icon: '🛠️', label: 'Service',                 desc: 'Prestation classique d\'une entreprise.' },
+      { key: 'article',    icon: '🛍️', label: 'Article (Boutique)',      desc: 'Produit de boutique en ligne.' },
+      { key: 'instagram',  icon: '📸', label: 'Instagram',               desc: 'Publication Instagram en vitrine.' },
+      { key: 'immobilier', icon: '🏠', label: 'Immobilier',              desc: 'Annonce immobilière (vente/location).' }
     ];
 
-    document.getElementById('prompts-zone').innerHTML = `
-      <form onsubmit="submitPrompts(event)">
-        ${promptCards.map(pc => `
-          <div class="prompt-block">
-            <label class="prompt-block-title">${pc.title}</label>
-            <p class="prompt-block-desc">${esc(pc.desc)}</p>
-            <textarea name="${pc.key}" rows="14" style="font-family:ui-monospace,monospace;font-size:12px;line-height:1.5">${esc(r.prompts[pc.key] || '')}</textarea>
-            <div class="hint"><strong>Variables disponibles :</strong> ${esc(pc.vars)}</div>
-          </div>
-        `).join('')}
-        <div class="modal-actions">
-          <button type="submit" class="btn btn-primary btn-lg">💾 Enregistrer tous les prompts</button>
+    const html = `
+      <!-- =========  SECTION 1 : MODÈLES PAR TYPE  ========= -->
+      <div class="card">
+        <h2 style="margin-top:0">🎛️ Modèle Claude par type de contenu</h2>
+        <p class="text-muted" style="margin-top:6px">Chaque type de contenu peut utiliser un modèle différent. Plus le modèle est haut de gamme, plus la qualité est élevée — et plus c'est cher.</p>
+
+        <div class="ai-models-grid">
+          ${contentTypes.map(ct => `
+            <div class="ai-model-row">
+              <div class="ai-model-row-head">
+                <span class="ai-model-icon">${ct.icon}</span>
+                <div style="flex:1;min-width:0">
+                  <div class="ai-model-title">${ct.label}</div>
+                  <div class="ai-model-desc">${esc(ct.desc)}</div>
+                </div>
+              </div>
+              <div class="ai-model-controls">
+                <select id="ai-model-${ct.key}" class="ai-model-select">
+                  ${models.map(m => `
+                    <option value="${m.id}" ${s['model_'+ct.key] === m.id ? 'selected' : ''}>
+                      ${m.name} — ${formatPrice(m.price_in)}$ / ${formatPrice(m.price_out)}$ par M tokens
+                    </option>
+                  `).join('')}
+                </select>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="testAiModel('${ct.key}')">🧪 Tester</button>
+              </div>
+              <div id="ai-test-result-${ct.key}" class="ai-test-result"></div>
+            </div>
+          `).join('')}
         </div>
-      </form>
+
+        <details class="ai-models-help">
+          <summary>📖 Comparatif des modèles disponibles</summary>
+          <div class="ai-models-table">
+            ${models.map(m => `
+              <div class="ai-model-card ai-model-card-tier-${m.tier}">
+                <div class="ai-model-card-head">
+                  <strong>${m.name}</strong>
+                  <span class="badge badge-${m.tier}">${m.tier === 'flagship' ? 'Premium' : m.tier === 'balanced' ? 'Équilibré' : 'Rapide'}</span>
+                </div>
+                <p class="text-muted" style="font-size:12px;margin:4px 0">${esc(m.description)}</p>
+                <div class="ai-model-stats">
+                  <div><span>Vitesse</span><strong>${m.speed}</strong></div>
+                  <div><span>Qualité</span><strong>${m.quality}</strong></div>
+                  <div><span>Input</span><strong>${formatPrice(m.price_in)} $ / M</strong></div>
+                  <div><span>Output</span><strong>${formatPrice(m.price_out)} $ / M</strong></div>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </details>
+      </div>
+
+      <!-- =========  SECTION 2 : PARAMÈTRES AVANCÉS  ========= -->
+      <div class="card">
+        <h2 style="margin-top:0">⚙️ Paramètres avancés</h2>
+        <div class="ai-advanced-row">
+          <div>
+            <label for="ai-max-tokens"><strong>Longueur max de réponse</strong> <small class="text-muted">(max_tokens)</small></label>
+            <input type="number" id="ai-max-tokens" min="100" max="16000" step="100" value="${s.max_tokens}">
+            <p class="hint">Plus haut = réponses plus longues mais plus chères. <strong>2000</strong> couvre la plupart des cas.</p>
+          </div>
+          <div>
+            <label for="ai-temperature"><strong>Créativité</strong> <small class="text-muted">(temperature)</small></label>
+            <div class="ai-temp-row">
+              <input type="range" id="ai-temperature" min="0" max="1" step="0.1" value="${s.temperature}" oninput="document.getElementById('ai-temp-display').textContent = this.value">
+              <span id="ai-temp-display" class="ai-temp-display">${s.temperature}</span>
+            </div>
+            <p class="hint"><strong>0.0–0.3</strong> factuel, <strong>0.7</strong> équilibré, <strong>1.0</strong> créatif.</p>
+            <div class="ai-temp-presets">
+              <button type="button" class="btn btn-secondary btn-sm" onclick="setTempPreset(0.2)">Factuel (0.2)</button>
+              <button type="button" class="btn btn-secondary btn-sm" onclick="setTempPreset(0.7)">Équilibré (0.7)</button>
+              <button type="button" class="btn btn-secondary btn-sm" onclick="setTempPreset(1.0)">Créatif (1.0)</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- =========  SECTION 3 : COMPTE ANTHROPIC  ========= -->
+      <div class="card">
+        <h2 style="margin-top:0">🔗 Mon compte Anthropic</h2>
+        <p class="text-muted" style="margin-top:6px">Liens directs vers la console Anthropic pour gérer mon budget et mes clés API.</p>
+        <div class="ai-links-grid">
+          <a href="${links.usage}" target="_blank" rel="noopener" class="ai-link-card">
+            <div class="ai-link-icon">💰</div>
+            <div>
+              <strong>Voir ma consommation</strong>
+              <span>Budget dépensé, graphiques d'usage</span>
+            </div>
+          </a>
+          <a href="${links.billing}" target="_blank" rel="noopener" class="ai-link-card">
+            <div class="ai-link-icon">💳</div>
+            <div>
+              <strong>Recharger mon crédit</strong>
+              <span>Ajouter du crédit, gérer le paiement</span>
+            </div>
+          </a>
+          <a href="${links.keys}" target="_blank" rel="noopener" class="ai-link-card">
+            <div class="ai-link-icon">🔑</div>
+            <div>
+              <strong>Gérer mes clés API</strong>
+              <span>Voir, créer, révoquer les clés</span>
+            </div>
+          </a>
+          <a href="${links.home}" target="_blank" rel="noopener" class="ai-link-card">
+            <div class="ai-link-icon">📊</div>
+            <div>
+              <strong>Console générale</strong>
+              <span>Tableau de bord principal</span>
+            </div>
+          </a>
+        </div>
+      </div>
+
+      <!-- =========  SECTION 4 : STATISTIQUES  ========= -->
+      <div class="card">
+        <h2 style="margin-top:0">📊 Statistiques d'usage (côté Annuaire YOUPI®)</h2>
+        <p class="text-muted" style="margin-top:6px">Calculs basés sur le journal d'audit. Les coûts sont des <strong>estimations</strong> selon les prix Anthropic affichés ; la facture exacte est dans la console.</p>
+
+        <div class="ai-stats-summary">
+          <div class="ai-stat-tile">
+            <div class="ai-stat-label">Coût total estimé</div>
+            <div class="ai-stat-value">$${stats.total.cost.toFixed(4)}</div>
+            <div class="ai-stat-sub">${stats.total.calls} appel${stats.total.calls > 1 ? 's' : ''}</div>
+          </div>
+          <div class="ai-stat-tile">
+            <div class="ai-stat-label">Ce mois (${stats.this_month.month})</div>
+            <div class="ai-stat-value">$${stats.this_month.cost.toFixed(4)}</div>
+            <div class="ai-stat-sub">${stats.this_month.calls} appel${stats.this_month.calls > 1 ? 's' : ''}</div>
+          </div>
+          <div class="ai-stat-tile">
+            <div class="ai-stat-label">Tokens entrée (total)</div>
+            <div class="ai-stat-value">${formatNumber(stats.total.tokens_in)}</div>
+            <div class="ai-stat-sub">prompts envoyés</div>
+          </div>
+          <div class="ai-stat-tile">
+            <div class="ai-stat-label">Tokens sortie (total)</div>
+            <div class="ai-stat-value">${formatNumber(stats.total.tokens_out)}</div>
+            <div class="ai-stat-sub">contenu généré</div>
+          </div>
+        </div>
+
+        <h3 style="margin-top:24px">Coût par mois (12 derniers mois)</h3>
+        <div class="ai-chart-wrapper">
+          ${renderMonthlyChart(stats.monthly)}
+        </div>
+
+        <h3 style="margin-top:24px">Répartition par type de contenu</h3>
+        <div class="ai-breakdown">
+          ${renderBreakdown(stats.by_type, contentTypes)}
+        </div>
+
+        <h3 style="margin-top:24px">Répartition par modèle utilisé</h3>
+        <div class="ai-breakdown">
+          ${renderModelBreakdown(stats.by_model)}
+        </div>
+      </div>
+
+      <!-- =========  SECTION 5 : PROMPTS  ========= -->
+      <div class="card">
+        <div class="page-header" style="margin-bottom:8px">
+          <h2 style="margin:0">📝 Prompts IA</h2>
+          <button class="btn btn-secondary btn-sm" onclick="resetPromptsToDefault()">↻ Restaurer valeurs par défaut</button>
+        </div>
+        <p class="text-muted" style="margin-top:6px">Personnalisez les prompts utilisés par Claude pour générer le markdown. Chaque type de contenu a son propre prompt.</p>
+        <div id="prompts-zone">${renderPromptsForm()}</div>
+      </div>
+
+      <!-- =========  BOUTON ENREGISTRER GLOBAL  ========= -->
+      <div class="card" style="position:sticky;bottom:12px;z-index:10;display:flex;gap:12px;align-items:center;justify-content:flex-end;flex-wrap:wrap">
+        <span class="text-muted" style="margin-right:auto">⚠️ Pense à enregistrer avant de quitter cette page.</span>
+        <button type="button" class="btn btn-primary btn-lg" onclick="saveAllAiSettings()">💾 Tout enregistrer (modèles + paramètres + prompts)</button>
+      </div>
+    `;
+
+    document.getElementById('ai-zone').innerHTML = html;
+  }
+
+  function renderPromptsForm() {
+    const d = _aiDashboard;
+    const prompts = d.prompts || {};
+    const promptCards = [
+      { key: 'prompt_company',    title: '🏢 Inscription entreprise', desc: 'Génère le markdown de présentation de l\'entreprise au moment de son inscription.', vars: 'nom_entreprise, secteur, telephone, email, site_web, ville, adresse_complete, description, liste_services, horaires, facebook, instagram, image_url (format {{variable}})' },
+      { key: 'prompt_service',    title: '🛠️ Service',                  desc: 'Génère le markdown pour une prestation/service.',           vars: '{titre}, {description}, {prix}, {lien_externe}, {image_url}, {company_nom}, {company_telephone}, {company_adresse}, {company_horaires}, {company_description}, {company_secteur}, {company_email}, {company_ville}, {company_site}' },
+      { key: 'prompt_article',    title: '🛍️ Article (Boutique)',       desc: 'Génère le markdown e-commerce pour un produit de boutique.', vars: '{titre}, {description}, {prix}, {lien_externe}, {image_url}, {company_nom}, {company_telephone}, {company_adresse}, {company_horaires}, {company_description}' },
+      { key: 'prompt_instagram',  title: '📸 Instagram',                 desc: 'Génère le markdown pour une publication Instagram à mettre en vitrine.', vars: '{titre}, {description}, {lien_externe}, {image_url}, {company_nom}, {company_telephone}, {company_adresse}, {company_horaires}, {company_description}' },
+      { key: 'prompt_immobilier', title: '🏠 Immobilier',                desc: 'Génère la fiche immobilière (vente ou location) à partir d\'une annonce.', vars: '{titre}, {description}, {prix}, {lien_externe}, {image_url}, {company_nom}, {company_telephone}, {company_adresse}, {company_horaires}, {company_description}' }
+    ];
+    return promptCards.map(pc => `
+      <div class="prompt-block">
+        <label class="prompt-block-title">${pc.title}</label>
+        <p class="prompt-block-desc">${esc(pc.desc)}</p>
+        <textarea id="prompt-textarea-${pc.key}" rows="14" style="font-family:ui-monospace,monospace;font-size:12px;line-height:1.5">${esc(prompts[pc.key] || '')}</textarea>
+        <div class="hint"><strong>Variables disponibles :</strong> ${esc(pc.vars)}</div>
+      </div>
+    `).join('');
+  }
+
+  // ------------ helpers d'affichage stats ------------
+  function formatPrice(p) {
+    return Number(p).toFixed(2);
+  }
+  function formatNumber(n) {
+    if (typeof n !== 'number') n = parseFloat(n) || 0;
+    return n.toLocaleString('fr-FR');
+  }
+
+  function renderMonthlyChart(monthly) {
+    if (!monthly || !monthly.length) return '<p class="text-muted">Pas encore de données.</p>';
+    const maxCost = Math.max(...monthly.map(m => m.cost), 0.0001);
+    // Graphique SVG en barres
+    const W = 720, H = 220, padX = 40, padY = 20, padB = 40;
+    const innerW = W - 2 * padX;
+    const innerH = H - padY - padB;
+    const barGap = 6;
+    const barW = (innerW - barGap * (monthly.length - 1)) / monthly.length;
+
+    const bars = monthly.map((m, i) => {
+      const h = m.cost > 0 ? Math.max(2, (m.cost / maxCost) * innerH) : 0;
+      const x = padX + i * (barW + barGap);
+      const y = padY + (innerH - h);
+      const labelMonth = m.month.split('-')[1]; // MM
+      return `
+        <g>
+          <rect x="${x}" y="${y}" width="${barW}" height="${h}" rx="3" fill="#2563eb" opacity="${m.cost > 0 ? 0.9 : 0.2}">
+            <title>${m.month} : $${m.cost.toFixed(4)} (${m.calls} appel${m.calls > 1 ? 's' : ''})</title>
+          </rect>
+          ${m.cost > 0 ? `<text x="${x + barW/2}" y="${y - 4}" text-anchor="middle" font-size="10" fill="#475569" font-weight="600">$${m.cost.toFixed(2)}</text>` : ''}
+          <text x="${x + barW/2}" y="${H - padB + 16}" text-anchor="middle" font-size="11" fill="#64748b">${labelMonth}</text>
+        </g>
+      `;
+    }).join('');
+
+    return `
+      <svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet" style="width:100%;max-width:720px;height:auto;display:block">
+        <line x1="${padX}" y1="${padY + innerH}" x2="${W - padX}" y2="${padY + innerH}" stroke="#cbd5e1" stroke-width="1"/>
+        <text x="${padX}" y="${padY - 4}" font-size="11" fill="#64748b">$ par mois (max : $${maxCost.toFixed(2)})</text>
+        ${bars}
+      </svg>
+      <p class="text-muted" style="font-size:12px;margin-top:8px">Survolez les barres pour voir le détail.</p>
     `;
   }
 
-  async function submitPrompts(e) {
-    e.preventDefault();
-    const fd = new FormData(e.target);
-    showLoader('Sauvegarde…');
-    const r = await api('updatePrompts', {
+  function renderBreakdown(byType, contentTypes) {
+    const types = Object.keys(byType);
+    if (!types.length) return '<p class="text-muted">Pas encore de données.</p>';
+    const total = Object.values(byType).reduce((a, b) => a + b.cost, 0) || 1;
+    const labelByKey = {};
+    contentTypes.forEach(ct => { labelByKey[ct.key] = ct.icon + ' ' + ct.label; });
+    labelByKey.test = '🧪 Tests';
+    labelByKey.unknown = '❓ Inconnu';
+
+    return types.map(t => {
+      const d = byType[t];
+      const pct = (d.cost / total) * 100;
+      return `
+        <div class="ai-breakdown-row">
+          <div class="ai-breakdown-label">${labelByKey[t] || t}</div>
+          <div class="ai-breakdown-bar"><div style="width:${pct.toFixed(1)}%"></div></div>
+          <div class="ai-breakdown-value">$${d.cost.toFixed(4)} <small>(${d.calls})</small></div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function renderModelBreakdown(byModel) {
+    const ids = Object.keys(byModel);
+    if (!ids.length) return '<p class="text-muted">Pas encore de données.</p>';
+    const total = Object.values(byModel).reduce((a, b) => a + b.cost, 0) || 1;
+    const models = (_aiDashboard && _aiDashboard.available_models) || [];
+    const nameById = id => {
+      const m = models.find(x => x.id === id);
+      return m ? m.name : id;
+    };
+
+    return ids.map(id => {
+      const d = byModel[id];
+      const pct = (d.cost / total) * 100;
+      return `
+        <div class="ai-breakdown-row">
+          <div class="ai-breakdown-label">${esc(nameById(id))}</div>
+          <div class="ai-breakdown-bar"><div style="width:${pct.toFixed(1)}%"></div></div>
+          <div class="ai-breakdown-value">$${d.cost.toFixed(4)} <small>(${d.calls})</small></div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  // ------------ Actions ------------
+  function setTempPreset(v) {
+    document.getElementById('ai-temperature').value = v;
+    document.getElementById('ai-temp-display').textContent = v.toFixed(1);
+  }
+
+  async function testAiModel(contentTypeKey) {
+    const select = document.getElementById('ai-model-' + contentTypeKey);
+    if (!select) return;
+    const modelId = select.value;
+    const target  = document.getElementById('ai-test-result-' + contentTypeKey);
+    target.innerHTML = `<span class="text-muted">⏳ Test du modèle ${esc(modelId)}…</span>`;
+    const r = await api('testAiModel', { token: state.user.token, model_id: modelId });
+    if (!r.ok) {
+      target.innerHTML = `<div class="ai-test-fail">❌ ${esc(r.error || 'Échec')}</div>`;
+      return;
+    }
+    target.innerHTML = `
+      <div class="ai-test-ok">
+        <div><strong>✅ Réponse en ${r.elapsed_ms} ms</strong> · ${r.tokens_input} tokens in / ${r.tokens_output} tokens out · Coût ≈ $${r.cost_usd.toFixed(6)}</div>
+        <div class="ai-test-reply">${esc(r.reply)}</div>
+      </div>
+    `;
+  }
+
+  async function saveAllAiSettings() {
+    // 1. Récupération des valeurs
+    const models = {
+      model_company:    document.getElementById('ai-model-company').value,
+      model_service:    document.getElementById('ai-model-service').value,
+      model_article:    document.getElementById('ai-model-article').value,
+      model_instagram:  document.getElementById('ai-model-instagram').value,
+      model_immobilier: document.getElementById('ai-model-immobilier').value
+    };
+    const max_tokens  = parseInt(document.getElementById('ai-max-tokens').value, 10);
+    const temperature = parseFloat(document.getElementById('ai-temperature').value);
+
+    showLoader('Enregistrement…');
+
+    // 2. Sauvegarder paramètres + modèles
+    const r1 = await api('saveAiSettings', Object.assign({
       token: state.user.token,
-      prompt_company:    fd.get('prompt_company'),
-      prompt_service:    fd.get('prompt_service'),
-      prompt_article:    fd.get('prompt_article'),
-      prompt_instagram:  fd.get('prompt_instagram'),
-      prompt_immobilier: fd.get('prompt_immobilier')
+      max_tokens: max_tokens,
+      temperature: temperature
+    }, models));
+    if (!r1.ok) { hideLoader(); return toast('error', r1.error); }
+
+    // 3. Sauvegarder les prompts
+    const r2 = await api('updatePrompts', {
+      token: state.user.token,
+      prompt_company:    document.getElementById('prompt-textarea-prompt_company').value,
+      prompt_service:    document.getElementById('prompt-textarea-prompt_service').value,
+      prompt_article:    document.getElementById('prompt-textarea-prompt_article').value,
+      prompt_instagram:  document.getElementById('prompt-textarea-prompt_instagram').value,
+      prompt_immobilier: document.getElementById('prompt-textarea-prompt_immobilier').value
     });
     hideLoader();
-    if (!r.ok) return toast('error', r.error);
-    toast('success', 'Prompts sauvegardés ✅');
+    if (!r2.ok) return toast('error', r2.error);
+
+    toast('success', 'Configuration IA sauvegardée ✅');
   }
 
   async function resetPromptsToDefault() {
@@ -3997,8 +4626,9 @@
     hideLoader();
     if (!r.ok) return toast('error', r.error);
     toast('success', (r.prompts_reset || 6) + ' prompts restaurés à leurs valeurs par défaut');
-    renderAdminPrompts();
+    renderAdminAiDashboard();
   }
+
 
   async function renderAdminLogs() {
     if (!state.user || state.user.type !== 'admin') return navigate('home');
