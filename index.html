@@ -2797,7 +2797,7 @@
 
   <!-- ====================== FOOTER ====================== -->
   <footer class="footer">
-    <div>Annuaire YOUPI<span style="color:var(--teal-700)">®</span> · <a id="footer-version-link" onclick="navigate('changelog')" style="cursor:pointer;text-decoration:underline"><span id="footer-version">v2.2.0</span></a> · <a onclick="navigate('changelog')" style="cursor:pointer;text-decoration:underline">📰 Nouveautés</a></div>
+    <div>Annuaire YOUPI<span style="color:var(--teal-700)">®</span> · <a id="footer-version-link" onclick="navigate('changelog')" style="cursor:pointer;text-decoration:underline"><span id="footer-version">v2.2.1</span></a> · <a onclick="navigate('changelog')" style="cursor:pointer;text-decoration:underline">📰 Nouveautés</a></div>
     <div class="mt-16 text-xs">Conçu pour les entreprises ultra-marines · Martinique 🇲🇶 · Guadeloupe 🇬🇵 · Guyane 🇬🇫</div>
     <div class="footer-admin">
       <a onclick="openLoginAdmin()" style="cursor:pointer">Administration</a>
@@ -2825,7 +2825,7 @@
 
   const APP = {
     name: 'Annuaire YOUPI',
-    version: 'v2.2.0',
+    version: 'v2.2.1',
     versionDate: '14 mai 2026',
     BACKEND_URL: 'https://script.google.com/macros/s/AKfycbzQNSOAGCJp1QmZU0IE1FYiKmKCcGgTUpqKa3RJG9lwiAND_EC5dGdbh2XCu26ZTMoxtw/exec'
   };
@@ -2837,6 +2837,14 @@
   //  → Pour ajouter une nouvelle version, demander à Claude.
   // ------------------------------------------------------------
   const CHANGELOG = [
+    {
+      version: 'v2.2.1',
+      date: '14 mai 2026',
+      title: "Améliorations internes et fiabilité",
+      entries: [
+        { type: 'perf', text: "Améliorations internes de la fiabilité du système de publication Facebook." }
+      ]
+    },
     {
       version: 'v2.2.0',
       date: '14 mai 2026',
@@ -5653,15 +5661,27 @@
       `;
       return;
     }
+    const publishHtml = r.can_publish === true ? `
+      <div style="margin-top:10px;padding:10px 12px;background:#d1fae5;border-radius:6px;border-left:3px solid #10b981;font-size:13px">
+        ✅ <strong>Publication autorisée</strong> — Le token peut bien publier sur cette page (permission CREATE_CONTENT détectée).
+      </div>
+    ` : r.can_publish === false ? `
+      <div style="margin-top:10px;padding:10px 12px;background:#fef3c7;border-radius:6px;border-left:3px solid #f59e0b;font-size:13px">
+        ⚠️ <strong>Publication non autorisée</strong> — Le token n'a pas la permission CREATE_CONTENT. Les publications automatiques échoueront.
+      </div>
+    ` : '';
+
     target.innerHTML = `
       <div class="ai-test-ok">
         <strong>✅ Connexion OK</strong>
         <div style="margin-top:8px;font-size:13px;line-height:1.6">
           📘 <strong>Page :</strong> ${esc(r.page_name)}<br>
           🆔 <strong>ID :</strong> <span class="mono">${esc(r.page_id)}</span><br>
-          👥 <strong>Fans :</strong> ${r.fan_count.toLocaleString('fr-FR')}<br>
-          🏷️ <strong>Catégorie :</strong> ${esc(r.category) || '—'}
+          ${r.fan_count !== null && r.fan_count !== undefined ? `👥 <strong>Fans :</strong> ${r.fan_count.toLocaleString('fr-FR')}<br>` : ''}
+          ${r.category ? `🏷️ <strong>Catégorie :</strong> ${esc(r.category)}<br>` : ''}
+          ${r.tasks && r.tasks.length ? `🔑 <strong>Permissions du token :</strong> <span class="mono" style="font-size:11px">${esc(r.tasks.join(', '))}</span>` : ''}
         </div>
+        ${publishHtml}
       </div>
     `;
   }
