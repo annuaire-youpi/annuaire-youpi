@@ -1729,7 +1729,7 @@
 
   <!-- ====================== FOOTER ====================== -->
   <footer class="footer">
-    <div>Annuaire YOUPI<span style="color:var(--teal-700)">®</span> · <span id="footer-version">v0.16 — 2026</span></div>
+    <div>Annuaire YOUPI<span style="color:var(--teal-700)">®</span> · <span id="footer-version">v0.17 — 2026</span></div>
     <div class="mt-16 text-xs">Conçu pour les entreprises ultra-marines · Martinique 🇲🇶 · Guadeloupe 🇬🇵 · Guyane 🇬🇫</div>
     <div class="footer-admin">
       <a onclick="openLoginAdmin()" style="cursor:pointer">Administration</a>
@@ -1757,7 +1757,7 @@
 
   const APP = {
     name: 'Annuaire YOUPI',
-    version: 'v0.16 — 2026',
+    version: 'v0.17 — 2026',
     BACKEND_URL: 'https://script.google.com/macros/s/AKfycbzQNSOAGCJp1QmZU0IE1FYiKmKCcGgTUpqKa3RJG9lwiAND_EC5dGdbh2XCu26ZTMoxtw/exec'
   };
 
@@ -2030,7 +2030,7 @@
       case 'pro-dashboard':       renderProDashboard(); break;
       case 'pro-edit':            renderProEdit(); break;
       case 'pro-pages':           renderProPages(); break;
-      case 'pro-add-page':        renderProAddPage(); break;
+      case 'pro-add-page':        renderProAddPage(params); break;
       case 'pro-settings':        renderProSettings(); break;
       case 'admin-dashboard':     renderAdminDashboard(); break;
       case 'admin-companies':     renderAdminCompanies(); break;
