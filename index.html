@@ -2693,7 +2693,7 @@
 
   <!-- ====================== FOOTER ====================== -->
   <footer class="footer">
-    <div>Annuaire YOUPI<span style="color:var(--teal-700)">®</span> · <a id="footer-version-link" onclick="navigate('changelog')" style="cursor:pointer;text-decoration:underline"><span id="footer-version">v2.0.2</span></a> · <a onclick="navigate('changelog')" style="cursor:pointer;text-decoration:underline">📰 Nouveautés</a></div>
+    <div>Annuaire YOUPI<span style="color:var(--teal-700)">®</span> · <a id="footer-version-link" onclick="navigate('changelog')" style="cursor:pointer;text-decoration:underline"><span id="footer-version">v2.1.0</span></a> · <a onclick="navigate('changelog')" style="cursor:pointer;text-decoration:underline">📰 Nouveautés</a></div>
     <div class="mt-16 text-xs">Conçu pour les entreprises ultra-marines · Martinique 🇲🇶 · Guadeloupe 🇬🇵 · Guyane 🇬🇫</div>
     <div class="footer-admin">
       <a onclick="openLoginAdmin()" style="cursor:pointer">Administration</a>
@@ -2721,7 +2721,7 @@
 
   const APP = {
     name: 'Annuaire YOUPI',
-    version: 'v2.0.2',
+    version: 'v2.1.0',
     versionDate: '14 mai 2026',
     BACKEND_URL: 'https://script.google.com/macros/s/AKfycbzQNSOAGCJp1QmZU0IE1FYiKmKCcGgTUpqKa3RJG9lwiAND_EC5dGdbh2XCu26ZTMoxtw/exec'
   };
@@ -2733,6 +2733,18 @@
   //  → Pour ajouter une nouvelle version, demander à Claude.
   // ------------------------------------------------------------
   const CHANGELOG = [
+    {
+      version: 'v2.1.0',
+      date: '14 mai 2026',
+      title: "Création d'entreprises par l'administrateur (email + WhatsApp)",
+      entries: [
+        { type: 'feature', text: "L'administrateur peut désormais créer une fiche entreprise à la place d'un futur adhérent depuis le menu Entreprises (nouveau bouton « + Ajouter une entreprise »). Idéal pour pré-référencer ses anciens clients et étoffer rapidement la base de l'annuaire." },
+        { type: 'feature', text: "Envoi automatique d'un email de bienvenue stylisé à l'entreprise contenant son identifiant et son code PIN — l'administrateur ne voit jamais le PIN, garantissant la confidentialité." },
+        { type: 'feature', text: "Génération d'un lien WhatsApp complémentaire « 💬 Ouvrir WhatsApp » prêt à cliquer après la création, avec message pré-rédigé contenant les identifiants. Pratique pour transmettre les codes par WhatsApp en plus de l'email — réflexe naturel dans les Antilles." },
+        { type: 'feature', text: "Nouveau bouton « 🔑 Régénérer PIN + renvoyer email » dans la fiche admin de chaque entreprise. Utile quand un client a perdu son code PIN ou n'a jamais reçu son email initial. L'action est tracée dans le journal d'audit." },
+        { type: 'security', text: "Pour des raisons de sécurité, le code PIN n'est jamais stocké en clair dans la base ni affiché à l'administrateur. La régénération est la seule façon de récupérer un accès en cas de perte." }
+      ]
+    },
     {
       version: 'v2.0.2',
       date: '14 mai 2026',
@@ -3096,6 +3108,8 @@
       case 'pro-settings':        renderProSettings(); break;
       case 'admin-dashboard':     renderAdminDashboard(); break;
       case 'admin-companies':     renderAdminCompanies(); break;
+      case 'admin-add-company':   renderAdminAddCompany(); break;
+      case 'admin-company-created': renderAdminCompanyCreated(params); break;
       case 'admin-company-detail':renderAdminCompanyDetail(params); break;
       case 'admin-pages':         renderAdminPages(); break;
       case 'admin-prompts':       navigate('admin-ai'); return;
@@ -4443,7 +4457,10 @@
         <section>
           <div class="page-header">
             <h1>Entreprises</h1>
-            <button class="btn btn-secondary btn-sm" onclick="renderAdminCompanies()">↻ Rafraîchir</button>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <button class="btn btn-primary btn-sm" onclick="navigate('admin-add-company')">+ Ajouter une entreprise</button>
+              <button class="btn btn-secondary btn-sm" onclick="renderAdminCompanies()">↻ Rafraîchir</button>
+            </div>
           </div>
 
           <div id="companies-chips" class="filter-chips"></div>
@@ -4661,6 +4678,7 @@
             </div>
             <div class="row-actions">
               ${c.statut === 'actif' ? `<button class="btn btn-secondary btn-sm" onclick="adminReprocess('${esc(c.id)}')">↻ Rejouer IA + Chatling</button>` : ''}
+              ${c.statut === 'actif' ? `<button class="btn btn-secondary btn-sm" onclick="adminRegeneratePin('${esc(c.id)}', '${esc(c.nom_entreprise)}', '${esc(c.email)}')">🔑 Régénérer PIN + renvoyer email</button>` : ''}
               ${c.statut === 'actif' ? `<button class="btn btn-pause btn-sm" onclick="adminPauseCompany('${esc(c.id)}')">⏸ Mettre en pause</button>` : ''}
               ${c.statut === 'paused' ? `<button class="btn btn-resume btn-sm" onclick="adminResumeCompany('${esc(c.id)}')">▶ Réactiver</button>` : ''}
               ${c.statut !== 'archive' ? `<button class="btn btn-danger btn-sm" onclick="adminDeleteCompany('${esc(c.id)}')">🗑 Supprimer</button>` : ''}
@@ -5357,6 +5375,261 @@
     if (!r.ok) return toast('error', r.error);
     toast('success', (r.prompts_reset || 6) + ' prompts restaurés à leurs valeurs par défaut');
     renderAdminAiDashboard();
+  }
+
+
+
+  // ============================================================
+  //  CRÉATION D'UNE ENTREPRISE PAR L'ADMIN
+  //  (variante de l'inscription publique : email auto + lien WhatsApp,
+  //   pas d'affichage du PIN côté admin)
+  // ============================================================
+  function renderAdminAddCompany() {
+    if (!state.user || state.user.type !== 'admin') return navigate('home');
+    const sectors = (state.config && state.config.sectors) || ['Restauration & Cafés','Autre'];
+    const regions = ((state.config && state.config.regions) || [{ code: 'MQ', name: 'Martinique', status: 'active' }])
+      .filter(r => r.status === 'active');
+
+    document.getElementById('main').innerHTML = `
+      <div class="dashboard-grid">
+        ${adminSidebar('admin-companies')}
+        <section>
+          <div class="page-header">
+            <div>
+              <button class="btn btn-ghost btn-sm" onclick="navigate('admin-companies')" style="margin-bottom:8px">← Retour à la liste</button>
+              <h1>+ Ajouter une entreprise</h1>
+            </div>
+          </div>
+
+          <div class="card" style="background:#eff6ff;border:1px solid #bfdbfe;margin-bottom:16px">
+            <p style="margin:0;font-size:14px;line-height:1.5">
+              <strong>📧 Comment fonctionne la création admin :</strong><br>
+              Vous remplissez la fiche pour l'entreprise. À la validation, le système crée le compte
+              <strong>et envoie automatiquement un email</strong> à l'entreprise avec son identifiant et son code PIN.
+              Le PIN n'est <strong>jamais affiché</strong> dans l'admin (sécurité).
+              Vous obtiendrez aussi un bouton pour transmettre les identifiants par WhatsApp en complément.
+            </p>
+          </div>
+
+          <div class="card">
+            <p class="subtitle">Tous les champs marqués <span style="color:var(--error)">*</span> sont obligatoires. L'email <strong>doit être valide</strong> car il recevra les identifiants.</p>
+
+            <form id="admin-add-company-form" onsubmit="submitAdminAddCompany(event)">
+              <div class="form-grid">
+                <div class="field field-full">
+                  <label>Région <span class="req">*</span></label>
+                  <select name="region" required>
+                    ${regions.map(r => `<option value="${r.code}">${esc(r.name)}</option>`).join('')}
+                  </select>
+                </div>
+                <div class="field field-full">
+                  <label>Nom de l'entreprise <span class="req">*</span></label>
+                  <input name="nom_entreprise" required maxlength="120" />
+                </div>
+                <div class="field field-full">
+                  <label>Secteur d'activité <span class="req">*</span></label>
+                  <select name="secteur" required>
+                    <option value="">— Choisir —</option>
+                    ${sectors.map(s => `<option>${esc(s)}</option>`).join('')}
+                  </select>
+                </div>
+                <div class="field">
+                  <label>Téléphone <span class="req">*</span></label>
+                  <input name="telephone" type="tel" required placeholder="0596 12 34 56" />
+                  <div class="hint">Ce numéro servira aussi pour le lien WhatsApp 📱</div>
+                </div>
+                <div class="field">
+                  <label>Email <span class="req">*</span></label>
+                  <input name="email" type="email" required placeholder="contact@entreprise.mq" />
+                  <div class="hint">⚠️ Email réel obligatoire — les identifiants seront envoyés ici</div>
+                </div>
+                <div class="field">
+                  <label>Ville <span class="req">*</span></label>
+                  <input name="ville" required placeholder="Fort-de-France" />
+                </div>
+                <div class="field">
+                  <label>Site web</label>
+                  <input name="site_web" type="url" placeholder="https://…" />
+                </div>
+                <div class="field field-full">
+                  <label>Adresse complète</label>
+                  <input name="adresse_complete" placeholder="12 rue Victor Schoelcher, 97200 Fort-de-France" />
+                </div>
+                <div class="field field-full">
+                  <label>Description de l'entreprise <span class="req">*</span></label>
+                  <textarea name="description" required maxlength="800" placeholder="Décrivez l'activité, les valeurs, l'histoire en quelques lignes…"></textarea>
+                </div>
+                <div class="field field-full">
+                  <label>Liste des services <span class="req">*</span></label>
+                  <textarea name="liste_services" required maxlength="800" placeholder="Listez les services proposés (un par ligne)"></textarea>
+                </div>
+                <div class="field field-full">
+                  <label>Horaires <span class="req">*</span></label>
+                  <textarea name="horaires" required maxlength="400" placeholder="Lun–Ven : 8h–18h&#10;Sam : 9h–13h&#10;Dim : fermé"></textarea>
+                </div>
+                <div class="field">
+                  <label>Facebook</label>
+                  <input name="facebook" placeholder="https://facebook.com/…" />
+                </div>
+                <div class="field">
+                  <label>Instagram</label>
+                  <input name="instagram" placeholder="https://instagram.com/…" />
+                </div>
+                <div class="field field-full">
+                  <label>URL du logo / image</label>
+                  <input name="image_url" type="url" placeholder="https://… (URL directe de l'image)" />
+                </div>
+              </div>
+
+              <div class="modal-actions">
+                <button type="button" class="btn btn-ghost" onclick="navigate('admin-companies')">Annuler</button>
+                <button type="submit" class="btn btn-primary btn-lg">✓ Créer l'entreprise et envoyer l'email</button>
+              </div>
+            </form>
+          </div>
+        </section>
+      </div>
+    `;
+  }
+
+  async function submitAdminAddCompany(e) {
+    e.preventDefault();
+    const f = e.target;
+    const data = { token: state.user.token };
+    new FormData(f).forEach((v, k) => data[k] = String(v).trim());
+
+    showLoader('Création de l\'entreprise et envoi de l\'email…');
+    const r = await api('registerCompanyByAdmin', data);
+    hideLoader();
+
+    if (!r.ok) {
+      toast('error', r.error || 'Erreur lors de la création');
+      return;
+    }
+    // Le PIN n'est JAMAIS dans la réponse. On stocke wa_link en mémoire
+    // pour le bouton WhatsApp sur la page de succès.
+    window._lastCreatedCompany = {
+      company_id: r.company_id,
+      email_to: r.email_to,
+      email_sent: r.email_sent,
+      email_error: r.email_error,
+      wa_link: r.wa_link,
+      wa_phone_used: r.wa_phone_used
+    };
+    navigate('admin-company-created', { company_id: r.company_id });
+  }
+
+  function renderAdminCompanyCreated(params) {
+    if (!state.user || state.user.type !== 'admin') return navigate('home');
+    const info = window._lastCreatedCompany || {};
+    if (!info.company_id) return navigate('admin-companies');
+
+    document.getElementById('main').innerHTML = `
+      <div class="dashboard-grid">
+        ${adminSidebar('admin-companies')}
+        <section>
+          <div class="container-narrow">
+            <div class="card" style="text-align:center;padding:36px 28px">
+              <div style="font-size:48px;line-height:1;margin-bottom:12px">🎉</div>
+              <h1 style="margin:0 0 8px;font-size:24px">Entreprise créée avec succès</h1>
+              <p class="text-muted" style="margin:0 0 24px">
+                Identifiant : <strong class="mono">${esc(info.company_id)}</strong>
+              </p>
+
+              <!-- Statut email -->
+              <div class="card" style="background:${info.email_sent ? '#f0fdf4' : '#fef2f2'};border:2px solid ${info.email_sent ? '#86efac' : '#fca5a5'};text-align:left;margin-bottom:16px">
+                <div style="display:flex;gap:12px;align-items:flex-start">
+                  <div style="font-size:28px;line-height:1">${info.email_sent ? '📧' : '⚠️'}</div>
+                  <div style="flex:1;min-width:0">
+                    ${info.email_sent ? `
+                      <strong>Email envoyé avec succès</strong>
+                      <div style="font-size:13px;color:var(--text-2);margin-top:4px">
+                        Destinataire : <span class="mono">${esc(info.email_to)}</span><br>
+                        L'entreprise va recevoir ses identifiants (ID + code PIN) dans son email.
+                      </div>
+                    ` : `
+                      <strong style="color:#b91c1c">L'email n'a pas pu être envoyé</strong>
+                      <div style="font-size:13px;color:var(--text-2);margin-top:4px">
+                        Erreur : ${esc(info.email_error || 'inconnue')}<br>
+                        ⚠️ L'entreprise est bien créée mais ne recevra pas ses identifiants par email.
+                        Utilise le bouton WhatsApp ci-dessous, ou clique sur "Régénérer le PIN" plus tard.
+                      </div>
+                    `}
+                  </div>
+                </div>
+              </div>
+
+              <!-- WhatsApp complémentaire -->
+              ${info.wa_link ? `
+                <div class="card" style="background:#ecfdf5;border:2px solid #6ee7b7;text-align:left;margin-bottom:16px">
+                  <div style="display:flex;gap:12px;align-items:flex-start">
+                    <div style="font-size:28px;line-height:1">📱</div>
+                    <div style="flex:1;min-width:0">
+                      <strong>Envoyer aussi par WhatsApp (recommandé)</strong>
+                      <div style="font-size:13px;color:var(--text-2);margin:4px 0 12px">
+                        Numéro détecté : <span class="mono">+${esc(info.wa_phone_used)}</span><br>
+                        WhatsApp s'ouvrira sur ton téléphone avec un message déjà rédigé (ID + PIN). Tu n'as qu'à valider l'envoi.
+                      </div>
+                      <a href="${esc(info.wa_link)}" target="_blank" rel="noopener" class="btn btn-primary" style="background:#25d366;border-color:#25d366">
+                        💬 Ouvrir WhatsApp
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              ` : `
+                <div class="card" style="background:#fef3c7;border:1px solid #fde68a;text-align:left;margin-bottom:16px;font-size:13px">
+                  📱 Lien WhatsApp non généré (téléphone manquant ou invalide).
+                </div>
+              `}
+
+              <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:24px">
+                <button class="btn btn-secondary" onclick="navigate('admin-company-detail', { company_id: '${esc(info.company_id)}' })">Voir la fiche</button>
+                <button class="btn btn-primary" onclick="navigate('admin-add-company')">+ Ajouter une autre</button>
+                <button class="btn btn-ghost" onclick="navigate('admin-companies')">Retour à la liste</button>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+    `;
+  }
+
+  // Bouton "Régénérer PIN + renvoyer email" depuis la fiche admin
+  async function adminRegeneratePin(companyId, companyName, companyEmail) {
+    const msg = "🔑 Régénérer le code PIN de cette entreprise ?\n\n" +
+      "Entreprise : " + companyName + "\n" +
+      "Email destinataire : " + companyEmail + "\n\n" +
+      "⚠️ L'ancien code PIN sera invalidé immédiatement.\n" +
+      "Un nouveau code PIN sera généré et envoyé par email.\n\n" +
+      "À utiliser si l'entreprise a perdu son PIN ou n'a jamais reçu l'email initial.\n\n" +
+      "Continuer ?";
+    if (!confirm(msg)) return;
+
+    showLoader('Régénération du PIN et envoi de l\'email…');
+    const r = await api('regenerateCompanyPin', {
+      token: state.user.token,
+      company_id: companyId
+    });
+    hideLoader();
+    if (!r.ok) return toast('error', r.error || 'Échec de la régénération');
+
+    // Stocke pour proposer WhatsApp dans la même UX que la création
+    window._lastCreatedCompany = {
+      company_id: companyId,
+      email_to: r.email_to,
+      email_sent: r.email_sent,
+      email_error: r.email_error,
+      wa_link: r.wa_link,
+      wa_phone_used: r.wa_link ? r.wa_link.split('?')[0].replace('https://wa.me/', '') : ''
+    };
+
+    if (r.email_sent) {
+      toast('success', 'Nouveau PIN généré et email envoyé ✅');
+    } else {
+      toast('warning', 'Nouveau PIN généré, mais email non envoyé : ' + (r.email_error || 'erreur'));
+    }
+    // On ouvre la page de succès pour proposer WhatsApp
+    navigate('admin-company-created', { company_id: companyId });
   }
 
 
