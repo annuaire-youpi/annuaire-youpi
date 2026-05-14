@@ -1654,6 +1654,57 @@
     .btn-resume:hover { background: #059669; border-color: #059669; color: white; }
     .btn-danger  { background: #ef4444; color: white; border-color: #ef4444; }
     .btn-danger:hover { background: #dc2626; border-color: #dc2626; color: white; }
+
+    /* ============================================================
+       v0.16 — Cartes de choix du type de contenu (Service/Article/Insta/Immo)
+       ============================================================ */
+    .type-cards {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 14px;
+    }
+    @media (max-width: 600px) {
+      .type-cards { grid-template-columns: 1fr; }
+    }
+    .type-card {
+      background: var(--card);
+      border: 2px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 22px;
+      cursor: pointer;
+      text-align: left;
+      font-family: inherit;
+      transition: all .15s ease;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .type-card:hover {
+      border-color: var(--teal-600);
+      transform: translateY(-2px);
+      box-shadow: var(--shadow);
+    }
+    .type-card-icon {
+      width: 56px;
+      height: 56px;
+      border-radius: 14px;
+      font-size: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 8px;
+    }
+    .type-card-label {
+      font-family: var(--font-display);
+      font-size: 17px;
+      font-weight: 600;
+      color: var(--teal-900);
+    }
+    .type-card-tagline {
+      font-size: 13px;
+      color: var(--text-2);
+      line-height: 1.45;
+    }
   </style>
 </head>
 <body>
@@ -1678,7 +1729,7 @@
 
   <!-- ====================== FOOTER ====================== -->
   <footer class="footer">
-    <div>Annuaire YOUPI<span style="color:var(--teal-700)">®</span> · <span id="footer-version">v0.15 — 2026</span></div>
+    <div>Annuaire YOUPI<span style="color:var(--teal-700)">®</span> · <span id="footer-version">v0.16 — 2026</span></div>
     <div class="mt-16 text-xs">Conçu pour les entreprises ultra-marines · Martinique 🇲🇶 · Guadeloupe 🇬🇵 · Guyane 🇬🇫</div>
     <div class="footer-admin">
       <a onclick="openLoginAdmin()" style="cursor:pointer">Administration</a>
@@ -1706,7 +1757,7 @@
 
   const APP = {
     name: 'Annuaire YOUPI',
-    version: 'v0.15 — 2026',
+    version: 'v0.16 — 2026',
     BACKEND_URL: 'https://script.google.com/macros/s/AKfycbzQNSOAGCJp1QmZU0IE1FYiKmKCcGgTUpqKa3RJG9lwiAND_EC5dGdbh2XCu26ZTMoxtw/exec'
   };
 
@@ -2731,12 +2782,15 @@
 
     wrap.innerHTML = `
       <div class="expand-list">
-        ${r.pages.map(p => `
+        ${r.pages.map(p => {
+          const type = CONTENT_TYPES[p.type_contenu || 'service'] || CONTENT_TYPES.service;
+          return `
           <div class="expand-row" id="row-${esc(p.id)}">
             <div class="expand-row-header" onclick="togglePageDetails('${esc(p.id)}')">
               <div class="expand-row-main">
-                <div class="expand-row-title">${esc(p.titre_service)}</div>
+                <div class="expand-row-title">${type.icon} ${esc(p.titre_service)}</div>
                 <div class="expand-row-meta">
+                  <span class="text-xs" style="font-weight:600;color:${type.color}">${esc(type.label)}</span>
                   <span class="badge ${esc(p.chatling_status)}">${esc(p.chatling_status)}</span>
                   <span class="text-xs text-muted">créée ${fmtDate(p.date_creation)}</span>
                 </div>
@@ -2753,12 +2807,11 @@
               </div>
             </div>
           </div>
-        `).join('')}
+        `;
+        }).join('')}
       </div>
     `;
   }
-
-  // Toggle d'expansion d'une ligne de la liste des pages services
   function togglePageDetails(pageId) {
     const row = document.getElementById('row-' + pageId);
     if (!row) return;
@@ -2795,33 +2848,101 @@
     renderProPages();
   }
 
-  function renderProAddPage() {
+  // ============================================================
+  //  CRÉATION DE CONTENU — 4 types : Service / Article / Instagram / Immobilier
+  // ============================================================
+
+  const CONTENT_TYPES = {
+    service: {
+      icon: '🛠️',
+      label: 'Service',
+      tagline: 'Mettez en avant une prestation de votre entreprise',
+      color: '#2563eb'
+    },
+    article: {
+      icon: '🛍️',
+      label: 'Article (Boutique en ligne)',
+      tagline: 'Promouvoir un produit de votre boutique',
+      color: '#10b981'
+    },
+    instagram: {
+      icon: '📸',
+      label: 'Instagram',
+      tagline: 'Partager une de vos publications Instagram',
+      color: '#ec4899'
+    },
+    immobilier: {
+      icon: '🏠',
+      label: 'Immobilier',
+      tagline: 'Présenter un bien à la vente ou à la location',
+      color: '#f59e0b'
+    }
+  };
+
+  function renderProAddPage(params) {
     if (!state.user || state.user.type !== 'company') return navigate('home');
+    const type = params && params.type;
+
+    // Étape 1 : si pas de type choisi, afficher les 4 cards
+    if (!type) {
+      renderProAddPageTypeChoice();
+      return;
+    }
+
+    // Étape 2 : afficher le formulaire spécifique au type
+    if (!CONTENT_TYPES[type]) return renderProAddPageTypeChoice();
+    renderProAddPageForm(type);
+  }
+
+  function renderProAddPageTypeChoice() {
+    document.getElementById('main').innerHTML = `
+      <div class="dashboard-grid">
+        ${proSidebar('pro-pages')}
+        <section>
+          <div class="page-header">
+            <div>
+              <button class="btn btn-ghost btn-sm" onclick="navigate('pro-pages')" style="margin-bottom:8px">← Retour à mes contenus</button>
+              <h1>Créer un nouveau contenu</h1>
+            </div>
+          </div>
+          <p class="subtitle" style="margin-bottom:22px">Choisissez le type de contenu que vous souhaitez mettre en vitrine. L'IA Annuaire YOUPI® rédigera un contenu optimisé adapté à votre choix.</p>
+
+          <div class="type-cards">
+            ${Object.entries(CONTENT_TYPES).map(([key, t]) => `
+              <button class="type-card" onclick="navigate('pro-add-page', { type: '${key}' })">
+                <div class="type-card-icon" style="background:${t.color}22;color:${t.color}">${t.icon}</div>
+                <div class="type-card-label">${t.label}</div>
+                <div class="type-card-tagline">${t.tagline}</div>
+              </button>
+            `).join('')}
+          </div>
+        </section>
+      </div>
+    `;
+  }
+
+  function renderProAddPageForm(type) {
+    const t = CONTENT_TYPES[type];
+    const fields = renderTypeFields(type);
 
     document.getElementById('main').innerHTML = `
       <div class="dashboard-grid">
-        ${proSidebar('pro-add-page')}
+        ${proSidebar('pro-pages')}
         <section>
-          <div class="page-header"><h1>Ajouter une page service</h1></div>
+          <div class="page-header">
+            <div>
+              <button class="btn btn-ghost btn-sm" onclick="navigate('pro-add-page')" style="margin-bottom:8px">← Changer de type</button>
+              <h1>${t.icon} ${esc(t.label)}</h1>
+              <p class="subtitle" style="margin-top:4px">${esc(t.tagline)}</p>
+            </div>
+          </div>
+
           <div class="card">
-            <p class="subtitle">Mettez en avant un service spécifique de votre entreprise. L'IA Annuaire YOUPI® utilisera cette page pour vous recommander sur des requêtes ciblées.</p>
-            <form onsubmit="submitAddPage(event)">
-              <div class="field">
-                <label>Quel service ou sujet précis souhaitez-vous mettre en avant ? <span class="req">*</span></label>
-                <input name="titre_service" required maxlength="120" placeholder="Ex : Vidange et entretien voiture diesel" />
-              </div>
-              <div class="field">
-                <label>Décrivez ce service en détail pour guider l'IA <span class="req">*</span></label>
-                <textarea name="description_detaillee" required maxlength="2500" rows="8" placeholder="Décrivez le service, à qui il s'adresse, ce qu'il comprend, comment vous le réalisez, vos atouts spécifiques, vos prix indicatifs si pertinent…"></textarea>
-                <div class="hint">Plus c'est détaillé, mieux l'IA pourra vous recommander.</div>
-              </div>
-              <div class="field">
-                <label>URL d'une image illustrant ce service</label>
-                <input name="image_url" type="url" placeholder="https://…" />
-              </div>
+            <form onsubmit="submitAddPage(event, '${type}')">
+              ${fields}
               <div class="modal-actions">
-                <button type="button" class="btn btn-ghost" onclick="navigate('pro-pages')">Annuler</button>
-                <button type="submit" class="btn btn-primary btn-lg">Créer la page</button>
+                <button type="button" class="btn btn-ghost" onclick="navigate('pro-add-page')">← Annuler</button>
+                <button type="submit" class="btn btn-primary btn-lg">Créer le contenu</button>
               </div>
             </form>
           </div>
@@ -2830,17 +2951,122 @@
     `;
   }
 
-  async function submitAddPage(e) {
+  function renderTypeFields(type) {
+    switch (type) {
+      case 'service':
+        return `
+          <div class="field">
+            <label>Quel service ou sujet précis souhaitez-vous mettre en avant ? <span class="req">*</span></label>
+            <input name="titre_service" required maxlength="120" placeholder="Ex : Vidange et entretien voiture diesel" />
+            <div class="hint">Pensez à ce qu'un client taperait dans Google pour vous trouver.</div>
+          </div>
+          <div class="field">
+            <label>Décrivez ce service en détail pour guider l'IA <span class="req">*</span></label>
+            <textarea name="description_detaillee" required maxlength="2500" rows="8" placeholder="En quoi consiste ce service, à qui il s'adresse, ce qui le rend unique, les bénéfices pour vos clients…"></textarea>
+            <div class="hint">C'est le champ le plus important. Plus c'est détaillé, plus l'IA pourra vous recommander.</div>
+          </div>
+          <div class="field">
+            <label>URL d'une image illustrant ce service</label>
+            <input name="image_url" type="url" placeholder="https://…" />
+            <div class="hint">L'image apparaîtra dans le fil de discussion de l'agent IA.</div>
+          </div>
+        `;
+
+      case 'article':
+        return `
+          <div class="field">
+            <label>Quel est le nom exact de votre produit ? <span class="req">*</span></label>
+            <input name="titre_service" required maxlength="120" placeholder='Ex : Robe tropical fleurie taille S-XL' />
+            <div class="hint">Indiquez le nom complet du produit tel qu'il apparaît dans votre boutique.</div>
+          </div>
+          <div class="field">
+            <label>Décrivez votre produit en détail pour guider l'IA <span class="req">*</span></label>
+            <textarea name="description_detaillee" required maxlength="2500" rows="8" placeholder="Caractéristiques, avantages, ce qui rend ce produit unique…"></textarea>
+            <div class="hint">Copiez le descriptif de votre boutique, ou rédigez-le ici si vous n'en avez pas encore.</div>
+          </div>
+          <div class="field">
+            <label>Prix de vente de ce produit <span class="req">*</span></label>
+            <input name="prix" required maxlength="60" placeholder="Ex : 29,90 €" />
+            <div class="hint">Sera affiché par l'agent IA pour informer vos clients avant qu'ils visitent votre boutique.</div>
+          </div>
+          <div class="field">
+            <label>Lien vers votre produit dans votre boutique en ligne <span class="req">*</span></label>
+            <input name="lien_externe" type="url" required placeholder="https://maboutique.com/produits/ma-robe" />
+            <div class="hint">URL directe de la page produit. Sera utilisée pour diriger vos clients vers votre page d'achat.</div>
+          </div>
+          <div class="field">
+            <label>URL de la photo de votre produit <span class="req">*</span></label>
+            <input name="image_url" type="url" required placeholder="https://…" />
+            <div class="hint">Clic droit sur l'image dans votre boutique → "Copier l'adresse de l'image", puis collez-la ici.</div>
+          </div>
+        `;
+
+      case 'instagram':
+        return `
+          <div class="field">
+            <label>Quel est le titre de votre publication Instagram ? <span class="req">*</span></label>
+            <input name="titre_service" required maxlength="120" placeholder='Ex : Nouvelle collection été 2026 🌺' />
+            <div class="hint">Copiez/collez la légende existante de votre publication, ou adaptez-la.</div>
+          </div>
+          <div class="field">
+            <label>Décrivez votre publication Instagram en détail pour guider l'IA <span class="req">*</span></label>
+            <textarea name="description_detaillee" required maxlength="2500" rows="8" placeholder="De quoi parle la publication, ce que vous mettez en avant, ce qui peut intéresser vos clients…"></textarea>
+            <div class="hint">Copiez/collez la description complète de votre publication Instagram, ou rédigez votre propre texte.</div>
+          </div>
+          <div class="field">
+            <label>Lien vers votre publication Instagram <span class="req">*</span></label>
+            <input name="lien_externe" type="url" required placeholder="https://www.instagram.com/p/..." />
+            <div class="hint">URL directe de votre publication Instagram.</div>
+          </div>
+          <div class="field">
+            <label>URL de l'image de votre publication Instagram <span class="req">*</span></label>
+            <input name="image_url" type="url" required placeholder="https://…" />
+            <div class="hint">L'image apparaîtra dans le fil de discussion de l'agent IA.</div>
+          </div>
+        `;
+
+      case 'immobilier':
+        return `
+          <div class="field">
+            <label>Quel est le titre de votre annonce immobilière ? <span class="req">*</span></label>
+            <input name="titre_service" required maxlength="160" placeholder='Ex : Appartement T3 vue mer 65m² à Fort-de-France' />
+            <div class="hint">Indiquez le titre complet du bien.</div>
+          </div>
+          <div class="field">
+            <label>Décrivez votre bien immobilier en détail pour guider l'IA <span class="req">*</span></label>
+            <textarea name="description_detaillee" required maxlength="2500" rows="8" placeholder="Surface, nombre de pièces, localisation, équipements, points forts du bien…"></textarea>
+            <div class="hint">Copiez/collez la description de votre annonce, ou rédigez votre propre texte.</div>
+          </div>
+          <div class="field">
+            <label>Prix de vente ou de location de ce bien <span class="req">*</span></label>
+            <input name="prix" required maxlength="80" placeholder="Ex : 250 000 € | 750 € / mois charges comprises" />
+            <div class="hint">Sera affiché par l'agent IA pour informer vos clients.</div>
+          </div>
+          <div class="field">
+            <label>Lien vers votre annonce immobilière <span class="req">*</span></label>
+            <input name="lien_externe" type="url" required placeholder="https://monagence.com/annonce-123" />
+            <div class="hint">URL directe de votre annonce. Sera utilisée pour rediriger les clients qui veulent contacter l'agence.</div>
+          </div>
+          <div class="field">
+            <label>URL de la photo principale du bien <span class="req">*</span></label>
+            <input name="image_url" type="url" required placeholder="https://…" />
+            <div class="hint">Clic droit sur l'image dans votre annonce → "Copier l'adresse de l'image".</div>
+          </div>
+        `;
+    }
+  }
+
+  async function submitAddPage(e, type) {
     e.preventDefault();
     const fd = new FormData(e.target);
-    const data = { company_id: state.user.id, token: state.user.token };
+    const data = { company_id: state.user.id, token: state.user.token, type_contenu: type };
     fd.forEach((v, k) => data[k] = String(v).trim());
 
     showLoader('Génération IA + envoi à Chatling…');
     const r = await api('addServicePage', data);
     hideLoader();
     if (!r.ok) return toast('error', r.error || 'Erreur');
-    toast('success', 'Page créée ✅');
+    toast('success', 'Contenu créé ✅');
     navigate('pro-pages');
   }
 
@@ -3361,12 +3587,14 @@
       <div class="expand-list">
         ${list.map(p => {
           const companyName = companyMap[p.company_id] || '(entreprise inconnue)';
+          const type = CONTENT_TYPES[p.type_contenu || 'service'] || CONTENT_TYPES.service;
           return `
           <div class="expand-row" id="adminrow-${esc(p.id)}">
             <div class="expand-row-header" onclick="toggleAdminPageDetails('${esc(p.id)}')">
               <div class="expand-row-main">
-                <div class="expand-row-title">${esc(p.titre_service)}</div>
+                <div class="expand-row-title">${type.icon} ${esc(p.titre_service)}</div>
                 <div class="expand-row-meta">
+                  <span class="text-xs" style="font-weight:600;color:${type.color}">${esc(type.label)}</span>
                   <span class="text-sm" style="font-weight:600;color:var(--teal-800)">${esc(companyName)}</span>
                   <span class="badge ${esc(p.statut)}">${esc(p.statut)}</span>
                   <span class="badge ${esc(p.chatling_status)}">${esc(p.chatling_status)}</span>
@@ -3380,6 +3608,15 @@
                 <h3>Description fournie par l'entreprise</h3>
                 <div class="md-preview" style="max-height:200px">${esc(p.description_detaillee)}</div>
               </div>
+              ${(p.prix || p.lien_externe || p.image_url) ? `
+              <div class="expand-section">
+                <h3>Champs spécifiques</h3>
+                <div class="text-sm" style="line-height:1.8">
+                  ${p.prix ? `<div><strong>Prix :</strong> ${esc(p.prix)}</div>` : ''}
+                  ${p.lien_externe ? `<div><strong>Lien externe :</strong> <a href="${esc(p.lien_externe)}" target="_blank">${esc(p.lien_externe)}</a></div>` : ''}
+                  ${p.image_url ? `<div><strong>Image :</strong> <a href="${esc(p.image_url)}" target="_blank">${esc(p.image_url)}</a></div>` : ''}
+                </div>
+              </div>` : ''}
               <div class="expand-section">
                 <h3>Markdown généré par l'IA (base de connaissance)</h3>
                 <div class="md-preview" style="max-height:400px">${esc(p.markdown_genere || '(non généré)')}</div>
