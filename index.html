@@ -1705,6 +1705,52 @@
       color: var(--text-2);
       line-height: 1.45;
     }
+
+    /* ============================================================
+       v0.18 — Blocks éditeur prompts admin
+       ============================================================ */
+    .prompt-block {
+      background: var(--sand-50);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px;
+      margin-bottom: 18px;
+    }
+    .prompt-block-title {
+      display: block;
+      font-family: var(--font-display);
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--teal-900);
+      margin-bottom: 4px;
+    }
+    .prompt-block-desc {
+      font-size: 13px;
+      color: var(--text-2);
+      margin: 0 0 10px;
+    }
+    .prompt-block textarea {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--card);
+      resize: vertical;
+    }
+    .prompt-block textarea:focus {
+      outline: none;
+      border-color: var(--teal-600);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, .12);
+    }
+    .prompt-block .hint {
+      margin-top: 8px;
+      padding: 8px 10px;
+      background: var(--card);
+      border-radius: 6px;
+      font-size: 12px;
+      color: var(--text-2);
+      word-break: break-word;
+    }
   </style>
 </head>
 <body>
@@ -1729,7 +1775,7 @@
 
   <!-- ====================== FOOTER ====================== -->
   <footer class="footer">
-    <div>Annuaire YOUPI<span style="color:var(--teal-700)">®</span> · <span id="footer-version">v0.17 — 2026</span></div>
+    <div>Annuaire YOUPI<span style="color:var(--teal-700)">®</span> · <span id="footer-version">v0.18 — 2026</span></div>
     <div class="mt-16 text-xs">Conçu pour les entreprises ultra-marines · Martinique 🇲🇶 · Guadeloupe 🇬🇵 · Guyane 🇬🇫</div>
     <div class="footer-admin">
       <a onclick="openLoginAdmin()" style="cursor:pointer">Administration</a>
@@ -1757,7 +1803,7 @@
 
   const APP = {
     name: 'Annuaire YOUPI',
-    version: 'v0.17 — 2026',
+    version: 'v0.18 — 2026',
     BACKEND_URL: 'https://script.google.com/macros/s/AKfycbzQNSOAGCJp1QmZU0IE1FYiKmKCcGgTUpqKa3RJG9lwiAND_EC5dGdbh2XCu26ZTMoxtw/exec'
   };
 
@@ -3678,9 +3724,12 @@
       <div class="dashboard-grid">
         ${adminSidebar('admin-prompts')}
         <section>
-          <div class="page-header"><h1>Prompts IA</h1></div>
+          <div class="page-header">
+            <h1>Prompts IA</h1>
+            <button class="btn btn-secondary btn-sm" onclick="resetPromptsToDefault()">↻ Restaurer valeurs par défaut</button>
+          </div>
           <div class="card">
-            <p class="subtitle">Modifiez les prompts utilisés par Claude pour générer le markdown. Les variables disponibles sont entre <code>{{ }}</code>.</p>
+            <p class="subtitle">Personnalisez les prompts utilisés par Claude pour générer le markdown. Chaque type de contenu utilise son propre prompt.</p>
             <div id="prompts-zone"><p class="text-muted">Chargement…</p></div>
           </div>
         </section>
@@ -3690,20 +3739,51 @@
     const r = await api('getPrompts', { token: state.user.token });
     if (!r.ok) { document.getElementById('prompts-zone').innerHTML = `<p>${esc(r.error)}</p>`; return; }
 
+    const promptCards = [
+      {
+        key: 'prompt_company',
+        title: '🏢 Inscription entreprise',
+        desc: "Génère le markdown de présentation de l'entreprise au moment de son inscription.",
+        vars: 'nom_entreprise, secteur, telephone, email, site_web, ville, adresse_complete, description, liste_services, horaires, facebook, instagram, image_url (format {{variable}})'
+      },
+      {
+        key: 'prompt_service',
+        title: '🛠️ Création contenu — Service',
+        desc: "Génère le markdown pour une prestation/service.",
+        vars: '{titre}, {description}, {prix}, {lien_externe}, {image_url}, {company_nom}, {company_telephone}, {company_adresse}, {company_horaires}, {company_description}, {company_secteur}, {company_email}, {company_ville}, {company_site}'
+      },
+      {
+        key: 'prompt_article',
+        title: '🛍️ Création contenu — Article (Boutique en ligne)',
+        desc: "Génère le markdown e-commerce pour un produit de boutique.",
+        vars: '{titre}, {description}, {prix}, {lien_externe}, {image_url}, {company_nom}, {company_telephone}, {company_adresse}, {company_horaires}, {company_description}'
+      },
+      {
+        key: 'prompt_instagram',
+        title: '📸 Création contenu — Instagram',
+        desc: "Génère le markdown pour une publication Instagram à mettre en vitrine.",
+        vars: '{titre}, {description}, {lien_externe}, {image_url}, {company_nom}, {company_telephone}, {company_adresse}, {company_horaires}, {company_description}'
+      },
+      {
+        key: 'prompt_immobilier',
+        title: '🏠 Création contenu — Immobilier',
+        desc: "Génère la fiche immobilière (vente ou location) à partir d'une annonce.",
+        vars: '{titre}, {description}, {prix}, {lien_externe}, {image_url}, {company_nom}, {company_telephone}, {company_adresse}, {company_horaires}, {company_description}'
+      }
+    ];
+
     document.getElementById('prompts-zone').innerHTML = `
       <form onsubmit="submitPrompts(event)">
-        <div class="field">
-          <label>Prompt — Inscription entreprise (formulaire 1)</label>
-          <textarea name="prompt_company" rows="20" style="font-family:ui-monospace,monospace;font-size:13px">${esc(r.prompts.prompt_company || '')}</textarea>
-          <div class="hint">Variables : nom_entreprise, secteur, telephone, email, site_web, ville, adresse_complete, description, liste_services, horaires, facebook, instagram, image_url</div>
-        </div>
-        <div class="field">
-          <label>Prompt — Création page service (formulaire 2)</label>
-          <textarea name="prompt_page" rows="20" style="font-family:ui-monospace,monospace;font-size:13px">${esc(r.prompts.prompt_page || '')}</textarea>
-          <div class="hint">Variables : titre_service, description_detaillee, page_image_url, nom_entreprise, secteur, telephone, email, ville, adresse_complete, description, horaires, site_web</div>
-        </div>
+        ${promptCards.map(pc => `
+          <div class="prompt-block">
+            <label class="prompt-block-title">${pc.title}</label>
+            <p class="prompt-block-desc">${esc(pc.desc)}</p>
+            <textarea name="${pc.key}" rows="14" style="font-family:ui-monospace,monospace;font-size:12px;line-height:1.5">${esc(r.prompts[pc.key] || '')}</textarea>
+            <div class="hint"><strong>Variables disponibles :</strong> ${esc(pc.vars)}</div>
+          </div>
+        `).join('')}
         <div class="modal-actions">
-          <button type="submit" class="btn btn-primary">Enregistrer les prompts</button>
+          <button type="submit" class="btn btn-primary btn-lg">💾 Enregistrer tous les prompts</button>
         </div>
       </form>
     `;
@@ -3715,12 +3795,25 @@
     showLoader('Sauvegarde…');
     const r = await api('updatePrompts', {
       token: state.user.token,
-      prompt_company: fd.get('prompt_company'),
-      prompt_page: fd.get('prompt_page')
+      prompt_company:    fd.get('prompt_company'),
+      prompt_service:    fd.get('prompt_service'),
+      prompt_article:    fd.get('prompt_article'),
+      prompt_instagram:  fd.get('prompt_instagram'),
+      prompt_immobilier: fd.get('prompt_immobilier')
     });
     hideLoader();
     if (!r.ok) return toast('error', r.error);
     toast('success', 'Prompts sauvegardés ✅');
+  }
+
+  async function resetPromptsToDefault() {
+    if (!confirm("⚠️ Restaurer TOUS les prompts à leurs valeurs par défaut ?\n\nToutes vos modifications personnalisées seront PERDUES définitivement.\n\nCette action est utile pour récupérer les versions de référence après une mise à jour de l'application.\n\nContinuer ?")) return;
+    showLoader('Restauration…');
+    const r = await api('resetPromptsToDefault', { token: state.user.token });
+    hideLoader();
+    if (!r.ok) return toast('error', r.error);
+    toast('success', (r.prompts_reset || 6) + ' prompts restaurés à leurs valeurs par défaut');
+    renderAdminPrompts();
   }
 
   async function renderAdminLogs() {
