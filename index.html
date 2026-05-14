@@ -2137,6 +2137,341 @@
       background: #e5e7eb;
       color: #4b5563;
     }
+
+    /* ============================================================
+       v2.0.0 — PAGE CHANGELOG (suivi public des versions)
+       ============================================================ */
+    .changelog-page {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 32px 20px 48px;
+    }
+    .changelog-header {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+    .changelog-back {
+      display: inline-block;
+      margin-bottom: 16px;
+      color: var(--text-2);
+      text-decoration: none;
+      font-size: 14px;
+      cursor: pointer;
+    }
+    .changelog-back:hover { color: var(--text); text-decoration: underline; }
+    .changelog-header h1 {
+      font-size: 32px;
+      margin: 0 0 12px;
+      letter-spacing: -0.02em;
+    }
+    .changelog-intro {
+      color: var(--text-2);
+      font-size: 15px;
+      line-height: 1.6;
+      max-width: 600px;
+      margin: 0 auto 16px;
+    }
+    .changelog-current {
+      display: inline-block;
+      padding: 8px 16px;
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      border-radius: 999px;
+      font-size: 14px;
+    }
+    .changelog-current strong {
+      color: #2563eb;
+      font-variant-numeric: tabular-nums;
+    }
+    .changelog-legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center;
+      margin-bottom: 32px;
+      padding: 12px;
+      background: var(--card);
+      border-radius: var(--radius);
+    }
+    .changelog-legend-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 10px;
+      background: #fff;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--c);
+      border: 1px solid color-mix(in srgb, var(--c) 30%, transparent);
+    }
+
+    /* Timeline */
+    .changelog-timeline {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+    .changelog-timeline::before {
+      content: '';
+      position: absolute;
+      left: 18px;
+      top: 18px;
+      bottom: 18px;
+      width: 2px;
+      background: linear-gradient(180deg, #2563eb 0%, var(--border) 100%);
+      border-radius: 1px;
+    }
+    .changelog-version {
+      position: relative;
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px 24px 20px 56px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+      transition: box-shadow 0.2s, transform 0.2s;
+    }
+    .changelog-version:hover {
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    }
+    .changelog-version::before {
+      content: '';
+      position: absolute;
+      left: 12px;
+      top: 24px;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: #fff;
+      border: 3px solid var(--border);
+      z-index: 1;
+    }
+    .changelog-version.is-current {
+      border-color: #2563eb;
+      background: linear-gradient(180deg, #f8faff 0%, #fff 30%);
+    }
+    .changelog-version.is-current::before {
+      background: #2563eb;
+      border-color: #2563eb;
+      box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.15);
+    }
+    .changelog-version-head {
+      display: flex;
+      gap: 16px;
+      align-items: flex-start;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
+      padding-bottom: 12px;
+      border-bottom: 1px dashed var(--border);
+    }
+    .changelog-version-tag {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      flex-shrink: 0;
+    }
+    .changelog-version-number {
+      font-family: ui-monospace, "SF Mono", Menlo, monospace;
+      font-size: 18px;
+      font-weight: 700;
+      color: #2563eb;
+      letter-spacing: -0.02em;
+    }
+    .changelog-version-current {
+      display: inline-block;
+      padding: 2px 8px;
+      background: #2563eb;
+      color: #fff;
+      border-radius: 999px;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      text-align: center;
+    }
+    .changelog-version-meta {
+      flex: 1 1 200px;
+      min-width: 0;
+    }
+    .changelog-version-title {
+      font-weight: 700;
+      font-size: 17px;
+      color: var(--text);
+      margin-bottom: 4px;
+      line-height: 1.3;
+    }
+    .changelog-version-date {
+      font-size: 13px;
+      color: var(--text-2);
+    }
+    .changelog-entries {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .changelog-entry {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      padding: 10px 12px;
+      background: var(--card);
+      border-radius: 8px;
+      border-left: 3px solid var(--c);
+      line-height: 1.5;
+    }
+    .changelog-entry-icon {
+      font-size: 18px;
+      line-height: 1.3;
+      flex-shrink: 0;
+    }
+    .changelog-entry-text {
+      font-size: 14px;
+      color: var(--text);
+    }
+    .changelog-footer-note {
+      margin-top: 40px;
+      padding: 20px;
+      background: var(--card);
+      border-radius: var(--radius);
+      text-align: center;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+    .changelog-footer-note p {
+      margin: 0 0 8px;
+    }
+    .changelog-footer-note p:last-child { margin-bottom: 0; }
+
+    /* Mobile changelog */
+    @media (max-width: 600px) {
+      .changelog-page { padding: 20px 12px 32px; }
+      .changelog-header h1 { font-size: 24px; }
+      .changelog-intro { font-size: 14px; }
+      .changelog-timeline::before { left: 14px; }
+      .changelog-version {
+        padding: 16px 14px 16px 44px;
+        border-radius: 10px;
+      }
+      .changelog-version::before { left: 8px; top: 20px; width: 12px; height: 12px; }
+      .changelog-version-number { font-size: 16px; }
+      .changelog-version-title { font-size: 15px; }
+      .changelog-entry { padding: 8px 10px; gap: 8px; }
+      .changelog-entry-text { font-size: 13px; }
+      .changelog-legend { padding: 8px; gap: 6px; }
+      .changelog-legend-item { font-size: 11px; padding: 3px 8px; }
+    }
+
+    /* ============================================================
+       v2.0.0 — FIX MOBILE Configuration IA
+       ============================================================ */
+    @media (max-width: 600px) {
+      /* Modèles : boutons "Tester" passent en pleine largeur sous le dropdown */
+      .ai-model-controls {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      .ai-model-controls .btn { width: 100%; }
+      .ai-model-select { flex-basis: auto; width: 100%; }
+
+      /* Réponse du test : meilleure densité */
+      .ai-test-ok, .ai-test-fail { font-size: 12px; padding: 8px 10px; }
+      .ai-test-reply { font-size: 11px; }
+
+      /* Stats : 2 colonnes au lieu d'1 (plus dense visuellement) */
+      .ai-stats-summary { grid-template-columns: 1fr 1fr; gap: 8px; }
+      .ai-stat-tile { padding: 10px 12px; }
+      .ai-stat-value { font-size: 18px; }
+      .ai-stat-label { font-size: 10px; }
+      .ai-stat-sub { font-size: 10px; }
+
+      /* Tableau comparatif modèles : 1 colonne */
+      .ai-models-table { grid-template-columns: 1fr; }
+
+      /* Liens compte Anthropic : reste en grid auto-fit, déjà bien */
+      .ai-link-card { padding: 12px; }
+      .ai-link-icon { font-size: 24px; }
+      .ai-link-card strong { font-size: 13px; }
+      .ai-link-card span { font-size: 11px; }
+
+      /* Graphique : viewBox absorbe, mais on permet scroll horizontal si étiquettes coupées */
+      .ai-chart-wrapper {
+        padding: 8px;
+        overflow-x: auto;
+      }
+
+      /* Sticky bouton enregistrer : plus compact */
+      .ai-models-grid { gap: 8px; }
+      .ai-model-row { padding: 12px; }
+      .ai-model-row-head { gap: 8px; margin-bottom: 8px; }
+      .ai-model-icon { font-size: 20px; }
+      .ai-model-title { font-size: 14px; }
+      .ai-model-desc { font-size: 11px; }
+
+      /* Presets de température full width */
+      .ai-temp-presets .btn { flex: 1 1 calc(33% - 4px); min-width: 0; font-size: 11px; }
+
+      /* Comparatif détaillé : titres plus serrés */
+      .ai-models-help summary { font-size: 12px; padding: 6px 10px; }
+    }
+
+    /* ============================================================
+       v2.0.0 — FIX MOBILE Journal d'audit
+       ============================================================ */
+    @media (max-width: 600px) {
+      /* La timestamp courte est mise en avant */
+      .audit-mobile-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 6px;
+      }
+      .audit-time-short {
+        font-family: ui-monospace, monospace;
+        font-size: 12px;
+        color: var(--text-2);
+        font-weight: 600;
+      }
+      .audit-detail-text {
+        font-size: 12.5px;
+        line-height: 1.4;
+        word-break: break-word;
+      }
+      .audit-extra {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-top: 8px;
+        padding-top: 8px;
+        border-top: 1px dashed var(--border);
+        font-size: 11px;
+      }
+      .audit-extra > span {
+        background: #fff;
+        padding: 2px 8px;
+        border-radius: 4px;
+        border: 1px solid var(--border);
+        font-family: ui-monospace, monospace;
+      }
+    }
+    /* Style audit-extra version desktop (chips inline) */
+    .audit-extra-desktop {
+      display: inline-flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      font-size: 11px;
+    }
+    .audit-extra-desktop > span {
+      background: var(--card);
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-family: ui-monospace, monospace;
+    }
+
   </style>
 </head>
 <body>
@@ -2161,7 +2496,7 @@
 
   <!-- ====================== FOOTER ====================== -->
   <footer class="footer">
-    <div>Annuaire YOUPI<span style="color:var(--teal-700)">®</span> · <span id="footer-version">v0.19 — 2026</span></div>
+    <div>Annuaire YOUPI<span style="color:var(--teal-700)">®</span> · <a id="footer-version-link" onclick="navigate('changelog')" style="cursor:pointer;text-decoration:underline"><span id="footer-version">v2.0.0</span></a> · <a onclick="navigate('changelog')" style="cursor:pointer;text-decoration:underline">📰 Nouveautés</a></div>
     <div class="mt-16 text-xs">Conçu pour les entreprises ultra-marines · Martinique 🇲🇶 · Guadeloupe 🇬🇵 · Guyane 🇬🇫</div>
     <div class="footer-admin">
       <a onclick="openLoginAdmin()" style="cursor:pointer">Administration</a>
@@ -2189,9 +2524,83 @@
 
   const APP = {
     name: 'Annuaire YOUPI',
-    version: 'v0.20 — 2026',
+    version: 'v2.0.0',
+    versionDate: '14 mai 2026',
     BACKEND_URL: 'https://script.google.com/macros/s/AKfycbzQNSOAGCJp1QmZU0IE1FYiKmKCcGgTUpqKa3RJG9lwiAND_EC5dGdbh2XCu26ZTMoxtw/exec'
   };
+
+  // ------------------------------------------------------------
+  //  CHANGELOG public — historique des versions
+  //  Ordre : du plus récent (en haut) au plus ancien.
+  //  Types d'entrée : 'feature' ✨ | 'fix' 🐛 | 'design' 🎨 | 'perf' ⚡ | 'security' 🔒 | 'release' 📦
+  //  → Pour ajouter une nouvelle version, demander à Claude.
+  // ------------------------------------------------------------
+  const CHANGELOG = [
+    {
+      version: 'v2.0.0',
+      date: '14 mai 2026',
+      title: 'Tableau de bord IA + suivi public des versions',
+      entries: [
+        { type: 'release',  text: "Mise en place d'un véritable système de versions (format vMAJEUR.MINEUR.PATCH) avec page d'historique public accessible depuis le pied de page." },
+        { type: 'feature',  text: "Tableau de bord IA complet pour les administrateurs : choix du modèle Claude par type de contenu (entreprise, service, article, Instagram, immobilier)." },
+        { type: 'feature',  text: "Paramètres avancés de l'IA : longueur des réponses et niveau de créativité réglables, avec préréglages factuel / équilibré / créatif." },
+        { type: 'feature',  text: "Suivi des coûts d'utilisation de l'IA en temps réel, avec estimation en dollars, graphique mensuel sur 12 mois, et répartition par type de contenu." },
+        { type: 'feature',  text: "Liens directs vers la console Anthropic pour gérer le budget, recharger le crédit et administrer les clés API." },
+        { type: 'feature',  text: "Bouton « Tester » à côté de chaque modèle pour vérifier instantanément qu'il répond bien." },
+        { type: 'design',   text: "Optimisation des écrans Configuration IA et Journal d'audit pour smartphone : meilleure densité d'information, dates raccourcies, boutons plus accessibles." },
+        { type: 'perf',     text: "Suivi automatique des tokens consommés (entrée / sortie) et du coût estimé à chaque appel IA, enregistrés dans le journal d'audit." }
+      ]
+    },
+    {
+      version: 'v1.9.0',
+      date: 'Mai 2026',
+      title: 'Quatre types de contenu + expiration automatique',
+      entries: [
+        { type: 'feature',  text: "Quatre types de contenu distincts au lieu d'un seul : Service classique, Article (boutique en ligne), Publication Instagram, Annonce immobilière." },
+        { type: 'feature',  text: "Durée de visibilité configurable selon le type : 3 mois, 6 mois ou illimitée." },
+        { type: 'feature',  text: "Expiration automatique des contenus chaque nuit à 3h du matin avec retrait automatique de la base de connaissance de l'agent IA." },
+        { type: 'design',   text: "Badges visuels d'expiration sur chaque carte (bleu illimité, vert > 30j, ambre 7-30j, rouge < 7j, gris expiré)." },
+        { type: 'design',   text: "Pages de contenu présentées en cartes expansibles, cohérent avec le reste de l'application." }
+      ]
+    },
+    {
+      version: 'v1.5.0',
+      date: 'Avril 2026',
+      title: 'Refonte complète de l\'expérience utilisateur',
+      entries: [
+        { type: 'design',   text: "Suppression de toutes les fenêtres modales au profit de pages dédiées et de cartes expansibles, dans l'esprit des applications modernes type Linear et Notion." },
+        { type: 'design',   text: "Indicateurs de chargement et notifications déplacés en haut de page pour rester toujours visibles, même quand on fait défiler." },
+        { type: 'design',   text: "Navigation pensée mobile-first avec menus qui s'empilent verticalement sur smartphone." },
+        { type: 'design',   text: "Palette de couleurs unifiée autour du bleu cobalt et des tons sable, sans couleurs flashy." },
+        { type: 'fix',      text: "Correction du défilement qui ne remontait pas en haut de page après une navigation." },
+        { type: 'fix',      text: "Correction critique du retrait des fiches dans la base de connaissance de l'agent IA, qui ne fonctionnait pas auparavant." }
+      ]
+    },
+    {
+      version: 'v1.0.0',
+      date: 'Mars 2026',
+      title: 'Lancement de l\'Annuaire YOUPI®',
+      entries: [
+        { type: 'release',  text: "Première version publique de l'Annuaire YOUPI® pour les entreprises ultra-marines." },
+        { type: 'feature',  text: "Annuaire d'entreprises de Martinique avec extension prévue à la Guadeloupe et la Guyane." },
+        { type: 'feature',  text: "Agent conversationnel IA capable de recommander les entreprises selon les besoins des visiteurs." },
+        { type: 'feature',  text: "Inscription gratuite des entreprises avec génération automatique d'une fiche optimisée par intelligence artificielle." },
+        { type: 'feature',  text: "Espace professionnel sécurisé par code PIN à 6 chiffres pour que chaque entreprise puisse gérer sa présence." },
+        { type: 'feature',  text: "Possibilité pour les entreprises d'ajouter des pages de services qui alimentent automatiquement l'agent IA." },
+        { type: 'security', text: "Authentification par tokens sécurisés (HMAC) avec expiration automatique au bout de 30 jours." }
+      ]
+    }
+  ];
+
+  const CHANGELOG_TYPE_META = {
+    feature:  { icon: '✨', label: 'Nouveauté',     color: '#2563eb' },
+    fix:      { icon: '🐛', label: 'Correction',    color: '#ea580c' },
+    design:   { icon: '🎨', label: 'Design',        color: '#7c3aed' },
+    perf:     { icon: '⚡', label: 'Performance',   color: '#eab308' },
+    security: { icon: '🔒', label: 'Sécurité',      color: '#dc2626' },
+    release:  { icon: '📦', label: 'Mise en ligne', color: '#0891b2' }
+  };
+
 
   // ------------------------------------------------------------
   //  STATE
@@ -2455,6 +2864,7 @@
 
     switch (view) {
       case 'home':                renderHome(); break;
+      case 'changelog':           renderChangelog(); break;
       case 'login-pro':           renderLoginPro(); break;
       case 'login-admin':         renderLoginAdmin(); break;
       case 'register':            renderRegisterForm(); break;
@@ -2715,6 +3125,84 @@
     // Démarre l'animation du placeholder rotatif
     startPlaceholderRotation();
   }
+
+  // ============================================================
+  //  PAGE CHANGELOG (publique)
+  // ============================================================
+  function renderChangelog() {
+    const versions = CHANGELOG;
+    const meta = CHANGELOG_TYPE_META;
+
+    // Liste des types présents dans toutes les versions pour la légende
+    const allTypes = new Set();
+    versions.forEach(v => v.entries.forEach(e => allTypes.add(e.type)));
+
+    document.getElementById('main').innerHTML = `
+      <section class="changelog-page">
+        <div class="changelog-header">
+          <a class="changelog-back" onclick="navigate('home')">← Retour à l'accueil</a>
+          <h1>📰 Suivi des versions</h1>
+          <p class="changelog-intro">
+            Annuaire YOUPI<sup>®</sup> est en constante amélioration au service des citoyens et des entreprises ultra-marines.
+            Retrouvez ici l'historique complet des évolutions de l'application.
+          </p>
+          <div class="changelog-current">
+            Version actuelle : <strong>${esc(APP.version)}</strong>
+            <span class="text-muted">· déployée le ${esc(APP.versionDate)}</span>
+          </div>
+        </div>
+
+        <div class="changelog-legend">
+          ${Array.from(allTypes).map(t => `
+            <span class="changelog-legend-item" style="--c:${meta[t] ? meta[t].color : '#666'}">
+              ${meta[t] ? meta[t].icon : '•'} ${meta[t] ? meta[t].label : t}
+            </span>
+          `).join('')}
+        </div>
+
+        <div class="changelog-timeline">
+          ${versions.map((v, idx) => `
+            <article class="changelog-version ${idx === 0 ? 'is-current' : ''}">
+              <div class="changelog-version-head">
+                <div class="changelog-version-tag">
+                  <span class="changelog-version-number">${esc(v.version)}</span>
+                  ${idx === 0 ? '<span class="changelog-version-current">Actuelle</span>' : ''}
+                </div>
+                <div class="changelog-version-meta">
+                  <div class="changelog-version-title">${esc(v.title)}</div>
+                  <div class="changelog-version-date">📅 ${esc(v.date)}</div>
+                </div>
+              </div>
+
+              <ul class="changelog-entries">
+                ${v.entries.map(e => {
+                  const m = meta[e.type] || { icon: '•', label: e.type, color: '#666' };
+                  return `
+                    <li class="changelog-entry" style="--c:${m.color}">
+                      <span class="changelog-entry-icon" title="${esc(m.label)}">${m.icon}</span>
+                      <span class="changelog-entry-text">${esc(e.text)}</span>
+                    </li>
+                  `;
+                }).join('')}
+              </ul>
+            </article>
+          `).join('')}
+        </div>
+
+        <div class="changelog-footer-note">
+          <p>
+            🌴 <strong>Annuaire YOUPI<sup>®</sup></strong> est un service de proximité pensé pour faciliter
+            le quotidien des citoyens et la visibilité des entreprises de Martinique, Guadeloupe et Guyane.
+          </p>
+          <p class="text-muted">
+            Vous avez une suggestion, une idée d'évolution ?
+            <a onclick="navigate('home')" style="cursor:pointer;text-decoration:underline">Contactez l'équipe depuis l'accueil</a>.
+          </p>
+        </div>
+      </section>
+    `;
+  }
+
 
   function submitAISearch(e) {
     e.preventDefault();
@@ -4649,18 +5137,61 @@
     const r = await api('getAuditLog', { token: state.user.token });
     if (!r.ok) { document.getElementById('logs-zone').innerHTML = `<p>${esc(r.error)}</p>`; return; }
 
+    // Helper : format date courte "14/05/26 16:42"
+    const fmtDate = (iso) => {
+      if (!iso) return '—';
+      const d = new Date(iso);
+      if (isNaN(d.getTime())) return iso;
+      const pad = (n) => String(n).padStart(2, '0');
+      return pad(d.getDate()) + '/' + pad(d.getMonth() + 1) + '/' + String(d.getFullYear()).slice(-2) + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes());
+    };
+
+    // Helper : badge niveau coloré
+    const levelBadge = (lvl) => {
+      const bg = lvl === 'ERROR' ? '#fee2e2'
+              : lvl === 'WARN'  ? '#fef3c7'
+              : lvl === 'AI'    ? '#e0e7ff'
+              : '#e0f2fe';
+      const fg = lvl === 'ERROR' ? '#991b1b'
+              : lvl === 'WARN'  ? '#92400e'
+              : lvl === 'AI'    ? '#3730a3'
+              : '#075985';
+      return `<span class="badge" style="background:${bg};color:${fg};font-weight:700">${esc(lvl || '')}</span>`;
+    };
+
+    // Helper : chips IA (tokens, modèle, coût) si présents
+    const aiExtras = (l, isDesktop) => {
+      const cls = isDesktop ? 'audit-extra-desktop' : 'audit-extra';
+      const chips = [];
+      if (l.tokens_input  !== '' && l.tokens_input  !== undefined && l.tokens_input  !== null) chips.push(`📥 ${esc(String(l.tokens_input))} tok`);
+      if (l.tokens_output !== '' && l.tokens_output !== undefined && l.tokens_output !== null) chips.push(`📤 ${esc(String(l.tokens_output))} tok`);
+      if (l.model_used) chips.push(`🤖 ${esc(String(l.model_used))}`);
+      if (l.cost_estimate_usd !== '' && l.cost_estimate_usd !== undefined && l.cost_estimate_usd !== null && parseFloat(l.cost_estimate_usd) > 0) {
+        chips.push(`💰 $${parseFloat(l.cost_estimate_usd).toFixed(6)}`);
+      }
+      if (!chips.length) return '';
+      return `<div class="${cls}">${chips.map(c => `<span>${c}</span>`).join('')}</div>`;
+    };
+
     document.getElementById('logs-zone').innerHTML = `
+      <p class="text-muted" style="font-size:13px;margin-top:0">200 dernières entrées du journal (du plus récent au plus ancien).</p>
       <div class="table-wrap"><table class="data">
         <thead><tr><th>Date</th><th>Niveau</th><th>Action</th><th>Détail</th></tr></thead>
         <tbody>
-          ${r.logs.map(l => `
-            <tr>
-              <td data-label="Date" class="mono text-xs">${esc(l.timestamp)}</td>
-              <td data-label="Niveau"><span class="badge" style="background:${l.level === 'ERROR' ? '#fee2e2' : l.level === 'WARN' ? '#fef3c7' : '#e0f2fe'};color:#000">${esc(l.level)}</span></td>
-              <td data-label="Action" class="mono">${esc(l.action)}</td>
-              <td data-label="Détail" class="text-sm">${esc(l.detail)}</td>
-            </tr>
-          `).join('')}
+          ${r.logs.map(l => {
+            const detailHtml = `
+              <span class="audit-detail-text">${esc(l.detail || '')}</span>
+              ${aiExtras(l, true)}
+            `;
+            return `
+              <tr>
+                <td data-label="Date" class="mono text-xs"><span class="audit-time-short">${fmtDate(l.timestamp)}</span></td>
+                <td data-label="Niveau">${levelBadge(l.level)}</td>
+                <td data-label="Action" class="mono">${esc(l.action)}</td>
+                <td data-label="Détail" class="text-sm">${detailHtml}</td>
+              </tr>
+            `;
+          }).join('')}
           ${r.logs.length === 0 ? '<tr><td colspan="4" style="text-align:center;padding:24px">Aucun log.</td></tr>' : ''}
         </tbody>
       </table></div>
