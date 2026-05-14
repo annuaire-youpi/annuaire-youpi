@@ -2693,7 +2693,7 @@
 
   <!-- ====================== FOOTER ====================== -->
   <footer class="footer">
-    <div>Annuaire YOUPI<span style="color:var(--teal-700)">®</span> · <a id="footer-version-link" onclick="navigate('changelog')" style="cursor:pointer;text-decoration:underline"><span id="footer-version">v2.1.1</span></a> · <a onclick="navigate('changelog')" style="cursor:pointer;text-decoration:underline">📰 Nouveautés</a></div>
+    <div>Annuaire YOUPI<span style="color:var(--teal-700)">®</span> · <a id="footer-version-link" onclick="navigate('changelog')" style="cursor:pointer;text-decoration:underline"><span id="footer-version">v2.1.2</span></a> · <a onclick="navigate('changelog')" style="cursor:pointer;text-decoration:underline">📰 Nouveautés</a></div>
     <div class="mt-16 text-xs">Conçu pour les entreprises ultra-marines · Martinique 🇲🇶 · Guadeloupe 🇬🇵 · Guyane 🇬🇫</div>
     <div class="footer-admin">
       <a onclick="openLoginAdmin()" style="cursor:pointer">Administration</a>
@@ -2721,7 +2721,7 @@
 
   const APP = {
     name: 'Annuaire YOUPI',
-    version: 'v2.1.1',
+    version: 'v2.1.2',
     versionDate: '14 mai 2026',
     BACKEND_URL: 'https://script.google.com/macros/s/AKfycbzQNSOAGCJp1QmZU0IE1FYiKmKCcGgTUpqKa3RJG9lwiAND_EC5dGdbh2XCu26ZTMoxtw/exec'
   };
@@ -2733,6 +2733,14 @@
   //  → Pour ajouter une nouvelle version, demander à Claude.
   // ------------------------------------------------------------
   const CHANGELOG = [
+    {
+      version: 'v2.1.2',
+      date: '14 mai 2026',
+      title: "Lisibilité parfaite des messages officiels envoyés aux entreprises",
+      entries: [
+        { type: 'fix', text: "Correction de l'affichage de certains caractères spéciaux dans les messages officiels reçus par les entreprises sur leur application de messagerie : plus aucun caractère illisible (« ? ») ne s'affiche à la place des éléments décoratifs." }
+      ]
+    },
     {
       version: 'v2.1.1',
       date: '14 mai 2026',
