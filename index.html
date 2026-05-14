@@ -2797,7 +2797,7 @@
 
   <!-- ====================== FOOTER ====================== -->
   <footer class="footer">
-    <div>Annuaire YOUPI<span style="color:var(--teal-700)">®</span> · <a id="footer-version-link" onclick="navigate('changelog')" style="cursor:pointer;text-decoration:underline"><span id="footer-version">v2.2.1</span></a> · <a onclick="navigate('changelog')" style="cursor:pointer;text-decoration:underline">📰 Nouveautés</a></div>
+    <div>Annuaire YOUPI<span style="color:var(--teal-700)">®</span> · <a id="footer-version-link" onclick="navigate('changelog')" style="cursor:pointer;text-decoration:underline"><span id="footer-version">v2.2.2</span></a> · <a onclick="navigate('changelog')" style="cursor:pointer;text-decoration:underline">📰 Nouveautés</a></div>
     <div class="mt-16 text-xs">Conçu pour les entreprises ultra-marines · Martinique 🇲🇶 · Guadeloupe 🇬🇵 · Guyane 🇬🇫</div>
     <div class="footer-admin">
       <a onclick="openLoginAdmin()" style="cursor:pointer">Administration</a>
@@ -2825,7 +2825,7 @@
 
   const APP = {
     name: 'Annuaire YOUPI',
-    version: 'v2.2.1',
+    version: 'v2.2.2',
     versionDate: '14 mai 2026',
     BACKEND_URL: 'https://script.google.com/macros/s/AKfycbzQNSOAGCJp1QmZU0IE1FYiKmKCcGgTUpqKa3RJG9lwiAND_EC5dGdbh2XCu26ZTMoxtw/exec'
   };
@@ -2837,6 +2837,14 @@
   //  → Pour ajouter une nouvelle version, demander à Claude.
   // ------------------------------------------------------------
   const CHANGELOG = [
+    {
+      version: 'v2.2.2',
+      date: '14 mai 2026',
+      title: "Améliorations internes",
+      entries: [
+        { type: 'perf', text: "Optimisations internes de gestion des fiches entreprises." }
+      ]
+    },
     {
       version: 'v2.2.1',
       date: '14 mai 2026',
@@ -3382,6 +3390,7 @@
       case 'admin-dashboard':     renderAdminDashboard(); break;
       case 'admin-companies':     renderAdminCompanies(); break;
       case 'admin-add-company':   renderAdminAddCompany(); break;
+      case 'admin-edit-company':  renderAdminEditCompany(params); break;
       case 'admin-company-created': renderAdminCompanyCreated(params); break;
       case 'admin-company-detail':renderAdminCompanyDetail(params); break;
       case 'admin-pages':         renderAdminPages(); break;
@@ -4965,6 +4974,7 @@
               </div>
             </div>
             <div class="row-actions">
+              <button class="btn btn-primary btn-sm" onclick="navigate('admin-edit-company', { company_id: '${esc(c.id)}' })">✏️ Modifier la fiche</button>
               ${c.statut === 'actif' ? `<button class="btn btn-secondary btn-sm" onclick="adminReprocess('${esc(c.id)}')">↻ Rejouer IA + Chatling</button>` : ''}
               ${c.statut === 'actif' ? `<button class="btn btn-secondary btn-sm" onclick="adminRegeneratePin('${esc(c.id)}', '${esc(c.nom_entreprise)}', '${esc(c.email)}')">🔑 Régénérer PIN + renvoyer email</button>` : ''}
               ${c.statut === 'actif' ? `<button class="btn btn-pause btn-sm" onclick="adminPauseCompany('${esc(c.id)}')">⏸ Mettre en pause</button>` : ''}
@@ -5954,6 +5964,213 @@
   }
 
   // Bouton "Régénérer PIN + renvoyer email" depuis la fiche admin
+
+  // ============================================================
+  //  MODIFICATION D'UNE FICHE ENTREPRISE PAR L'ADMIN
+  //  Admin = pouvoir total : tous les champs modifiables
+  //  Option : relancer ou non le pipeline IA + Chatling + Facebook
+  // ============================================================
+  async function renderAdminEditCompany(params) {
+    if (!state.user || state.user.type !== 'admin') return navigate('home');
+    const id = params && params.company_id;
+    if (!id) return navigate('admin-companies');
+
+    document.getElementById('main').innerHTML = `
+      <div class="dashboard-grid">
+        ${adminSidebar('admin-companies')}
+        <section>
+          <div class="page-header">
+            <div>
+              <button class="btn btn-ghost btn-sm" onclick="navigate('admin-company-detail', { company_id: '${esc(id)}' })" style="margin-bottom:8px">← Retour à la fiche</button>
+              <h1>✏️ Modifier la fiche entreprise</h1>
+            </div>
+          </div>
+          <div id="edit-zone"><p class="text-muted">Chargement…</p></div>
+        </section>
+      </div>
+    `;
+
+    // Récupérer la fiche actuelle (depuis cache admin ou via API)
+    let c = (window._adminCompanies || []).find(x => x.id === id);
+    if (!c) {
+      const r = await api('listCompanies', { token: state.user.token });
+      if (!r.ok) {
+        document.getElementById('edit-zone').innerHTML = `<p>${esc(r.error)}</p>`;
+        return;
+      }
+      window._adminCompanies = r.companies;
+      c = r.companies.find(x => x.id === id);
+      if (!c) {
+        document.getElementById('edit-zone').innerHTML = `<p>Entreprise introuvable.</p>`;
+        return;
+      }
+    }
+
+    const sectors = (state.config && state.config.sectors) || [];
+    const regions = (state.config && state.config.regions) || [];
+    const statuts = ['actif', 'paused', 'archive'];
+
+    document.getElementById('edit-zone').innerHTML = `
+      <div class="card" style="background:#fef3c7;border:1px solid #fde68a;margin-bottom:16px">
+        <p style="margin:0;font-size:14px;line-height:1.5">
+          ⚠️ <strong>Mode admin — pouvoir total :</strong> tous les champs sont modifiables, y compris l'identifiant interne, la région et le statut.
+          Aucune validation côté formulaire — l'admin sait ce qu'il fait.
+        </p>
+      </div>
+
+      <div class="card">
+        <p class="subtitle">
+          Identifiant : <strong class="mono">${esc(c.id)}</strong>
+          <span class="text-muted"> · Modification d'une fiche existante.</span>
+        </p>
+
+        <form id="admin-edit-form" onsubmit="submitAdminEditCompany(event, '${esc(c.id)}')">
+          <div class="form-grid">
+            <div class="field">
+              <label>Région</label>
+              <select name="region">
+                ${regions.map(r => `<option value="${esc(r.code)}" ${c.region === r.code ? 'selected' : ''}>${esc(r.name)}</option>`).join('')}
+              </select>
+            </div>
+            <div class="field">
+              <label>Statut</label>
+              <select name="statut">
+                ${statuts.map(s => `<option value="${s}" ${c.statut === s ? 'selected' : ''}>${s}</option>`).join('')}
+              </select>
+            </div>
+            <div class="field field-full">
+              <label>Nom de l'entreprise</label>
+              <input name="nom_entreprise" value="${esc(c.nom_entreprise)}" maxlength="200" />
+            </div>
+            <div class="field field-full">
+              <label>Secteur d'activité</label>
+              <select name="secteur">
+                ${sectors.map(s => `<option value="${esc(s)}" ${c.secteur === s ? 'selected' : ''}>${esc(s)}</option>`).join('')}
+              </select>
+            </div>
+            <div class="field">
+              <label>Téléphone</label>
+              <input name="telephone" type="tel" value="${esc(c.telephone) || ''}" />
+            </div>
+            <div class="field">
+              <label>Email</label>
+              <input name="email" type="email" value="${esc(c.email)}" />
+            </div>
+            <div class="field">
+              <label>Ville</label>
+              <input name="ville" value="${esc(c.ville)}" />
+            </div>
+            <div class="field">
+              <label>Site web</label>
+              <input name="site_web" type="url" value="${esc(c.site_web) || ''}" />
+            </div>
+            <div class="field field-full">
+              <label>Adresse complète</label>
+              <input name="adresse_complete" value="${esc(c.adresse_complete) || ''}" />
+            </div>
+            <div class="field field-full">
+              <label>Description de l'entreprise</label>
+              <textarea name="description" maxlength="2000" rows="4">${esc(c.description) || ''}</textarea>
+            </div>
+            <div class="field field-full">
+              <label>Liste des services</label>
+              <textarea name="liste_services" maxlength="2000" rows="4">${esc(c.liste_services) || ''}</textarea>
+            </div>
+            <div class="field field-full">
+              <label>Horaires</label>
+              <textarea name="horaires" maxlength="800" rows="3">${esc(c.horaires) || ''}</textarea>
+            </div>
+            <div class="field">
+              <label>Facebook</label>
+              <input name="facebook" value="${esc(c.facebook) || ''}" />
+            </div>
+            <div class="field">
+              <label>Instagram</label>
+              <input name="instagram" value="${esc(c.instagram) || ''}" />
+            </div>
+            <div class="field field-full">
+              <label>URL du logo / image</label>
+              <input name="image_url" type="url" value="${esc(c.image_url) || ''}" placeholder="https://…" />
+              ${c.image_url ? `<div class="hint">Image actuelle : <img src="${esc(c.image_url)}" alt="" style="display:block;max-width:160px;max-height:90px;border-radius:6px;margin-top:6px" onerror="this.style.display='none'"></div>` : ''}
+            </div>
+          </div>
+
+          <!-- Option relance pipeline -->
+          <div class="card" style="background:#eff6ff;border:1px solid #bfdbfe;margin-top:20px">
+            <label style="display:flex;gap:10px;align-items:flex-start;cursor:pointer;margin:0">
+              <input type="checkbox" name="relaunch_pipeline" id="relaunch-checkbox" style="margin-top:3px;flex-shrink:0;width:18px;height:18px;cursor:pointer">
+              <div>
+                <strong style="display:block;font-size:14px">🔄 Relancer la chaîne complète après sauvegarde</strong>
+                <span style="font-size:13px;color:var(--text-2);line-height:1.5">
+                  Régénère le markdown IA → met à jour la base de connaissance Chatling → republie sur Facebook.<br>
+                  <strong>À cocher</strong> si vous modifiez des informations qui doivent être propagées (nom, description, services, image…).<br>
+                  <strong>Laissez décoché</strong> pour une correction mineure (faute de frappe, lien…) qui ne mérite pas une republication.
+                </span>
+              </div>
+            </label>
+          </div>
+
+          <div class="modal-actions">
+            <button type="button" class="btn btn-ghost" onclick="navigate('admin-company-detail', { company_id: '${esc(c.id)}' })">Annuler</button>
+            <button type="submit" class="btn btn-primary btn-lg">💾 Enregistrer les modifications</button>
+          </div>
+        </form>
+      </div>
+    `;
+  }
+
+  async function submitAdminEditCompany(e, companyId) {
+    e.preventDefault();
+    const f = e.target;
+    const data = { token: state.user.token, company_id: companyId };
+
+    // Collecte tous les champs
+    new FormData(f).forEach((v, k) => {
+      if (k === 'relaunch_pipeline') data[k] = true; // checkbox cochée
+      else data[k] = String(v).trim();
+    });
+
+    // Si la case n'a pas été touchée, FormData ne renvoie pas le champ
+    // donc on force à false explicitement
+    if (data.relaunch_pipeline === undefined) data.relaunch_pipeline = false;
+
+    const willRelaunch = data.relaunch_pipeline === true;
+
+    if (willRelaunch) {
+      if (!confirm("🔄 Confirmer la relance de la chaîne complète ?\n\n" +
+        "• Le markdown IA va être régénéré\n" +
+        "• La base de connaissance Chatling va être mise à jour\n" +
+        "• Une nouvelle publication Facebook va être créée\n\n" +
+        "Cette opération peut prendre 10-30 secondes.\n\nContinuer ?")) return;
+    }
+
+    showLoader(willRelaunch ? 'Enregistrement + relance pipeline…' : 'Enregistrement…');
+    const r = await api('updateCompanyAdmin', data);
+    hideLoader();
+
+    if (!r.ok) {
+      toast('error', r.error || 'Erreur lors de la mise à jour');
+      return;
+    }
+
+    // Invalider le cache pour forcer reload
+    window._adminCompanies = null;
+
+    let successMsg = '✅ Fiche mise à jour';
+    if (willRelaunch) {
+      const reprocessOk = r.reprocess && r.reprocess.ok;
+      const fbOk = r.facebook && r.facebook.ok;
+      if (reprocessOk && fbOk) successMsg = '✅ Fiche modifiée, IA + Chatling + Facebook relancés';
+      else if (reprocessOk) successMsg = '⚠️ Fiche modifiée, IA + Chatling OK mais Facebook a échoué';
+      else if (fbOk) successMsg = '⚠️ Fiche modifiée et Facebook OK mais IA/Chatling a échoué';
+      else successMsg = '⚠️ Fiche modifiée mais la relance pipeline a échoué — vérifiez le journal';
+    }
+    toast('success', successMsg);
+
+    navigate('admin-company-detail', { company_id: companyId });
+  }
+
+
   async function adminRegeneratePin(companyId, companyName, companyEmail) {
     const msg = "🔑 Régénérer le code PIN de cette entreprise ?\n\n" +
       "Entreprise : " + companyName + "\n" +
