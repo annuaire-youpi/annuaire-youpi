@@ -2797,7 +2797,7 @@
 
   <!-- ====================== FOOTER ====================== -->
   <footer class="footer">
-    <div>Annuaire YOUPI<span style="color:var(--teal-700)">®</span> · <a id="footer-version-link" onclick="navigate('changelog')" style="cursor:pointer;text-decoration:underline"><span id="footer-version">v2.2.2</span></a> · <a onclick="navigate('changelog')" style="cursor:pointer;text-decoration:underline">📰 Nouveautés</a></div>
+    <div>Annuaire YOUPI<span style="color:var(--teal-700)">®</span> · <a id="footer-version-link" onclick="navigate('changelog')" style="cursor:pointer;text-decoration:underline"><span id="footer-version">v2.2.3</span></a> · <a onclick="navigate('changelog')" style="cursor:pointer;text-decoration:underline">📰 Nouveautés</a></div>
     <div class="mt-16 text-xs">Conçu pour les entreprises ultra-marines · Martinique 🇲🇶 · Guadeloupe 🇬🇵 · Guyane 🇬🇫</div>
     <div class="footer-admin">
       <a onclick="openLoginAdmin()" style="cursor:pointer">Administration</a>
@@ -2825,7 +2825,7 @@
 
   const APP = {
     name: 'Annuaire YOUPI',
-    version: 'v2.2.2',
+    version: 'v2.2.3',
     versionDate: '14 mai 2026',
     BACKEND_URL: 'https://script.google.com/macros/s/AKfycbzQNSOAGCJp1QmZU0IE1FYiKmKCcGgTUpqKa3RJG9lwiAND_EC5dGdbh2XCu26ZTMoxtw/exec'
   };
@@ -2837,6 +2837,14 @@
   //  → Pour ajouter une nouvelle version, demander à Claude.
   // ------------------------------------------------------------
   const CHANGELOG = [
+    {
+      version: 'v2.2.3',
+      date: '14 mai 2026',
+      title: "Améliorations internes",
+      entries: [
+        { type: 'perf', text: "Améliorations internes du suivi des publications boostées." }
+      ]
+    },
     {
       version: 'v2.2.2',
       date: '14 mai 2026',
@@ -3167,7 +3175,10 @@
   function buildStripeBoostUrlFront(companyId, pageId) {
     let ref = companyId || 'unknown';
     if (pageId) ref += '__' + pageId;
-    return STRIPE_BOOST_URL + '?ref=' + encodeURIComponent(ref);
+    // client_reference_id : paramètre natif Stripe, remonte dans l'email de
+    // notification + dashboard + webhook checkout.session.completed.
+    // Permet l'identification automatique de la publication à booster côté admin.
+    return STRIPE_BOOST_URL + '?client_reference_id=' + encodeURIComponent(ref);
   }
 
   /**
@@ -3284,13 +3295,46 @@
     if (entityType === 'company') payload.company_id = entityId;
     else payload.page_id = entityId;
     const r = await api(action, payload);
+
+    if (!r.ok) {
+      hideLoader();
+      return toast('error', r.error || 'Échec de la republication');
+    }
+
+    // Invalider le cache + recharger pour avoir la nouvelle URL FB
+    if (entityType === 'company') window._adminCompanies = null;
+    else window._adminPages = null;
+
+    await new Promise(res => setTimeout(res, 800)); // attente propagation Sheet
+
+    // Recharger les données fraîches
+    if (entityType === 'company') {
+      const reload = await api('listCompanies', { token: state.user.token });
+      if (reload && reload.ok) window._adminCompanies = reload.companies;
+    } else {
+      const reload = await api('listAllPages', { token: state.user.token });
+      if (reload && reload.ok) window._adminPages = reload.pages;
+    }
     hideLoader();
-    if (!r.ok) return toast('error', r.error || 'Échec de la republication');
     toast('success', 'Publication Facebook créée ✅');
+
     // Rafraîchir la vue admin courante
     if (state.view === 'admin-company-detail') renderAdminCompanyDetail({ company_id: entityId });
     else if (state.view === 'admin-companies') renderAdminCompanies();
     else if (state.view === 'admin-pages') renderAdminPages();
+  }
+
+  // Bouton "🔄 Rafraîchir" dans l'en-tête de la fiche admin :
+  // force un re-fetch des données et re-render
+  async function adminRefreshCompany(companyId) {
+    showLoader('Rafraîchissement…');
+    window._adminCompanies = null;
+    const reload = await api('listCompanies', { token: state.user.token });
+    hideLoader();
+    if (!reload || !reload.ok) return toast('error', 'Impossible de rafraîchir');
+    window._adminCompanies = reload.companies;
+    renderAdminCompanyDetail({ company_id: companyId });
+    toast('success', 'Fiche rafraîchie ✅');
   }
   function saveSession() {
     try {
@@ -4975,6 +5019,7 @@
             </div>
             <div class="row-actions">
               <button class="btn btn-primary btn-sm" onclick="navigate('admin-edit-company', { company_id: '${esc(c.id)}' })">✏️ Modifier la fiche</button>
+              <button class="btn btn-ghost btn-sm" onclick="adminRefreshCompany('${esc(c.id)}')">🔄 Rafraîchir</button>
               ${c.statut === 'actif' ? `<button class="btn btn-secondary btn-sm" onclick="adminReprocess('${esc(c.id)}')">↻ Rejouer IA + Chatling</button>` : ''}
               ${c.statut === 'actif' ? `<button class="btn btn-secondary btn-sm" onclick="adminRegeneratePin('${esc(c.id)}', '${esc(c.nom_entreprise)}', '${esc(c.email)}')">🔑 Régénérer PIN + renvoyer email</button>` : ''}
               ${c.statut === 'actif' ? `<button class="btn btn-pause btn-sm" onclick="adminPauseCompany('${esc(c.id)}')">⏸ Mettre en pause</button>` : ''}
@@ -6153,9 +6198,6 @@
       return;
     }
 
-    // Invalider le cache pour forcer reload
-    window._adminCompanies = null;
-
     let successMsg = '✅ Fiche mise à jour';
     if (willRelaunch) {
       const reprocessOk = r.reprocess && r.reprocess.ok;
@@ -6166,6 +6208,18 @@
       else successMsg = '⚠️ Fiche modifiée mais la relance pipeline a échoué — vérifiez le journal';
     }
     toast('success', successMsg);
+
+    // Force le rechargement depuis le backend (cache invalidé + petite attente
+    // pour que les écritures Sheet soient propagées)
+    window._adminCompanies = null;
+    showLoader('Rechargement de la fiche…');
+    // Petit délai pour laisser le temps aux écritures Sheet de se propager
+    await new Promise(r => setTimeout(r, 1000));
+    const reload = await api('listCompanies', { token: state.user.token });
+    hideLoader();
+    if (reload && reload.ok) {
+      window._adminCompanies = reload.companies;
+    }
 
     navigate('admin-company-detail', { company_id: companyId });
   }
