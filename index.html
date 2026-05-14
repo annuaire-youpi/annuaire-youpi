@@ -2693,7 +2693,7 @@
 
   <!-- ====================== FOOTER ====================== -->
   <footer class="footer">
-    <div>Annuaire YOUPI<span style="color:var(--teal-700)">®</span> · <a id="footer-version-link" onclick="navigate('changelog')" style="cursor:pointer;text-decoration:underline"><span id="footer-version">v2.1.0</span></a> · <a onclick="navigate('changelog')" style="cursor:pointer;text-decoration:underline">📰 Nouveautés</a></div>
+    <div>Annuaire YOUPI<span style="color:var(--teal-700)">®</span> · <a id="footer-version-link" onclick="navigate('changelog')" style="cursor:pointer;text-decoration:underline"><span id="footer-version">v2.1.1</span></a> · <a onclick="navigate('changelog')" style="cursor:pointer;text-decoration:underline">📰 Nouveautés</a></div>
     <div class="mt-16 text-xs">Conçu pour les entreprises ultra-marines · Martinique 🇲🇶 · Guadeloupe 🇬🇵 · Guyane 🇬🇫</div>
     <div class="footer-admin">
       <a onclick="openLoginAdmin()" style="cursor:pointer">Administration</a>
@@ -2721,7 +2721,7 @@
 
   const APP = {
     name: 'Annuaire YOUPI',
-    version: 'v2.1.0',
+    version: 'v2.1.1',
     versionDate: '14 mai 2026',
     BACKEND_URL: 'https://script.google.com/macros/s/AKfycbzQNSOAGCJp1QmZU0IE1FYiKmKCcGgTUpqKa3RJG9lwiAND_EC5dGdbh2XCu26ZTMoxtw/exec'
   };
@@ -2734,15 +2734,21 @@
   // ------------------------------------------------------------
   const CHANGELOG = [
     {
+      version: 'v2.1.1',
+      date: '14 mai 2026',
+      title: "Connexion à l'espace pro plus rapide depuis un lien",
+      entries: [
+        { type: 'feature', text: "Vous pouvez désormais accéder directement à la page de connexion à votre espace pro en cliquant sur un lien externe (par exemple depuis un email reçu de l'équipe Annuaire YOUPI®). Plus besoin de chercher le bouton de connexion sur l'accueil." },
+        { type: 'fix',     text: "Correction de l'adresse web utilisée dans les communications officielles de l'Annuaire YOUPI® (emails de bienvenue, messages WhatsApp)." }
+      ]
+    },
+    {
       version: 'v2.1.0',
       date: '14 mai 2026',
-      title: "Création d'entreprises par l'administrateur (email + WhatsApp)",
+      title: 'Améliorations internes et renforcements de sécurité',
       entries: [
-        { type: 'feature', text: "L'administrateur peut désormais créer une fiche entreprise à la place d'un futur adhérent depuis le menu Entreprises (nouveau bouton « + Ajouter une entreprise »). Idéal pour pré-référencer ses anciens clients et étoffer rapidement la base de l'annuaire." },
-        { type: 'feature', text: "Envoi automatique d'un email de bienvenue stylisé à l'entreprise contenant son identifiant et son code PIN — l'administrateur ne voit jamais le PIN, garantissant la confidentialité." },
-        { type: 'feature', text: "Génération d'un lien WhatsApp complémentaire « 💬 Ouvrir WhatsApp » prêt à cliquer après la création, avec message pré-rédigé contenant les identifiants. Pratique pour transmettre les codes par WhatsApp en plus de l'email — réflexe naturel dans les Antilles." },
-        { type: 'feature', text: "Nouveau bouton « 🔑 Régénérer PIN + renvoyer email » dans la fiche admin de chaque entreprise. Utile quand un client a perdu son code PIN ou n'a jamais reçu son email initial. L'action est tracée dans le journal d'audit." },
-        { type: 'security', text: "Pour des raisons de sécurité, le code PIN n'est jamais stocké en clair dans la base ni affiché à l'administrateur. La régénération est la seule façon de récupérer un accès en cas de perte." }
+        { type: 'security', text: "Renforcement de la confidentialité dans la gestion des comptes entreprises." },
+        { type: 'perf',     text: "Optimisations diverses sur le fonctionnement interne de l'application." }
       ]
     },
     {
@@ -5973,7 +5979,15 @@
     };
 
     // 3. NAVIGUER IMMÉDIATEMENT (l'utilisateur voit la page instantanément)
-    if (state.user && state.user.type === 'company') navigate('pro-dashboard');
+    //    Si l'URL contient un hash (#login-pro, #login-admin, #changelog, etc.),
+    //    on respecte ce hash et on navigue vers la vue correspondante.
+    const hash = (window.location.hash || '').replace(/^#/, '').trim();
+    const allowedHashRoutes = ['login-pro', 'login-admin', 'register', 'changelog', 'home'];
+    if (hash && allowedHashRoutes.indexOf(hash) !== -1) {
+      // Nettoie le hash après lecture (UX : pas de hash résiduel dans la barre d'adresse)
+      try { history.replaceState(null, '', window.location.pathname + window.location.search); } catch(e) {}
+      navigate(hash);
+    } else if (state.user && state.user.type === 'company') navigate('pro-dashboard');
     else if (state.user && state.user.type === 'admin') navigate('admin-dashboard');
     else navigate('home');
 
