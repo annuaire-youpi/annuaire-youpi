@@ -1591,6 +1591,69 @@
       font-weight: 600;
       cursor: pointer;
     }
+
+    /* ============================================================
+       v0.15 — Filter chips + badges statut + actions admin
+       ============================================================ */
+    .filter-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 18px;
+    }
+    .chip {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 100px;
+      padding: 7px 14px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-2);
+      cursor: pointer;
+      transition: all .15s ease;
+      font-family: inherit;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .chip:hover {
+      border-color: var(--teal-600);
+      color: var(--teal-700);
+    }
+    .chip.active {
+      background: var(--teal-700);
+      color: white;
+      border-color: var(--teal-700);
+    }
+    .chip-count {
+      background: rgba(0,0,0,.08);
+      padding: 1px 8px;
+      border-radius: 100px;
+      font-size: 11px;
+      font-weight: 700;
+      min-width: 20px;
+      text-align: center;
+    }
+    .chip.active .chip-count {
+      background: rgba(255,255,255,.25);
+    }
+
+    /* Badges statut */
+    .badge.actif    { background: #dcfce7; color: #166534; }
+    .badge.paused   { background: #fef3c7; color: #92400e; }
+    .badge.archive  { background: #fee2e2; color: #991b1b; }
+    .badge.deleted  { background: #fee2e2; color: #991b1b; }
+    .badge.processed{ background: #dcfce7; color: #166534; }
+    .badge.pending  { background: #e0e7ff; color: #3730a3; }
+    .badge.failed   { background: #fee2e2; color: #991b1b; }
+
+    /* Boutons d'action admin */
+    .btn-pause   { background: #fbbf24; color: #78350f; border-color: #fbbf24; }
+    .btn-pause:hover { background: #f59e0b; border-color: #f59e0b; color: #78350f; }
+    .btn-resume  { background: #10b981; color: white; border-color: #10b981; }
+    .btn-resume:hover { background: #059669; border-color: #059669; color: white; }
+    .btn-danger  { background: #ef4444; color: white; border-color: #ef4444; }
+    .btn-danger:hover { background: #dc2626; border-color: #dc2626; color: white; }
   </style>
 </head>
 <body>
@@ -1615,7 +1678,7 @@
 
   <!-- ====================== FOOTER ====================== -->
   <footer class="footer">
-    <div>Annuaire YOUPI<span style="color:var(--teal-700)">®</span> · <span id="footer-version">v0.13 — 2026</span></div>
+    <div>Annuaire YOUPI<span style="color:var(--teal-700)">®</span> · <span id="footer-version">v0.15 — 2026</span></div>
     <div class="mt-16 text-xs">Conçu pour les entreprises ultra-marines · Martinique 🇲🇶 · Guadeloupe 🇬🇵 · Guyane 🇬🇫</div>
     <div class="footer-admin">
       <a onclick="openLoginAdmin()" style="cursor:pointer">Administration</a>
@@ -1643,7 +1706,7 @@
 
   const APP = {
     name: 'Annuaire YOUPI',
-    version: 'v0.13 — 2026',
+    version: 'v0.15 — 2026',
     BACKEND_URL: 'https://script.google.com/macros/s/AKfycbzQNSOAGCJp1QmZU0IE1FYiKmKCcGgTUpqKa3RJG9lwiAND_EC5dGdbh2XCu26ZTMoxtw/exec'
   };
 
@@ -2935,15 +2998,17 @@
             <h1>Entreprises</h1>
             <button class="btn btn-secondary btn-sm" onclick="renderAdminCompanies()">↻ Rafraîchir</button>
           </div>
-          <div class="card">
-            <div class="form-grid mb-12">
-              <div><label>Filtrer par région</label><select id="filter-region"><option value="">Toutes</option></select></div>
-              <div><label>Filtrer par statut Chatling</label><select id="filter-chatling">
-                <option value="">Tous</option><option>processed</option><option>pending</option><option>failed</option>
-              </select></div>
-            </div>
-            <div id="companies-table"><p class="text-muted">Chargement…</p></div>
+
+          <div id="companies-chips" class="filter-chips"></div>
+
+          <div class="form-grid mb-12" style="grid-template-columns:1fr 1fr; gap:10px;">
+            <div><label>Région</label><select id="filter-region"><option value="">Toutes</option></select></div>
+            <div><label>Statut Chatling</label><select id="filter-chatling">
+              <option value="">Tous</option><option>processed</option><option>pending</option><option>paused</option><option>failed</option><option>deleted</option>
+            </select></div>
           </div>
+
+          <div id="companies-table"><p class="text-muted">Chargement…</p></div>
         </section>
       </div>
     `;
@@ -2951,51 +3016,158 @@
     const r = await api('listCompanies', { token: state.user.token });
     if (!r.ok) { document.getElementById('companies-table').innerHTML = `<p>${esc(r.error)}</p>`; return; }
     window._adminCompanies = r.companies;
+    window._adminCompaniesFilter = window._adminCompaniesFilter || 'actif';
 
     // Remplir filtre régions
-    const regions = [...new Set(r.companies.map(c => c.region))];
-    document.getElementById('filter-region').innerHTML = '<option value="">Toutes</option>' + regions.map(r => `<option>${esc(r)}</option>`).join('');
+    const regions = [...new Set(r.companies.map(c => c.region))].filter(Boolean);
+    document.getElementById('filter-region').innerHTML = '<option value="">Toutes</option>' + regions.map(rg => `<option>${esc(rg)}</option>`).join('');
     document.getElementById('filter-region').onchange = renderCompaniesTable;
     document.getElementById('filter-chatling').onchange = renderCompaniesTable;
 
     renderCompaniesTable();
   }
 
+  function setCompaniesFilter(status) {
+    window._adminCompaniesFilter = status;
+    renderCompaniesTable();
+  }
+
   function renderCompaniesTable() {
-    const rf = document.getElementById('filter-region').value;
-    const cf = document.getElementById('filter-chatling').value;
-    let list = window._adminCompanies || [];
+    const all = window._adminCompanies || [];
+    const statusFilter = window._adminCompaniesFilter || 'actif';
+    const rf = document.getElementById('filter-region') ? document.getElementById('filter-region').value : '';
+    const cf = document.getElementById('filter-chatling') ? document.getElementById('filter-chatling').value : '';
+
+    // Compter par statut
+    const counts = {
+      all: all.length,
+      actif: all.filter(c => c.statut === 'actif').length,
+      paused: all.filter(c => c.statut === 'paused').length,
+      archive: all.filter(c => c.statut === 'archive').length
+    };
+
+    // Render chips
+    const chips = [
+      { key: 'actif',  label: 'Actives',    count: counts.actif },
+      { key: 'paused', label: 'En pause',   count: counts.paused },
+      { key: 'archive',label: 'Supprimées', count: counts.archive },
+      { key: 'all',    label: 'Toutes',     count: counts.all }
+    ];
+    const chipsHTML = chips.map(ch => `
+      <button class="chip ${statusFilter === ch.key ? 'active' : ''}" onclick="setCompaniesFilter('${ch.key}')">
+        ${ch.label}<span class="chip-count">${ch.count}</span>
+      </button>
+    `).join('');
+    document.getElementById('companies-chips').innerHTML = chipsHTML;
+
+    // Filtrer
+    let list = all.slice();
+    if (statusFilter !== 'all') list = list.filter(c => c.statut === statusFilter);
     if (rf) list = list.filter(c => c.region === rf);
     if (cf) list = list.filter(c => c.chatling_status === cf);
 
+    // Trier : plus récentes en premier
+    list.sort((a, b) => String(b.date_inscription || '').localeCompare(String(a.date_inscription || '')));
+
+    if (list.length === 0) {
+      document.getElementById('companies-table').innerHTML = `<div class="card"><p class="text-muted">Aucune entreprise ne correspond à ce filtre.</p></div>`;
+      return;
+    }
+
+    // Render liste (cards expansibles pour rester cohérent avec le reste de l'app)
     const html = `
-      <div class="table-wrap"><table class="data">
-        <thead><tr>
-          <th>ID</th><th>Entreprise</th><th>Secteur</th><th>Région</th><th>Chatling</th><th>Inscrite</th><th>Statut</th><th></th>
-        </tr></thead>
-        <tbody>
-          ${list.map(c => `
-            <tr>
-              <td data-label="ID" class="mono">${esc(c.id)}</td>
-              <td data-label="Entreprise"><strong>${esc(c.nom_entreprise)}</strong><br><span class="text-xs text-muted">${esc(c.ville)} · ${esc(c.email)}</span></td>
-              <td data-label="Secteur">${esc(c.secteur)}</td>
-              <td data-label="Région">${esc(c.region)}</td>
-              <td data-label="Chatling"><span class="badge ${esc(c.chatling_status)}">${esc(c.chatling_status)}</span></td>
-              <td data-label="Inscrite">${fmtDate(c.date_inscription)}</td>
-              <td data-label="Statut"><span class="badge ${esc(c.statut)}">${esc(c.statut)}</span></td>
-              <td data-label="">
-                <div class="row-actions">
-                  <button class="btn btn-ghost btn-sm" onclick="adminViewCompany('${esc(c.id)}')">Voir</button>
-                  <button class="btn btn-secondary btn-sm" onclick="adminReprocess('${esc(c.id)}')">↻ IA</button>
+      <div class="expand-list">
+        ${list.map(c => {
+          const isPaused = c.statut === 'paused';
+          const isArchived = c.statut === 'archive';
+          const isActive = c.statut === 'actif';
+          return `
+          <div class="expand-row" id="cmpyrow-${esc(c.id)}">
+            <div class="expand-row-header" onclick="toggleCompanyDetails('${esc(c.id)}')">
+              <div class="expand-row-main">
+                <div class="expand-row-title">${esc(c.nom_entreprise)}</div>
+                <div class="expand-row-meta">
+                  <span class="text-xs mono">${esc(c.id)}</span>
+                  <span class="badge ${esc(c.statut)}">${esc(c.statut)}</span>
+                  <span class="badge ${esc(c.chatling_status)}">${esc(c.chatling_status)}</span>
+                  <span class="text-xs text-muted">${esc(c.region)} · ${esc(c.secteur || '—')} · ${esc(c.ville || '—')}</span>
                 </div>
-              </td>
-            </tr>
-          `).join('')}
-          ${list.length === 0 ? '<tr><td colspan="8" style="text-align:center;padding:24px">Aucune entreprise.</td></tr>' : ''}
-        </tbody>
-      </table></div>
+              </div>
+              <span class="expand-row-chevron">▾</span>
+            </div>
+            <div class="expand-row-body" id="cmpydetails-${esc(c.id)}">
+              <div class="expand-section">
+                <h3>Contacts</h3>
+                <div class="text-sm" style="line-height:1.8">
+                  <div><strong>Email :</strong> ${esc(c.email) || '—'}</div>
+                  <div><strong>Téléphone :</strong> ${esc(c.telephone) || '—'}</div>
+                  <div><strong>Site web :</strong> ${c.site_web ? `<a href="${esc(c.site_web)}" target="_blank">${esc(c.site_web)}</a>` : '—'}</div>
+                </div>
+              </div>
+              <div class="expand-section">
+                <h3>Métadonnées</h3>
+                <div class="text-sm" style="line-height:1.8">
+                  <div><strong>Inscrite le :</strong> ${fmtDate(c.date_inscription)}</div>
+                  <div><strong>Dernier push Chatling :</strong> ${fmtDate(c.chatling_processed_at) || '—'}</div>
+                  <div><strong>Source ID Chatling :</strong> <span class="mono text-xs">${esc(c.chatling_source_id) || '—'}</span></div>
+                </div>
+              </div>
+              <div class="expand-actions" style="flex-wrap:wrap;justify-content:flex-start">
+                <button class="btn btn-primary btn-sm" onclick="event.stopPropagation();adminViewCompany('${esc(c.id)}')">📄 Voir la fiche complète</button>
+                ${isActive ? `<button class="btn btn-secondary btn-sm" onclick="event.stopPropagation();adminReprocess('${esc(c.id)}')">↻ Régénérer IA</button>` : ''}
+                ${isActive ? `<button class="btn btn-pause btn-sm" onclick="event.stopPropagation();adminPauseCompany('${esc(c.id)}')">⏸ Mettre en pause</button>` : ''}
+                ${isPaused ? `<button class="btn btn-resume btn-sm" onclick="event.stopPropagation();adminResumeCompany('${esc(c.id)}')">▶ Réactiver</button>` : ''}
+                ${!isArchived ? `<button class="btn btn-danger btn-sm" onclick="event.stopPropagation();adminDeleteCompany('${esc(c.id)}')">🗑 Supprimer définitivement</button>` : ''}
+              </div>
+            </div>
+          </div>`;
+        }).join('')}
+      </div>
     `;
     document.getElementById('companies-table').innerHTML = html;
+  }
+
+  function toggleCompanyDetails(id) {
+    const row = document.getElementById('cmpyrow-' + id);
+    if (!row) return;
+    const isOpen = row.classList.contains('expanded');
+    document.querySelectorAll('#companies-table .expand-row.expanded').forEach(r => {
+      if (r.id !== row.id) r.classList.remove('expanded');
+    });
+    row.classList.toggle('expanded', !isOpen);
+  }
+
+  async function adminPauseCompany(id) {
+    if (!confirm("Mettre cette entreprise EN PAUSE ?\n\n• Sa fiche et ses pages services seront retirées de la base IA Chatling\n• L'IA cessera de la recommander\n• La fiche reste conservée et peut être réactivée à tout moment\n\nContinuer ?")) return;
+    showLoader('Mise en pause…');
+    const r = await api('pauseCompany', { token: state.user.token, company_id: id });
+    hideLoader();
+    if (!r.ok) return toast('error', r.error);
+    toast('success', 'Entreprise mise en pause (' + (r.paused_pages || 0) + ' page(s) services aussi)');
+    if (state.view === 'admin-company-detail') navigate('admin-companies');
+    else renderAdminCompanies();
+  }
+
+  async function adminResumeCompany(id) {
+    if (!confirm("Réactiver cette entreprise ?\n\nSa fiche et ses pages services seront re-poussées dans Chatling. L'IA pourra à nouveau la recommander.")) return;
+    showLoader('Réactivation…');
+    const r = await api('resumeCompany', { token: state.user.token, company_id: id });
+    hideLoader();
+    if (!r.ok) return toast('error', r.error);
+    toast('success', 'Entreprise réactivée (' + (r.resumed_pages || 0) + ' page(s) services aussi)');
+    if (state.view === 'admin-company-detail') navigate('admin-companies');
+    else renderAdminCompanies();
+  }
+
+  async function adminDeleteCompany(id) {
+    if (!confirm("⚠️ SUPPRESSION DÉFINITIVE\n\nCette entreprise et toutes ses pages services seront :\n• Supprimées de la base IA Chatling immédiatement\n• Archivées dans le Sheet\n\nCette action est irréversible. Continuer ?")) return;
+    showLoader('Suppression…');
+    const r = await api('deleteCompany', { token: state.user.token, company_id: id });
+    hideLoader();
+    if (!r.ok) return toast('error', r.error);
+    toast('success', 'Entreprise supprimée (Annuaire + base IA)');
+    if (state.view === 'admin-company-detail') navigate('admin-companies');
+    else renderAdminCompanies();
   }
 
   function adminViewCompany(id) {
@@ -3041,7 +3213,10 @@
               </div>
             </div>
             <div class="row-actions">
-              <button class="btn btn-secondary btn-sm" onclick="adminReprocess('${esc(c.id)}')">↻ Rejouer IA + Chatling</button>
+              ${c.statut === 'actif' ? `<button class="btn btn-secondary btn-sm" onclick="adminReprocess('${esc(c.id)}')">↻ Rejouer IA + Chatling</button>` : ''}
+              ${c.statut === 'actif' ? `<button class="btn btn-pause btn-sm" onclick="adminPauseCompany('${esc(c.id)}')">⏸ Mettre en pause</button>` : ''}
+              ${c.statut === 'paused' ? `<button class="btn btn-resume btn-sm" onclick="adminResumeCompany('${esc(c.id)}')">▶ Réactiver</button>` : ''}
+              ${c.statut !== 'archive' ? `<button class="btn btn-danger btn-sm" onclick="adminDeleteCompany('${esc(c.id)}')">🗑 Supprimer</button>` : ''}
             </div>
           </div>
 
@@ -3113,6 +3288,7 @@
             <h1>Pages services</h1>
             <button class="btn btn-secondary btn-sm" onclick="renderAdminPages()">↻ Rafraîchir</button>
           </div>
+          <div id="admin-pages-chips" class="filter-chips"></div>
           <div id="admin-pages-list"><p class="text-muted">Chargement…</p></div>
         </section>
       </div>
@@ -3128,25 +3304,62 @@
     if (!pagesRes.ok) { wrap.innerHTML = `<div class="card"><p class="text-muted">${esc(pagesRes.error)}</p></div>`; return; }
 
     // Map company_id → nom_entreprise
-    const companyMap = {};
+    window._adminPagesCompanyMap = {};
     if (companiesRes && companiesRes.ok) {
-      companiesRes.companies.forEach(c => { companyMap[c.id] = c.nom_entreprise; });
+      companiesRes.companies.forEach(c => { window._adminPagesCompanyMap[c.id] = c.nom_entreprise; });
       window._adminCompanies = companiesRes.companies; // cache pour adminViewCompany
     }
 
-    if (pagesRes.pages.length === 0) {
-      wrap.innerHTML = `<div class="card"><p class="text-muted">Aucune page service créée pour l'instant.</p></div>`;
+    window._adminAllPages = pagesRes.pages;
+    window._adminPagesFilter = window._adminPagesFilter || 'actif';
+
+    renderAdminPagesList();
+  }
+
+  function setPagesFilter(status) {
+    window._adminPagesFilter = status;
+    renderAdminPagesList();
+  }
+
+  function renderAdminPagesList() {
+    const all = window._adminAllPages || [];
+    const companyMap = window._adminPagesCompanyMap || {};
+    const filter = window._adminPagesFilter || 'actif';
+
+    // Compter par statut
+    const counts = {
+      all: all.length,
+      actif: all.filter(p => p.statut === 'actif').length,
+      archive: all.filter(p => p.statut === 'archive').length
+    };
+
+    const chips = [
+      { key: 'actif',   label: 'Actives',    count: counts.actif },
+      { key: 'archive', label: 'Supprimées', count: counts.archive },
+      { key: 'all',     label: 'Toutes',     count: counts.all }
+    ];
+    document.getElementById('admin-pages-chips').innerHTML = chips.map(ch => `
+      <button class="chip ${filter === ch.key ? 'active' : ''}" onclick="setPagesFilter('${ch.key}')">
+        ${ch.label}<span class="chip-count">${ch.count}</span>
+      </button>
+    `).join('');
+
+    // Filtrer
+    let list = all.slice();
+    if (filter !== 'all') list = list.filter(p => p.statut === filter);
+
+    // Tri : récentes d'abord
+    list.sort((a, b) => String(b.date_creation || '').localeCompare(String(a.date_creation || '')));
+
+    const wrap = document.getElementById('admin-pages-list');
+    if (list.length === 0) {
+      wrap.innerHTML = `<div class="card"><p class="text-muted">Aucune page ne correspond à ce filtre.</p></div>`;
       return;
     }
 
-    // Tri : pages les plus récentes en premier
-    const sorted = pagesRes.pages.slice().sort((a, b) =>
-      String(b.date_creation).localeCompare(String(a.date_creation))
-    );
-
     wrap.innerHTML = `
       <div class="expand-list">
-        ${sorted.map(p => {
+        ${list.map(p => {
           const companyName = companyMap[p.company_id] || '(entreprise inconnue)';
           return `
           <div class="expand-row" id="adminrow-${esc(p.id)}">
@@ -3155,6 +3368,7 @@
                 <div class="expand-row-title">${esc(p.titre_service)}</div>
                 <div class="expand-row-meta">
                   <span class="text-sm" style="font-weight:600;color:var(--teal-800)">${esc(companyName)}</span>
+                  <span class="badge ${esc(p.statut)}">${esc(p.statut)}</span>
                   <span class="badge ${esc(p.chatling_status)}">${esc(p.chatling_status)}</span>
                   <span class="text-xs text-muted">${fmtDate(p.date_creation)}</span>
                 </div>
@@ -3180,7 +3394,7 @@
                 </div>
               </div>
               <div class="expand-actions">
-                <button class="btn btn-secondary btn-sm" onclick="adminReprocessPage('${esc(p.id)}')">↻ Régénérer IA + Chatling</button>
+                ${p.statut === 'actif' ? `<button class="btn btn-secondary btn-sm" onclick="event.stopPropagation();adminReprocessPage('${esc(p.id)}')">↻ Régénérer IA + Chatling</button>` : ''}
               </div>
             </div>
           </div>`;
