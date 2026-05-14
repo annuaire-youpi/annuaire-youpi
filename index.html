@@ -2473,6 +2473,110 @@
     }
 
     /* ============================================================
+       v2.2.0 — BLOC FACEBOOK (publication + boost)
+       ============================================================ */
+    .fb-block {
+      background: linear-gradient(180deg, #f0f4ff 0%, #fff 100%);
+      border: 1px solid #bfdbfe;
+      border-radius: 12px;
+      padding: 16px;
+      margin-top: 16px;
+    }
+    .fb-block-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 700;
+      font-size: 14px;
+      color: #1d4ed8;
+      margin-bottom: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .fb-block-icon { font-size: 18px; }
+    .fb-status {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      padding: 12px 14px;
+      border-radius: 8px;
+      margin-bottom: 12px;
+      background: #fff;
+      border: 1px solid var(--border);
+    }
+    .fb-status-ok      { border-left: 4px solid #10b981; }
+    .fb-status-warn    { border-left: 4px solid #f59e0b; background: #fefce8; }
+    .fb-status-err     { border-left: 4px solid #ef4444; background: #fef2f2; }
+    .fb-status-pending { border-left: 4px solid #6366f1; }
+    .fb-status-icon { font-size: 22px; flex-shrink: 0; line-height: 1.2; }
+    .fb-status-text { flex: 1; min-width: 0; }
+    .fb-status-text strong { display: block; font-size: 14px; color: var(--text); }
+    .fb-status-sub { font-size: 12.5px; color: var(--text-2); margin-top: 4px; line-height: 1.4; }
+    .btn-fb-view {
+      display: inline-block;
+      background: #1877f2;
+      color: #fff !important;
+      padding: 10px 16px;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 13px;
+      border: 1px solid #1877f2;
+      margin-bottom: 12px;
+    }
+    .btn-fb-view:hover { background: #166fe5; border-color: #166fe5; }
+    .fb-boost {
+      background: linear-gradient(135deg, #fef3c7, #fde68a);
+      border: 1px solid #fcd34d;
+      border-radius: 8px;
+      padding: 14px;
+      margin-top: 8px;
+    }
+    .fb-boost-head {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      margin-bottom: 10px;
+    }
+    .fb-boost-icon { font-size: 24px; flex-shrink: 0; }
+    .fb-boost-head strong { display: block; font-size: 14px; color: #78350f; }
+    .fb-boost-sub { font-size: 12px; color: #92400e; margin-top: 2px; line-height: 1.4; }
+    .btn-fb-boost {
+      display: inline-block;
+      background: #ea580c;
+      color: #fff !important;
+      padding: 10px 16px;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: 700;
+      font-size: 13px;
+      border: 1px solid #ea580c;
+      width: 100%;
+      text-align: center;
+      box-sizing: border-box;
+    }
+    .btn-fb-boost:hover { background: #c2410c; border-color: #c2410c; }
+    .fb-admin-actions {
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px dashed var(--border);
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    @media (max-width: 600px) {
+      .fb-block { padding: 12px; }
+      .fb-status { padding: 10px 12px; gap: 10px; }
+      .fb-status-icon { font-size: 20px; }
+      .fb-status-text strong { font-size: 13px; }
+      .fb-status-sub { font-size: 12px; }
+      .btn-fb-view { width: 100%; text-align: center; }
+      .fb-boost { padding: 12px; }
+      .fb-boost-head { gap: 8px; }
+      .fb-boost-icon { font-size: 20px; }
+    }
+
+    /* ============================================================
        v2.0.1 — FIX MOBILE Cards expandues (pages services admin)
        URLs longues, IDs, markdown qui débordent
        ============================================================ */
@@ -2693,7 +2797,7 @@
 
   <!-- ====================== FOOTER ====================== -->
   <footer class="footer">
-    <div>Annuaire YOUPI<span style="color:var(--teal-700)">®</span> · <a id="footer-version-link" onclick="navigate('changelog')" style="cursor:pointer;text-decoration:underline"><span id="footer-version">v2.1.2</span></a> · <a onclick="navigate('changelog')" style="cursor:pointer;text-decoration:underline">📰 Nouveautés</a></div>
+    <div>Annuaire YOUPI<span style="color:var(--teal-700)">®</span> · <a id="footer-version-link" onclick="navigate('changelog')" style="cursor:pointer;text-decoration:underline"><span id="footer-version">v2.2.0</span></a> · <a onclick="navigate('changelog')" style="cursor:pointer;text-decoration:underline">📰 Nouveautés</a></div>
     <div class="mt-16 text-xs">Conçu pour les entreprises ultra-marines · Martinique 🇲🇶 · Guadeloupe 🇬🇵 · Guyane 🇬🇫</div>
     <div class="footer-admin">
       <a onclick="openLoginAdmin()" style="cursor:pointer">Administration</a>
@@ -2721,7 +2825,7 @@
 
   const APP = {
     name: 'Annuaire YOUPI',
-    version: 'v2.1.2',
+    version: 'v2.2.0',
     versionDate: '14 mai 2026',
     BACKEND_URL: 'https://script.google.com/macros/s/AKfycbzQNSOAGCJp1QmZU0IE1FYiKmKCcGgTUpqKa3RJG9lwiAND_EC5dGdbh2XCu26ZTMoxtw/exec'
   };
@@ -2733,6 +2837,18 @@
   //  → Pour ajouter une nouvelle version, demander à Claude.
   // ------------------------------------------------------------
   const CHANGELOG = [
+    {
+      version: 'v2.2.0',
+      date: '14 mai 2026',
+      title: "Publications Facebook automatiques + Boost Facebook Ads",
+      entries: [
+        { type: 'feature', text: "Chaque nouvelle entreprise inscrite à l'Annuaire YOUPI® bénéficie automatiquement d'une publication Facebook professionnelle sur la page officielle de l'Annuaire YOUPI® (plus de 50 000 abonnés ultra-marins). La publication est rédigée par notre IA et inclut le nom, les services, les coordonnées et un appel à l'action vers l'agent IA." },
+        { type: 'feature', text: "Chaque nouvelle page créée par une entreprise (service, article boutique, publication Instagram, annonce immobilière) déclenche également une publication Facebook dédiée pour mettre l'offre en avant auprès de la communauté." },
+        { type: 'feature', text: "Le lien de chaque publication Facebook est désormais affiché directement dans le tableau de bord de l'entreprise et sur chaque page service. Les entreprises peuvent ainsi vérifier que leur communication est bien publiée et la partager facilement." },
+        { type: 'feature', text: "Nouveau bouton « ⚡ Booster avec Facebook Ads » sur chaque publication : permet aux entreprises de booster leur visibilité et de toucher des dizaines de milliers de personnes locales supplémentaires grâce à la publicité Facebook, à partir de quelques euros par jour." },
+        { type: 'design',  text: "Affichage clair du statut de la publication Facebook : publiée, en attente, ou en cours de création. Si une image manque, l'entreprise est invitée à en ajouter une pour qu'une publication soit créée." }
+      ]
+    },
     {
       version: 'v2.1.2',
       date: '14 mai 2026',
@@ -3024,6 +3140,141 @@
       const d = new Date(s);
       return d.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' });
     } catch { return s; }
+  }
+
+  // ============================================================
+  //  BLOC FACEBOOK (publication + boost) — affichage réutilisable
+  //  Utilisé sur les cards d'entreprise et de page, espace pro + admin
+  // ============================================================
+  const STRIPE_BOOST_URL = 'https://buy.stripe.com/8x200lbtIbge3H00Ow5sA01';
+
+  function buildStripeBoostUrlFront(companyId, pageId) {
+    let ref = companyId || 'unknown';
+    if (pageId) ref += '__' + pageId;
+    return STRIPE_BOOST_URL + '?ref=' + encodeURIComponent(ref);
+  }
+
+  /**
+   * Rend un bloc "Publication Facebook + Boost" pour une entité.
+   * @param {Object} opts - { fbUrl, fbStatus, companyId, pageId, isAdmin, entityType }
+   *   fbUrl       : URL du post FB (ou vide si pas publié)
+   *   fbStatus    : statut FB ('published', 'skipped_no_image', 'error_xxx', ...)
+   *   companyId   : ID entreprise (toujours requis)
+   *   pageId      : ID page (uniquement si entityType === 'page')
+   *   isAdmin     : true pour afficher bouton Republier
+   *   entityType  : 'company' ou 'page'
+   */
+  function renderFacebookBlock(opts) {
+    const fbUrl     = opts.fbUrl || '';
+    const fbStatus  = opts.fbStatus || '';
+    const companyId = opts.companyId;
+    const pageId    = opts.pageId || '';
+    const isAdmin   = !!opts.isAdmin;
+    const entityType = opts.entityType || 'company';
+
+    const boostUrl = buildStripeBoostUrlFront(companyId, pageId);
+
+    // Détermine le bandeau haut selon le statut
+    let topHtml;
+    if (fbUrl) {
+      topHtml = `
+        <div class="fb-status fb-status-ok">
+          <span class="fb-status-icon">✅</span>
+          <div class="fb-status-text">
+            <strong>Publiée sur l'Annuaire YOUPI<sup>®</sup> Facebook</strong>
+            <div class="fb-status-sub">Votre publication est en ligne et visible par tous les visiteurs.</div>
+          </div>
+        </div>
+        <a href="${esc(fbUrl)}" target="_blank" rel="noopener" class="btn btn-fb-view">
+          🔗 Voir la publication Facebook
+        </a>
+      `;
+    } else if (fbStatus === 'skipped_no_image') {
+      topHtml = `
+        <div class="fb-status fb-status-warn">
+          <span class="fb-status-icon">⚠️</span>
+          <div class="fb-status-text">
+            <strong>Publication Facebook non créée</strong>
+            <div class="fb-status-sub">Une image est nécessaire pour publier. Ajoutez une image à votre fiche${entityType === 'page' ? '/contenu' : ''} pour qu'une publication soit créée.</div>
+          </div>
+        </div>
+      `;
+    } else if (fbStatus && fbStatus.indexOf('error') === 0) {
+      topHtml = `
+        <div class="fb-status fb-status-err">
+          <span class="fb-status-icon">❌</span>
+          <div class="fb-status-text">
+            <strong>Publication Facebook en attente</strong>
+            <div class="fb-status-sub">${isAdmin ? esc(fbStatus) : 'Notre équipe va relancer la publication.'}</div>
+          </div>
+        </div>
+      `;
+    } else {
+      topHtml = `
+        <div class="fb-status fb-status-pending">
+          <span class="fb-status-icon">⏳</span>
+          <div class="fb-status-text">
+            <strong>Publication Facebook en cours…</strong>
+            <div class="fb-status-sub">Patientez quelques secondes et rafraîchissez la page.</div>
+          </div>
+        </div>
+      `;
+    }
+
+    // Bandeau boost (toujours affiché, encourage le boost)
+    const boostHtml = `
+      <div class="fb-boost">
+        <div class="fb-boost-head">
+          <span class="fb-boost-icon">🚀</span>
+          <div>
+            <strong>Booster cette publication</strong>
+            <div class="fb-boost-sub">Touchez +50 000 personnes locales grâce à Facebook Ads à partir de quelques euros par jour.</div>
+          </div>
+        </div>
+        <a href="${esc(boostUrl)}" target="_blank" rel="noopener" class="btn btn-fb-boost">
+          ⚡ Booster avec Facebook Ads
+        </a>
+      </div>
+    `;
+
+    // Bouton admin "Republier"
+    const adminBtn = isAdmin ? `
+      <div class="fb-admin-actions">
+        <button class="btn btn-secondary btn-sm" onclick="adminRepublishFb('${entityType}', '${esc(entityType === 'company' ? companyId : pageId)}')">
+          ↻ Republier sur Facebook
+        </button>
+      </div>
+    ` : '';
+
+    return `
+      <div class="fb-block">
+        <div class="fb-block-title">
+          <span class="fb-block-icon">📘</span>
+          <span>Publication Facebook</span>
+        </div>
+        ${topHtml}
+        ${boostHtml}
+        ${adminBtn}
+      </div>
+    `;
+  }
+
+  // Action admin : republier sur Facebook
+  async function adminRepublishFb(entityType, entityId) {
+    if (!confirm("Relancer la publication Facebook pour cet élément ?\n\nUne nouvelle publication sera créée sur la page Facebook de l'Annuaire YOUPI®.")) return;
+    showLoader('Republication Facebook…');
+    const action = entityType === 'company' ? 'republishFacebookCompany' : 'republishFacebookPage';
+    const payload = { token: state.user.token };
+    if (entityType === 'company') payload.company_id = entityId;
+    else payload.page_id = entityId;
+    const r = await api(action, payload);
+    hideLoader();
+    if (!r.ok) return toast('error', r.error || 'Échec de la republication');
+    toast('success', 'Publication Facebook créée ✅');
+    // Rafraîchir la vue admin courante
+    if (state.view === 'admin-company-detail') renderAdminCompanyDetail({ company_id: entityId });
+    else if (state.view === 'admin-companies') renderAdminCompanies();
+    else if (state.view === 'admin-pages') renderAdminPages();
   }
   function saveSession() {
     try {
@@ -3839,6 +4090,13 @@
               <div class="field-full"><label>Services</label><div style="white-space:pre-wrap">${esc(c.liste_services)}</div></div>
               <div class="field-full"><label>Horaires</label><div style="white-space:pre-wrap">${esc(c.horaires)}</div></div>
             </div>
+            ${renderFacebookBlock({
+              fbUrl: c.facebook_post_url,
+              fbStatus: c.facebook_status,
+              companyId: c.id,
+              isAdmin: false,
+              entityType: 'company'
+            })}
             <div class="modal-actions">
               <button class="btn btn-primary" onclick="navigate('pro-edit')">Modifier mes infos</button>
             </div>
@@ -3972,6 +4230,14 @@
                 <h3>Description que vous avez fournie</h3>
                 <div class="md-preview" style="max-height:200px">${esc(p.description_detaillee)}</div>
               </div>
+              ${renderFacebookBlock({
+                fbUrl: p.facebook_post_url,
+                fbStatus: p.facebook_status,
+                companyId: state.user.id,
+                pageId: p.id,
+                isAdmin: false,
+                entityType: 'page'
+              })}
               <div class="expand-actions">
                 <button class="btn btn-ghost btn-sm" style="color:var(--error)" onclick="deleteMyPage('${esc(p.id)}')">Supprimer cette page</button>
               </div>
@@ -4715,6 +4981,13 @@
               <div><label>Facebook</label><div>${c.facebook ? `<a href="${esc(c.facebook)}" target="_blank">${esc(c.facebook)}</a>` : '—'}</div></div>
               <div><label>Instagram</label><div>${c.instagram ? `<a href="${esc(c.instagram)}" target="_blank">${esc(c.instagram)}</a>` : '—'}</div></div>
             </div>
+            ${renderFacebookBlock({
+              fbUrl: c.facebook_post_url,
+              fbStatus: c.facebook_status,
+              companyId: c.id,
+              isAdmin: true,
+              entityType: 'company'
+            })}
           </div>
 
           <div class="card">
@@ -4913,6 +5186,14 @@
                   <span class="field-value">${fmtDate(p.chatling_processed_at)}</span>
                 </div>
               </div>
+              ${renderFacebookBlock({
+                fbUrl: p.facebook_post_url,
+                fbStatus: p.facebook_status,
+                companyId: p.company_id,
+                pageId: p.id,
+                isAdmin: true,
+                entityType: 'page'
+              })}
               <div class="expand-actions">
                 ${p.statut === 'actif' ? `<button class="btn btn-secondary btn-sm" onclick="event.stopPropagation();adminReprocessPage('${esc(p.id)}')">↻ Régénérer IA + Chatling</button>` : ''}
               </div>
@@ -5028,7 +5309,8 @@
       { key: 'service',    icon: '🛠️', label: 'Service',                 desc: 'Prestation classique d\'une entreprise.' },
       { key: 'article',    icon: '🛍️', label: 'Article (Boutique)',      desc: 'Produit de boutique en ligne.' },
       { key: 'instagram',  icon: '📸', label: 'Instagram',               desc: 'Publication Instagram en vitrine.' },
-      { key: 'immobilier', icon: '🏠', label: 'Immobilier',              desc: 'Annonce immobilière (vente/location).' }
+      { key: 'immobilier', icon: '🏠', label: 'Immobilier',              desc: 'Annonce immobilière (vente/location).' },
+      { key: 'facebook',   icon: '📘', label: 'Publication Facebook',    desc: 'Texte des posts publiés sur la page Facebook YOUPI.' }
     ];
 
     const html = `
@@ -5145,6 +5427,17 @@
         </div>
       </div>
 
+      <!-- =========  SECTION 3.5 : CONNEXION FACEBOOK  ========= -->
+      <div class="card">
+        <h2 style="margin-top:0">📘 Connexion Facebook</h2>
+        <p class="text-muted" style="margin-top:6px">Vérifie que l'application est bien connectée à la page Facebook de l'Annuaire YOUPI®.</p>
+        <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:12px">
+          <button type="button" class="btn btn-primary" onclick="testFacebookConnection()">🧪 Tester la connexion</button>
+          <span class="text-muted" style="font-size:13px">Une requête en lecture seule est faite sur l'API Facebook (aucune publication).</span>
+        </div>
+        <div id="fb-test-result" style="margin-top:12px"></div>
+      </div>
+
       <!-- =========  SECTION 4 : STATISTIQUES  ========= -->
       <div class="card">
         <h2 style="margin-top:0">📊 Statistiques d'usage (côté Annuaire YOUPI®)</h2>
@@ -5217,7 +5510,9 @@
       { key: 'prompt_service',    title: '🛠️ Service',                  desc: 'Génère le markdown pour une prestation/service.',           vars: '{titre}, {description}, {prix}, {lien_externe}, {image_url}, {company_nom}, {company_telephone}, {company_adresse}, {company_horaires}, {company_description}, {company_secteur}, {company_email}, {company_ville}, {company_site}' },
       { key: 'prompt_article',    title: '🛍️ Article (Boutique)',       desc: 'Génère le markdown e-commerce pour un produit de boutique.', vars: '{titre}, {description}, {prix}, {lien_externe}, {image_url}, {company_nom}, {company_telephone}, {company_adresse}, {company_horaires}, {company_description}' },
       { key: 'prompt_instagram',  title: '📸 Instagram',                 desc: 'Génère le markdown pour une publication Instagram à mettre en vitrine.', vars: '{titre}, {description}, {lien_externe}, {image_url}, {company_nom}, {company_telephone}, {company_adresse}, {company_horaires}, {company_description}' },
-      { key: 'prompt_immobilier', title: '🏠 Immobilier',                desc: 'Génère la fiche immobilière (vente ou location) à partir d\'une annonce.', vars: '{titre}, {description}, {prix}, {lien_externe}, {image_url}, {company_nom}, {company_telephone}, {company_adresse}, {company_horaires}, {company_description}' }
+      { key: 'prompt_immobilier', title: '🏠 Immobilier',                desc: 'Génère la fiche immobilière (vente ou location) à partir d\'une annonce.', vars: '{titre}, {description}, {prix}, {lien_externe}, {image_url}, {company_nom}, {company_telephone}, {company_adresse}, {company_horaires}, {company_description}' },
+      { key: 'prompt_facebook_company', title: '📘 Post Facebook — Inscription entreprise', desc: 'Texte du post Facebook publié quand une nouvelle entreprise s\'inscrit.', vars: '{company_nom}, {company_telephone}, {company_email}, {company_adresse}, {company_ville}, {company_horaires}, {company_description}, {company_secteur}, {company_site}, {company_facebook}, {company_instagram}, {company_services}, {company_image}' },
+      { key: 'prompt_facebook_service', title: '📘 Post Facebook — Service / Article / Instagram / Immobilier', desc: 'Texte du post Facebook publié pour une nouvelle page (tous types confondus).', vars: '{titre}, {description}, {prix}, {lien_externe}, {image_url}, {company_nom}, {company_telephone}, {company_ville}, {company_horaires}, {company_description}' }
     ];
     return promptCards.map(pc => `
       <div class="prompt-block">
@@ -5344,6 +5639,33 @@
     `;
   }
 
+  async function testFacebookConnection() {
+    const target = document.getElementById('fb-test-result');
+    target.innerHTML = `<span class="text-muted">⏳ Test de la connexion à Facebook…</span>`;
+    const r = await api('testFacebookConnection', { token: state.user.token });
+    if (!r.ok) {
+      target.innerHTML = `
+        <div class="ai-test-fail">
+          <strong>❌ Connexion Facebook échouée</strong>
+          <div style="margin-top:6px">${esc(r.error || 'Erreur inconnue')}</div>
+          <div style="margin-top:8px;font-size:12px;color:var(--text-2)">Vérifie que <code>FACEBOOK_PAGE_ID</code> et <code>FACEBOOK_PAGE_TOKEN</code> sont bien définis dans les Script Properties d'Apps Script.</div>
+        </div>
+      `;
+      return;
+    }
+    target.innerHTML = `
+      <div class="ai-test-ok">
+        <strong>✅ Connexion OK</strong>
+        <div style="margin-top:8px;font-size:13px;line-height:1.6">
+          📘 <strong>Page :</strong> ${esc(r.page_name)}<br>
+          🆔 <strong>ID :</strong> <span class="mono">${esc(r.page_id)}</span><br>
+          👥 <strong>Fans :</strong> ${r.fan_count.toLocaleString('fr-FR')}<br>
+          🏷️ <strong>Catégorie :</strong> ${esc(r.category) || '—'}
+        </div>
+      </div>
+    `;
+  }
+
   async function saveAllAiSettings() {
     // 1. Récupération des valeurs
     const models = {
@@ -5351,7 +5673,8 @@
       model_service:    document.getElementById('ai-model-service').value,
       model_article:    document.getElementById('ai-model-article').value,
       model_instagram:  document.getElementById('ai-model-instagram').value,
-      model_immobilier: document.getElementById('ai-model-immobilier').value
+      model_immobilier: document.getElementById('ai-model-immobilier').value,
+      model_facebook:   document.getElementById('ai-model-facebook').value
     };
     const max_tokens  = parseInt(document.getElementById('ai-max-tokens').value, 10);
     const temperature = parseFloat(document.getElementById('ai-temperature').value);
@@ -5373,7 +5696,9 @@
       prompt_service:    document.getElementById('prompt-textarea-prompt_service').value,
       prompt_article:    document.getElementById('prompt-textarea-prompt_article').value,
       prompt_instagram:  document.getElementById('prompt-textarea-prompt_instagram').value,
-      prompt_immobilier: document.getElementById('prompt-textarea-prompt_immobilier').value
+      prompt_immobilier: document.getElementById('prompt-textarea-prompt_immobilier').value,
+      prompt_facebook_company: document.getElementById('prompt-textarea-prompt_facebook_company').value,
+      prompt_facebook_service: document.getElementById('prompt-textarea-prompt_facebook_service').value
     });
     hideLoader();
     if (!r2.ok) return toast('error', r2.error);
