@@ -1751,6 +1751,87 @@
       color: var(--text-2);
       word-break: break-word;
     }
+
+    /* ============================================================
+       v0.19 — Duration cards (durée de visibilité dans le formulaire)
+       ============================================================ */
+    .duration-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      gap: 10px;
+      margin-top: 6px;
+    }
+    .duration-card {
+      display: block;
+      background: var(--card);
+      border: 2px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      cursor: pointer;
+      transition: all .15s ease;
+      position: relative;
+    }
+    .duration-card:hover {
+      border-color: var(--teal-600);
+    }
+    .duration-card input[type="radio"] {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      width: 18px;
+      height: 18px;
+      accent-color: var(--teal-700);
+    }
+    .duration-card:has(input:checked) {
+      border-color: var(--teal-700);
+      background: linear-gradient(135deg, rgba(37,99,235,.04), rgba(37,99,235,.02));
+      box-shadow: var(--shadow);
+    }
+    .duration-card-body { padding-right: 26px; }
+    .duration-card-title {
+      font-weight: 700;
+      font-size: 15px;
+      color: var(--teal-900);
+      margin-bottom: 4px;
+    }
+    .duration-card-desc {
+      font-size: 12px;
+      color: var(--text-2);
+      line-height: 1.4;
+    }
+
+    /* Badges d'expiration sur les cards de pages */
+    .badge-expiration {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 10px;
+      border-radius: 100px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .3px;
+    }
+    .badge-expiration.unlimited {
+      background: #e0e7ff;
+      color: #3730a3;
+    }
+    .badge-expiration.ok {
+      background: #dcfce7;
+      color: #166534;
+    }
+    .badge-expiration.warning {
+      background: #fef3c7;
+      color: #92400e;
+    }
+    .badge-expiration.danger {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+    .badge.expired {
+      background: #e5e7eb;
+      color: #4b5563;
+    }
   </style>
 </head>
 <body>
@@ -1775,7 +1856,7 @@
 
   <!-- ====================== FOOTER ====================== -->
   <footer class="footer">
-    <div>Annuaire YOUPI<span style="color:var(--teal-700)">®</span> · <span id="footer-version">v0.18 — 2026</span></div>
+    <div>Annuaire YOUPI<span style="color:var(--teal-700)">®</span> · <span id="footer-version">v0.19 — 2026</span></div>
     <div class="mt-16 text-xs">Conçu pour les entreprises ultra-marines · Martinique 🇲🇶 · Guadeloupe 🇬🇵 · Guyane 🇬🇫</div>
     <div class="footer-admin">
       <a onclick="openLoginAdmin()" style="cursor:pointer">Administration</a>
@@ -1803,7 +1884,7 @@
 
   const APP = {
     name: 'Annuaire YOUPI',
-    version: 'v0.18 — 2026',
+    version: 'v0.19 — 2026',
     BACKEND_URL: 'https://script.google.com/macros/s/AKfycbzQNSOAGCJp1QmZU0IE1FYiKmKCcGgTUpqKa3RJG9lwiAND_EC5dGdbh2XCu26ZTMoxtw/exec'
   };
 
@@ -2838,6 +2919,7 @@
                 <div class="expand-row-meta">
                   <span class="text-xs" style="font-weight:600;color:${type.color}">${esc(type.label)}</span>
                   <span class="badge ${esc(p.chatling_status)}">${esc(p.chatling_status)}</span>
+                  ${expirationBadge(p)}
                   <span class="text-xs text-muted">créée ${fmtDate(p.date_creation)}</span>
                 </div>
               </div>
@@ -2924,6 +3006,38 @@
       color: '#f59e0b'
     }
   };
+
+  /**
+   * Retourne le HTML d'un badge "Durée de visibilité" pour une page.
+   * - Si page expirée (statut 'expired') : badge gris "Expirée"
+   * - Si pas de date d'expiration : badge bleu "♾️ Illimitée"
+   * - Si > 30 jours restants : badge vert "Expire dans X j"
+   * - Si 7-30 jours restants : badge ambre "Expire dans X j"
+   * - Si < 7 jours restants : badge rouge "Expire dans X j"
+   */
+  function expirationBadge(page) {
+    if (page.statut === 'expired') {
+      return '<span class="badge expired">Expirée</span>';
+    }
+    if (!page.expires_at) {
+      return '<span class="badge-expiration unlimited">♾️ Illimitée</span>';
+    }
+    const exp = new Date(page.expires_at);
+    if (isNaN(exp.getTime())) return '';
+    const now = new Date();
+    const diffMs = exp.getTime() - now.getTime();
+    const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+
+    if (diffDays <= 0) {
+      return '<span class="badge-expiration danger">⏰ Expire aujourd\'hui</span>';
+    }
+    let cls = 'ok';
+    if (diffDays <= 7) cls = 'danger';
+    else if (diffDays <= 30) cls = 'warning';
+
+    const label = diffDays === 1 ? 'Expire demain' : `Expire dans ${diffDays} j`;
+    return `<span class="badge-expiration ${cls}">⏱️ ${label}</span>`;
+  }
 
   function renderProAddPage(params) {
     if (!state.user || state.user.type !== 'company') return navigate('home');
@@ -3045,6 +3159,33 @@
             <input name="image_url" type="url" required placeholder="https://…" />
             <div class="hint">Clic droit sur l'image dans votre boutique → "Copier l'adresse de l'image", puis collez-la ici.</div>
           </div>
+          <div class="field">
+            <label>Durée de visibilité dans l'agent IA <span class="req">*</span></label>
+            <div class="duration-cards">
+              <label class="duration-card">
+                <input type="radio" name="duree_visibilite" value="3m" required />
+                <div class="duration-card-body">
+                  <div class="duration-card-title">3 mois</div>
+                  <div class="duration-card-desc">Idéal pour promos, ventes flash, stock limité</div>
+                </div>
+              </label>
+              <label class="duration-card">
+                <input type="radio" name="duree_visibilite" value="6m" required />
+                <div class="duration-card-body">
+                  <div class="duration-card-title">6 mois</div>
+                  <div class="duration-card-desc">Pour les collections saisonnières</div>
+                </div>
+              </label>
+              <label class="duration-card">
+                <input type="radio" name="duree_visibilite" value="illimitee" required checked />
+                <div class="duration-card-body">
+                  <div class="duration-card-title">♾️ Illimitée</div>
+                  <div class="duration-card-desc">Visible tant que vous le souhaitez</div>
+                </div>
+              </label>
+            </div>
+            <div class="hint">À la fin de cette durée, le produit sera automatiquement retiré de l'agent IA.</div>
+          </div>
         `;
 
       case 'instagram':
@@ -3097,6 +3238,26 @@
             <label>URL de la photo principale du bien <span class="req">*</span></label>
             <input name="image_url" type="url" required placeholder="https://…" />
             <div class="hint">Clic droit sur l'image dans votre annonce → "Copier l'adresse de l'image".</div>
+          </div>
+          <div class="field">
+            <label>Durée de visibilité dans l'agent IA <span class="req">*</span></label>
+            <div class="duration-cards">
+              <label class="duration-card">
+                <input type="radio" name="duree_visibilite" value="6m" required />
+                <div class="duration-card-body">
+                  <div class="duration-card-title">6 mois</div>
+                  <div class="duration-card-desc">Idéal — l'agent IA cessera de proposer le bien à la fin de cette période</div>
+                </div>
+              </label>
+              <label class="duration-card">
+                <input type="radio" name="duree_visibilite" value="illimitee" required checked />
+                <div class="duration-card-body">
+                  <div class="duration-card-title">♾️ Illimitée</div>
+                  <div class="duration-card-desc">Vous gérerez vous-même la suppression quand le bien sera vendu/loué</div>
+                </div>
+              </label>
+            </div>
+            <div class="hint">Une fois le bien vendu ou loué, il sera automatiquement retiré de la base IA pour ne plus être recommandé.</div>
           </div>
         `;
     }
@@ -3558,7 +3719,10 @@
         <section>
           <div class="page-header">
             <h1>Pages services</h1>
-            <button class="btn btn-secondary btn-sm" onclick="renderAdminPages()">↻ Rafraîchir</button>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <button class="btn btn-secondary btn-sm" onclick="adminRunExpirationCheck()">⏰ Vérifier expirations</button>
+              <button class="btn btn-secondary btn-sm" onclick="renderAdminPages()">↻ Rafraîchir</button>
+            </div>
           </div>
           <div id="admin-pages-chips" class="filter-chips"></div>
           <div id="admin-pages-list"><p class="text-muted">Chargement…</p></div>
@@ -3602,11 +3766,13 @@
     const counts = {
       all: all.length,
       actif: all.filter(p => p.statut === 'actif').length,
+      expired: all.filter(p => p.statut === 'expired').length,
       archive: all.filter(p => p.statut === 'archive').length
     };
 
     const chips = [
       { key: 'actif',   label: 'Actives',    count: counts.actif },
+      { key: 'expired', label: 'Expirées',   count: counts.expired },
       { key: 'archive', label: 'Supprimées', count: counts.archive },
       { key: 'all',     label: 'Toutes',     count: counts.all }
     ];
@@ -3644,6 +3810,7 @@
                   <span class="text-sm" style="font-weight:600;color:var(--teal-800)">${esc(companyName)}</span>
                   <span class="badge ${esc(p.statut)}">${esc(p.statut)}</span>
                   <span class="badge ${esc(p.chatling_status)}">${esc(p.chatling_status)}</span>
+                  ${expirationBadge(p)}
                   <span class="text-xs text-muted">${fmtDate(p.date_creation)}</span>
                 </div>
               </div>
@@ -3654,13 +3821,15 @@
                 <h3>Description fournie par l'entreprise</h3>
                 <div class="md-preview" style="max-height:200px">${esc(p.description_detaillee)}</div>
               </div>
-              ${(p.prix || p.lien_externe || p.image_url) ? `
+              ${(p.prix || p.lien_externe || p.image_url || p.duree_visibilite) ? `
               <div class="expand-section">
                 <h3>Champs spécifiques</h3>
                 <div class="text-sm" style="line-height:1.8">
                   ${p.prix ? `<div><strong>Prix :</strong> ${esc(p.prix)}</div>` : ''}
                   ${p.lien_externe ? `<div><strong>Lien externe :</strong> <a href="${esc(p.lien_externe)}" target="_blank">${esc(p.lien_externe)}</a></div>` : ''}
                   ${p.image_url ? `<div><strong>Image :</strong> <a href="${esc(p.image_url)}" target="_blank">${esc(p.image_url)}</a></div>` : ''}
+                  ${p.duree_visibilite ? `<div><strong>Durée de visibilité :</strong> ${esc(p.duree_visibilite === 'illimitee' ? 'Illimitée ♾️' : p.duree_visibilite === '3m' ? '3 mois' : p.duree_visibilite === '6m' ? '6 mois' : p.duree_visibilite)}</div>` : ''}
+                  ${p.expires_at ? `<div><strong>Date d'expiration :</strong> ${fmtDate(p.expires_at)}</div>` : ''}
                 </div>
               </div>` : ''}
               <div class="expand-section">
@@ -3714,6 +3883,21 @@
     hideLoader();
     if (!r.ok) return toast('error', r.error);
     toast('success', 'Page régénérée');
+    renderAdminPages();
+  }
+
+  async function adminRunExpirationCheck() {
+    if (!confirm("Lancer maintenant la vérification des pages expirées ?\n\n• Toutes les pages dont la date d'expiration est dépassée seront retirées de Chatling\n• Leur statut passera à 'expired' dans le Sheet\n\nCette opération est normalement exécutée automatiquement chaque jour à 3h du matin.")) return;
+    showLoader('Vérification des expirations…');
+    const r = await api('runExpirationCheck', { token: state.user.token });
+    hideLoader();
+    if (!r.ok) return toast('error', r.error);
+    const count = r.expired_count || 0;
+    if (count === 0) {
+      toast('info', 'Aucune page à expirer pour le moment ✅');
+    } else {
+      toast('success', count + ' page(s) ont été expirées et retirées de Chatling');
+    }
     renderAdminPages();
   }
 
