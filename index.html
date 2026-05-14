@@ -63,7 +63,7 @@
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
-    html, body { height: 100%; }
+    html { height: auto; scroll-behavior: auto; }
     body {
       font-family: var(--font-sans);
       font-size: 15px;
@@ -156,8 +156,6 @@
       position: sticky;
       top: 0;
       z-index: 100;
-      backdrop-filter: blur(8px);
-      background: rgba(255,255,255,.92);
     }
     .header-inner {
       max-width: 1200px;
@@ -421,37 +419,103 @@
     .field-full { grid-column: 1 / -1; }
 
     /* ============================================================
-       Toast
+       INDICATEURS GLOBAUX — v0.12 : tous en haut, position fixed
+       Garantis toujours visibles, jamais cachés par le scroll.
+       Direct children du <body>, hors de tout conteneur avec
+       backdrop-filter/transform qui pourrait casser position:fixed.
        ============================================================ */
+
+    /* Barre de progression fine en haut (style YouTube/GitHub) */
+    #topbar-progress {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      z-index: 99999;
+      display: none;
+      background-color: var(--teal-100);
+      background-image: linear-gradient(90deg,
+        transparent 0%,
+        var(--teal-700) 30%,
+        var(--teal-700) 70%,
+        transparent 100%);
+      background-size: 200% 100%;
+      animation: progressShine 1.1s linear infinite;
+      pointer-events: none;
+    }
+    #topbar-progress.show { display: block; }
+    @keyframes progressShine {
+      0%   { background-position: 100% 0; }
+      100% { background-position: -100% 0; }
+    }
+
+    /* Petit badge "Enregistrement..." centré en haut */
+    #topbar-msg {
+      position: fixed;
+      top: 14px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(15, 23, 42, .95);
+      color: #fff;
+      padding: 8px 18px;
+      border-radius: 100px;
+      font-size: 13px;
+      font-weight: 600;
+      z-index: 99998;
+      display: none;
+      white-space: nowrap;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, .25);
+      max-width: calc(100vw - 32px);
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    #topbar-msg.show { display: block; animation: msgSlideIn .25s ease; }
+    @keyframes msgSlideIn {
+      from { opacity: 0; transform: translate(-50%, -16px); }
+      to   { opacity: 1; transform: translate(-50%, 0); }
+    }
+
+    /* Toasts en haut, centré, au-dessus du contenu */
     #toast-container {
       position: fixed;
-      top: 80px;
-      right: 20px;
-      z-index: 9999;
+      top: 60px;
+      left: 0;
+      right: 0;
+      z-index: 99997;
       display: flex;
       flex-direction: column;
       gap: 10px;
-      max-width: calc(100vw - 40px);
+      align-items: center;
+      pointer-events: none;
+      padding: 0 16px;
     }
     .toast {
       background: var(--card);
       border: 1px solid var(--border);
-      border-left: 4px solid var(--teal-600);
+      border-left: 4px solid var(--teal-700);
       border-radius: var(--radius);
-      padding: 12px 16px;
+      padding: 14px 20px;
       box-shadow: var(--shadow-lg);
       animation: toastIn .25s ease;
-      max-width: 380px;
+      max-width: 440px;
       font-size: 14px;
-      font-weight: 500;
+      font-weight: 600;
+      pointer-events: auto;
     }
     .toast.success { border-left-color: var(--success); }
     .toast.error   { border-left-color: var(--error); }
     .toast.warning { border-left-color: var(--warning); }
     .toast.info    { border-left-color: var(--info); }
     @keyframes toastIn {
-      from { opacity: 0; transform: translateY(-8px); }
+      from { opacity: 0; transform: translateY(-12px); }
       to   { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (max-width: 600px) {
+      #toast-container { top: 56px; padding: 0 12px; }
+      .toast { font-size: 13px; padding: 12px 16px; max-width: none; width: 100%; }
+      #topbar-msg { font-size: 12px; padding: 7px 14px; top: 10px; }
     }
 
     /* ============================================================
@@ -459,14 +523,23 @@
        ============================================================ */
     .modal-backdrop {
       position: fixed;
-      inset: 0;
-      background: rgba(28, 25, 23, .45);
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(15, 23, 42, .55);
       backdrop-filter: blur(4px);
-      z-index: 500;
-      display: grid;
-      place-items: center;
-      padding: 16px;
+      -webkit-backdrop-filter: blur(4px);
+      z-index: 9999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
       animation: fadeIn .15s ease;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
     }
     @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     .modal {
@@ -477,6 +550,7 @@
       max-width: 460px;
       padding: 28px;
       animation: modalIn .2s ease;
+      margin: auto;
     }
     .modal.modal-lg { max-width: 720px; }
     @keyframes modalIn {
@@ -496,38 +570,12 @@
       justify-content: flex-end;
       margin-top: 20px;
     }
+    /* Empêche le scroll de la page derrière quand une modal est ouverte */
+    body.modal-open {
+      overflow: hidden;
+    }
 
-    /* ============================================================
-       Loader
-       ============================================================ */
-    #loader-overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(255,255,255,.85);
-      backdrop-filter: blur(2px);
-      z-index: 800;
-      display: none;
-      place-items: center;
-    }
-    #loader-overlay.show { display: grid; }
-    .loader-content {
-      background: var(--card);
-      border-radius: var(--radius-lg);
-      padding: 24px 32px;
-      box-shadow: var(--shadow-lg);
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      font-weight: 600;
-    }
-    .spinner {
-      width: 22px; height: 22px;
-      border: 3px solid var(--teal-100);
-      border-top-color: var(--teal-700);
-      border-radius: 50%;
-      animation: spin .8s linear infinite;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
+    /* Loader supprimé en v0.12 (remplacé par #topbar-progress + #topbar-msg) */
 
     /* ============================================================
        Demo banner
@@ -704,6 +752,21 @@
       margin-top: 60px;
     }
     .footer a { color: var(--text-2); }
+    .footer-admin {
+      margin-top: 18px;
+      font-size: 11px;
+      opacity: .35;
+      transition: opacity .15s ease;
+    }
+    .footer-admin:hover { opacity: 1; }
+    .footer-admin a {
+      color: var(--muted);
+      text-decoration: none;
+    }
+    .footer-admin a:hover {
+      color: var(--teal-700);
+      text-decoration: underline;
+    }
 
     /* ============================================================
        Inscription success
@@ -776,6 +839,10 @@
        RESPONSIVE — Mobile-first refinements v0.4
        ============================================================ */
 
+    /* Labels adaptatifs des boutons header (label-full / label-short) */
+    .header-nav .btn .label-full  { display: inline; }
+    .header-nav .btn .label-short { display: none; }
+
     /* Header — compact sur mobile */
     @media (max-width: 768px) {
       .header-inner { padding: 12px 14px; gap: 10px; }
@@ -788,9 +855,10 @@
     }
     @media (max-width: 540px) {
       .brand span:not(.brand-r) { font-size: 14px; }
-      /* On garde uniquement les boutons critiques sur très petit */
-      .header-nav .btn:nth-child(1):not(.btn-primary) { display: none; }
       .header-nav .badge { font-size: 10px; padding: 2px 6px; }
+      /* Sur mobile : on bascule sur les labels courts (l'Espace pro reste visible !) */
+      .header-nav .btn .label-full  { display: none; }
+      .header-nav .btn .label-short { display: inline; }
     }
     @media (max-width: 420px) {
       /* Sur écrans très étroits, on cache le texte et on garde uniquement
@@ -838,20 +906,22 @@
       .how-step { padding: 18px; }
     }
 
-    /* Dashboard sidebar → tabs horizontaux scrollables sur mobile */
+    /* Dashboard sidebar — comportement responsive */
     @media (max-width: 900px) {
       .dashboard-grid { grid-template-columns: 1fr; gap: 14px; }
       .sidebar {
         position: static;
         padding: 12px;
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
       }
       .sidebar-user {
         padding-bottom: 12px;
         margin-bottom: 12px;
       }
       .sidebar-user-name { font-size: 14px; }
+    }
+
+    /* Tablet (entre 540px et 900px) : tabs horizontaux scrollables */
+    @media (min-width: 541px) and (max-width: 900px) {
       .sidebar-nav {
         flex-direction: row;
         gap: 4px;
@@ -868,7 +938,29 @@
         font-size: 13px;
         flex-shrink: 0;
       }
-      .sidebar-nav .nav-icon { display: inline; }
+    }
+
+    /* Mobile (<=540px) : menu empilé verticalement, plein écran */
+    @media (max-width: 540px) {
+      .sidebar { padding: 10px; }
+      .sidebar-nav {
+        flex-direction: column;
+        gap: 4px;
+        margin: 0;
+        padding: 0;
+        overflow: visible;
+      }
+      .sidebar-nav button {
+        width: 100%;
+        justify-content: flex-start;
+        padding: 14px 16px;
+        font-size: 14px;
+        text-align: left;
+      }
+      .sidebar-nav .nav-icon {
+        width: 22px;
+        font-size: 16px;
+      }
     }
 
     /* Page header sur mobile */
@@ -1369,6 +1461,136 @@
       text-underline-offset: 3px;
     }
     .demo-discreet a:hover { color: var(--teal-700); }
+
+    /* ============================================================
+       v0.8 — Cards expansibles (remplace les modales "Voir détails")
+       ============================================================ */
+    .expand-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .expand-row {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      transition: border-color .15s ease, box-shadow .15s ease;
+    }
+    .expand-row:hover { border-color: var(--border-2); }
+    .expand-row.expanded {
+      border-color: var(--teal-600);
+      box-shadow: var(--shadow);
+    }
+    .expand-row-header {
+      padding: 14px 18px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      cursor: pointer;
+      user-select: none;
+    }
+    .expand-row-header:hover { background: var(--sand-50); }
+    .expand-row-main {
+      flex: 1;
+      min-width: 0;
+    }
+    .expand-row-title {
+      font-weight: 700;
+      font-size: 15px;
+      color: var(--text);
+      margin-bottom: 4px;
+    }
+    .expand-row-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .expand-row-chevron {
+      font-size: 18px;
+      color: var(--text-2);
+      transition: transform .2s ease;
+      flex-shrink: 0;
+    }
+    .expand-row.expanded .expand-row-chevron {
+      transform: rotate(180deg);
+      color: var(--teal-700);
+    }
+    .expand-row-body {
+      display: none;
+      padding: 0 18px 18px;
+      border-top: 1px solid var(--border);
+      animation: expandDown .2s ease;
+    }
+    .expand-row.expanded .expand-row-body {
+      display: block;
+    }
+    @keyframes expandDown {
+      from { opacity: 0; transform: translateY(-6px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .expand-section {
+      margin-top: 16px;
+    }
+    .expand-section h3 {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-2);
+      text-transform: uppercase;
+      letter-spacing: .4px;
+      margin-bottom: 8px;
+    }
+    .expand-actions {
+      margin-top: 18px;
+      padding-top: 14px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      gap: 8px;
+      justify-content: flex-end;
+    }
+
+    /* ============================================================
+       v0.8 — Pages d'authentification (login pro / admin)
+       ============================================================ */
+    .auth-card {
+      max-width: 460px;
+      margin: 0 auto;
+    }
+    .auth-intro {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+    .auth-icon {
+      font-size: 44px;
+      margin-bottom: 12px;
+    }
+    .auth-card h2 {
+      font-family: var(--font-display);
+      font-size: 22px;
+      font-weight: 600;
+      color: var(--teal-900);
+      margin-bottom: 8px;
+    }
+    .auth-card .subtitle {
+      font-size: 14px;
+      color: var(--text-2);
+      margin-bottom: 0;
+    }
+    .btn-block { width: 100%; }
+    .auth-footer {
+      margin-top: 24px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border);
+      text-align: center;
+      font-size: 14px;
+      color: var(--text-2);
+    }
+    .auth-footer a {
+      color: var(--teal-700);
+      font-weight: 600;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
@@ -1393,19 +1615,18 @@
 
   <!-- ====================== FOOTER ====================== -->
   <footer class="footer">
-    <div>Annuaire YOUPI<span style="color:var(--teal-700)">®</span> · <span id="footer-version">v0.5 — 2026</span></div>
+    <div>Annuaire YOUPI<span style="color:var(--teal-700)">®</span> · <span id="footer-version">v0.13 — 2026</span></div>
     <div class="mt-16 text-xs">Conçu pour les entreprises ultra-marines · Martinique 🇲🇶 · Guadeloupe 🇬🇵 · Guyane 🇬🇫</div>
+    <div class="footer-admin">
+      <a onclick="openLoginAdmin()" style="cursor:pointer">Administration</a>
+    </div>
   </footer>
 
-  <!-- ====================== TOAST + LOADER + MODAL ZONES ====================== -->
+  <!-- ====================== INDICATEURS GLOBAUX (toujours visibles, top de page) ====================== -->
+  <div id="topbar-progress"></div>
+  <div id="topbar-msg"></div>
   <div id="toast-container"></div>
   <div id="modal-zone"></div>
-  <div id="loader-overlay">
-    <div class="loader-content">
-      <div class="spinner"></div>
-      <span id="loader-text">Chargement…</span>
-    </div>
-  </div>
 
   <script>
   /* ============================================================
@@ -1413,9 +1634,16 @@
      ============================================================ */
   'use strict';
 
+  // ⚠️ CRITIQUE : désactiver la restauration automatique du scroll par le navigateur.
+  // Sans ça, Brave/Chrome restaurent silencieusement la position de scroll après nos scrollTo(0,0),
+  // d'où l'impression que le scroll ne fonctionne pas lors des navigations.
+  if ('scrollRestoration' in history) {
+    try { history.scrollRestoration = 'manual'; } catch(e) {}
+  }
+
   const APP = {
     name: 'Annuaire YOUPI',
-    version: 'v0.5 — 2026',
+    version: 'v0.13 — 2026',
     BACKEND_URL: 'https://script.google.com/macros/s/AKfycbzQNSOAGCJp1QmZU0IE1FYiKmKCcGgTUpqKa3RJG9lwiAND_EC5dGdbh2XCu26ZTMoxtw/exec'
   };
 
@@ -1515,18 +1743,26 @@
   }
 
   // ------------------------------------------------------------
-  //  LOADER
+  //  LOADER — v0.12 : barre en haut + badge texte, toujours visibles
   // ------------------------------------------------------------
   function showLoader(text = 'Chargement…') {
-    document.getElementById('loader-text').textContent = text;
-    document.getElementById('loader-overlay').classList.add('show');
+    const bar = document.getElementById('topbar-progress');
+    const msg = document.getElementById('topbar-msg');
+    if (bar) bar.classList.add('show');
+    if (msg) {
+      msg.textContent = text;
+      msg.classList.add('show');
+    }
   }
   function hideLoader() {
-    document.getElementById('loader-overlay').classList.remove('show');
+    const bar = document.getElementById('topbar-progress');
+    const msg = document.getElementById('topbar-msg');
+    if (bar) bar.classList.remove('show');
+    if (msg) msg.classList.remove('show');
   }
 
   // ------------------------------------------------------------
-  //  MODAL
+  //  MODAL — renforcée v0.7 (scroll lock, auto-focus, ESC)
   // ------------------------------------------------------------
   function openModal(html, opts = {}) {
     const zone = document.getElementById('modal-zone');
@@ -1534,12 +1770,42 @@
       <div class="modal-backdrop" id="modal-bd">
         <div class="modal ${opts.large ? 'modal-lg' : ''}">${html}</div>
       </div>`;
+
+    // Bloque le scroll de la page derrière
+    document.body.classList.add('modal-open');
+
+    // Compense la barre de scroll qui disparaît (évite le shift visuel desktop)
+    const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+    if (scrollbarWidth > 0) document.body.style.paddingRight = scrollbarWidth + 'px';
+
+    // Fermeture par clic sur le backdrop
     document.getElementById('modal-bd').addEventListener('click', e => {
       if (e.target.id === 'modal-bd' && !opts.persistent) closeModal();
     });
+
+    // Fermeture par touche ESC (UX standard)
+    if (!opts.persistent) {
+      document._modalEscHandler = function(e) {
+        if (e.key === 'Escape') closeModal();
+      };
+      document.addEventListener('keydown', document._modalEscHandler);
+    }
+
+    // Auto-focus sur le premier champ de saisie après l'animation d'apparition
+    setTimeout(() => {
+      const first = zone.querySelector('input:not([type="hidden"]):not([disabled]), select, textarea');
+      if (first) first.focus();
+    }, 100);
   }
+
   function closeModal() {
     document.getElementById('modal-zone').innerHTML = '';
+    document.body.classList.remove('modal-open');
+    document.body.style.paddingRight = '';
+    if (document._modalEscHandler) {
+      document.removeEventListener('keydown', document._modalEscHandler);
+      document._modalEscHandler = null;
+    }
   }
 
   // ------------------------------------------------------------
@@ -1590,9 +1856,14 @@
 
     if (!u) {
       nav.innerHTML = `
-        <button class="btn btn-ghost btn-sm" onclick="openLoginPro()">Espace pro</button>
-        <button class="btn btn-primary btn-sm" onclick="navigate('register')">+ Inscrire mon entreprise</button>
-        <button class="btn btn-ghost btn-sm" onclick="openLoginAdmin()" title="Admin" style="font-size:11px;opacity:.6">Admin</button>
+        <button class="btn btn-secondary btn-sm" onclick="openLoginPro()">
+          <span class="label-full">Espace pro</span>
+          <span class="label-short">🔑 Pro</span>
+        </button>
+        <button class="btn btn-primary btn-sm" onclick="navigate('register')">
+          <span class="label-full">+ Inscrire mon entreprise</span>
+          <span class="label-short">+ Inscrire</span>
+        </button>
       `;
     } else if (u.type === 'company') {
       nav.innerHTML = `
@@ -1616,34 +1887,55 @@
   }
 
   // ------------------------------------------------------------
-  //  ROUTER
+  //  ROUTER — Navigation avec scroll automatique en haut (triple sécurité)
   // ------------------------------------------------------------
+
+  // Helper : force le scroll au top, compatible tous navigateurs.
+  // Appelée plusieurs fois dans navigate() pour vaincre toute restauration auto.
+  function forceScrollTop() {
+    try { window.scrollTo(0, 0); } catch(e) {}
+    try { window.scroll(0, 0); } catch(e) {}
+    if (document.documentElement) document.documentElement.scrollTop = 0;
+    if (document.body) document.body.scrollTop = 0;
+  }
+
   function navigate(view, params = {}) {
     state.view = view;
     state.viewParams = params;
     log('navigate', view, params);
 
-    const main = document.getElementById('main');
-    main.scrollTop = 0;
-    window.scrollTo(0, 0);
+    // 1️⃣ Scroll AVANT le rendering
+    forceScrollTop();
 
     switch (view) {
-      case 'home':            renderHome(); break;
-      case 'register':        renderRegisterForm(); break;
-      case 'register-success':renderRegisterSuccess(params); break;
-      case 'pro-dashboard':   renderProDashboard(); break;
-      case 'pro-edit':        renderProEdit(); break;
-      case 'pro-pages':       renderProPages(); break;
-      case 'pro-add-page':    renderProAddPage(); break;
-      case 'pro-settings':    renderProSettings(); break;
-      case 'admin-dashboard': renderAdminDashboard(); break;
-      case 'admin-companies': renderAdminCompanies(); break;
-      case 'admin-pages':     renderAdminPages(); break;
-      case 'admin-prompts':   renderAdminPrompts(); break;
-      case 'admin-logs':      renderAdminLogs(); break;
+      case 'home':                renderHome(); break;
+      case 'login-pro':           renderLoginPro(); break;
+      case 'login-admin':         renderLoginAdmin(); break;
+      case 'register':            renderRegisterForm(); break;
+      case 'register-success':    renderRegisterSuccess(params); break;
+      case 'pro-dashboard':       renderProDashboard(); break;
+      case 'pro-edit':            renderProEdit(); break;
+      case 'pro-pages':           renderProPages(); break;
+      case 'pro-add-page':        renderProAddPage(); break;
+      case 'pro-settings':        renderProSettings(); break;
+      case 'admin-dashboard':     renderAdminDashboard(); break;
+      case 'admin-companies':     renderAdminCompanies(); break;
+      case 'admin-company-detail':renderAdminCompanyDetail(params); break;
+      case 'admin-pages':         renderAdminPages(); break;
+      case 'admin-prompts':       renderAdminPrompts(); break;
+      case 'admin-logs':          renderAdminLogs(); break;
       default: renderHome();
     }
     renderHeader();
+
+    // 2️⃣ Scroll APRÈS rendering — appelé à plusieurs moments pour vaincre toute
+    //    restauration automatique du navigateur (Brave/Chrome scroll restoration)
+    forceScrollTop();
+    requestAnimationFrame(forceScrollTop);
+    setTimeout(forceScrollTop, 0);
+    setTimeout(forceScrollTop, 50);
+    setTimeout(forceScrollTop, 150);
+    setTimeout(forceScrollTop, 300);
   }
 
   // ============================================================
@@ -2054,7 +2346,7 @@
 
           <div class="modal-actions" style="justify-content:center">
             <button class="btn btn-secondary" onclick="navigate('home')">Retour à l'accueil</button>
-            <button class="btn btn-primary" onclick="openLoginPro()">Me connecter</button>
+            <button class="btn btn-primary" onclick="navigate('login-pro')">Me connecter</button>
           </div>
         </div>
       </div>
@@ -2062,27 +2354,60 @@
   }
 
   // ============================================================
-  //  LOGIN MODALS
+  //  LOGIN — Pages dédiées (UX moderne, plus de modales bloquantes)
   // ============================================================
-  function openLoginPro() {
-    openModal(`
-      <h2>Espace pro</h2>
-      <p class="modal-sub">Connectez-vous avec votre identifiant et votre PIN.</p>
-      <form onsubmit="submitLoginPro(event)">
-        <div class="field">
-          <label>Identifiant (YPI-MQ-…)</label>
-          <input name="company_id" required placeholder="YPI-MQ-0001" autocomplete="username" />
+  function openLoginPro()   { navigate('login-pro'); }
+  function openLoginAdmin() { navigate('login-admin'); }
+
+  function renderLoginPro() {
+    document.getElementById('main').innerHTML = `
+      <div class="container-narrow">
+        <div class="page-header">
+          <h1>Espace pro</h1>
+          <button class="btn btn-ghost btn-sm" onclick="navigate('home')">← Retour</button>
         </div>
-        <div class="field">
-          <label>PIN à 6 chiffres</label>
-          <input name="pin" required maxlength="6" inputmode="numeric" pattern="[0-9#]{6}" placeholder="••••••" autocomplete="current-password" />
+
+        <div class="card auth-card">
+          <div class="auth-intro">
+            <div class="auth-icon">🔑</div>
+            <h2>Connectez-vous à votre espace</h2>
+            <p class="subtitle">Saisissez l'identifiant et le PIN reçus à votre inscription pour gérer votre fiche entreprise et vos pages services.</p>
+          </div>
+
+          <form onsubmit="submitLoginPro(event)" autocomplete="on">
+            <div class="field">
+              <label>Identifiant entreprise</label>
+              <input
+                name="company_id"
+                required
+                placeholder="YPI-MQ-0001"
+                autocomplete="username"
+                autocapitalize="characters"
+                spellcheck="false"
+              />
+              <div class="hint">Format : YPI-MQ-XXXX (Martinique), YPI-GP-XXXX (Guadeloupe), etc.</div>
+            </div>
+            <div class="field">
+              <label>PIN à 6 chiffres</label>
+              <input
+                name="pin"
+                required
+                maxlength="6"
+                inputmode="numeric"
+                pattern="[0-9#]{6}"
+                placeholder="••••••"
+                autocomplete="current-password"
+              />
+            </div>
+            <button type="submit" class="btn btn-primary btn-lg btn-block">Se connecter</button>
+          </form>
+
+          <div class="auth-footer">
+            <p>Pas encore inscrit ? <a href="#" onclick="navigate('register');return false;">Créer ma fiche entreprise gratuitement →</a></p>
+          </div>
         </div>
-        <div class="modal-actions">
-          <button type="button" class="btn btn-ghost" onclick="closeModal()">Annuler</button>
-          <button type="submit" class="btn btn-primary">Se connecter</button>
-        </div>
-      </form>
-    `);
+      </div>
+    `;
   }
 
   async function submitLoginPro(e) {
@@ -2101,26 +2426,43 @@
     }
     state.user = { type: 'company', id: company_id, token: res.token, data: res.company };
     saveSession();
-    closeModal();
     toast('success', 'Bienvenue ' + (res.company.nom_entreprise || ''));
     navigate('pro-dashboard');
   }
 
-  function openLoginAdmin() {
-    openModal(`
-      <h2>Connexion administrateur</h2>
-      <p class="modal-sub">Réservé à l'équipe Annuaire YOUPI®.</p>
-      <form onsubmit="submitLoginAdmin(event)">
-        <div class="field">
-          <label>PIN administrateur</label>
-          <input name="pin" required maxlength="6" inputmode="numeric" pattern="[0-9#]{6}" placeholder="••••••" autocomplete="current-password" />
+  function renderLoginAdmin() {
+    document.getElementById('main').innerHTML = `
+      <div class="container-narrow">
+        <div class="page-header">
+          <h1>Administration</h1>
+          <button class="btn btn-ghost btn-sm" onclick="navigate('home')">← Retour</button>
         </div>
-        <div class="modal-actions">
-          <button type="button" class="btn btn-ghost" onclick="closeModal()">Annuler</button>
-          <button type="submit" class="btn btn-primary">Se connecter</button>
+
+        <div class="card auth-card">
+          <div class="auth-intro">
+            <div class="auth-icon">🛡️</div>
+            <h2>Accès administrateur</h2>
+            <p class="subtitle">Réservé à l'équipe Annuaire YOUPI®.</p>
+          </div>
+
+          <form onsubmit="submitLoginAdmin(event)" autocomplete="on">
+            <div class="field">
+              <label>PIN administrateur</label>
+              <input
+                name="pin"
+                required
+                maxlength="6"
+                inputmode="numeric"
+                pattern="[0-9#]{6}"
+                placeholder="••••••"
+                autocomplete="current-password"
+              />
+            </div>
+            <button type="submit" class="btn btn-primary btn-lg btn-block">Se connecter</button>
+          </form>
         </div>
-      </form>
-    `);
+      </div>
+    `;
   }
 
   async function submitLoginAdmin(e) {
@@ -2138,7 +2480,6 @@
     }
     state.user = { type: 'admin', id: 'root', token: res.token, data: { nom_entreprise: 'Administrateur Annuaire YOUPI®' } };
     saveSession();
-    closeModal();
     toast('success', 'Bienvenue Admin');
     navigate('admin-dashboard');
   }
@@ -2152,7 +2493,6 @@
       { view: 'pro-dashboard', icon: '🏠', label: 'Tableau de bord' },
       { view: 'pro-edit',      icon: '✏️', label: 'Modifier ma fiche' },
       { view: 'pro-pages',     icon: '📄', label: 'Mes pages services' },
-      { view: 'pro-add-page',  icon: '➕', label: 'Ajouter une page' },
       { view: 'pro-settings',  icon: '⚙️', label: 'Paramètres' }
     ];
     return `
@@ -2220,13 +2560,6 @@
               <button class="btn btn-primary" onclick="navigate('pro-edit')">Modifier mes infos</button>
             </div>
           </div>
-
-          ${c.markdown_genere ? `
-          <div class="card">
-            <h2>Aperçu de votre fiche IA</h2>
-            <p class="subtitle">Voici comment l'agent IA Annuaire YOUPI® vous connaît.</p>
-            <div class="md-preview">${esc(c.markdown_genere)}</div>
-          </div>` : ''}
         </section>
       </div>
     `;
@@ -2313,67 +2646,89 @@
             <h1>Mes pages services</h1>
             <button class="btn btn-primary" onclick="navigate('pro-add-page')">+ Ajouter une page</button>
           </div>
-          <div id="pages-list" class="card"><p class="text-muted">Chargement…</p></div>
+          <div id="pages-list"><p class="text-muted">Chargement…</p></div>
         </section>
       </div>
     `;
 
     const r = await api('listMyPages', { company_id: state.user.id, token: state.user.token });
     const wrap = document.getElementById('pages-list');
-    if (!r.ok) { wrap.innerHTML = `<p class="text-muted">${esc(r.error)}</p>`; return; }
+    if (!r.ok) { wrap.innerHTML = `<div class="card"><p class="text-muted">${esc(r.error)}</p></div>`; return; }
     if (r.pages.length === 0) {
       wrap.innerHTML = `
-        <p class="subtitle">Vous n'avez pas encore créé de page service. Les pages permettent à l'IA Annuaire YOUPI® de vous recommander sur des requêtes plus précises.</p>
-        <button class="btn btn-primary" onclick="navigate('pro-add-page')">+ Créer ma première page</button>`;
+        <div class="card">
+          <p class="subtitle">Vous n'avez pas encore créé de page service. Les pages permettent à l'IA Annuaire YOUPI® de vous recommander sur des requêtes plus précises.</p>
+          <button class="btn btn-primary" onclick="navigate('pro-add-page')">+ Créer ma première page</button>
+        </div>`;
       return;
     }
+
+    // Stocke en mémoire pour le toggle
+    window._myPages = r.pages;
+
     wrap.innerHTML = `
-      <div class="table-wrap">
-        <table class="data">
-          <thead><tr><th>Titre</th><th>Statut IA</th><th>Créée le</th><th></th></tr></thead>
-          <tbody>
-            ${r.pages.map(p => `
-              <tr>
-                <td data-label="Titre"><strong>${esc(p.titre_service)}</strong><br><span class="text-xs text-muted">${esc(p.id)}</span></td>
-                <td data-label="Statut IA"><span class="badge ${esc(p.chatling_status)}">${esc(p.chatling_status)}</span></td>
-                <td data-label="Créée le">${fmtDate(p.date_creation)}</td>
-                <td data-label="">
-                  <div class="row-actions">
-                    <button class="btn btn-ghost btn-sm" onclick="viewPagePreview('${esc(p.id)}')">Voir</button>
-                    <button class="btn btn-ghost btn-sm" style="color:var(--error)" onclick="deleteMyPage('${esc(p.id)}')">Supprimer</button>
-                  </div>
-                </td>
-              </tr>
-            `).join('')}
-          </tbody>
-        </table>
+      <div class="expand-list">
+        ${r.pages.map(p => `
+          <div class="expand-row" id="row-${esc(p.id)}">
+            <div class="expand-row-header" onclick="togglePageDetails('${esc(p.id)}')">
+              <div class="expand-row-main">
+                <div class="expand-row-title">${esc(p.titre_service)}</div>
+                <div class="expand-row-meta">
+                  <span class="badge ${esc(p.chatling_status)}">${esc(p.chatling_status)}</span>
+                  <span class="text-xs text-muted">créée ${fmtDate(p.date_creation)}</span>
+                </div>
+              </div>
+              <span class="expand-row-chevron">▾</span>
+            </div>
+            <div class="expand-row-body" id="details-${esc(p.id)}">
+              <div class="expand-section">
+                <h3>Description que vous avez fournie</h3>
+                <div class="md-preview" style="max-height:200px">${esc(p.description_detaillee)}</div>
+              </div>
+              <div class="expand-actions">
+                <button class="btn btn-ghost btn-sm" style="color:var(--error)" onclick="deleteMyPage('${esc(p.id)}')">Supprimer cette page</button>
+              </div>
+            </div>
+          </div>
+        `).join('')}
       </div>
     `;
   }
 
-  async function viewPagePreview(pageId) {
-    const r = await api('listMyPages', { company_id: state.user.id, token: state.user.token });
-    if (!r.ok) return toast('error', r.error);
-    const p = r.pages.find(x => x.id === pageId);
-    if (!p) return toast('error', 'Page introuvable');
-    openModal(`
-      <h2>${esc(p.titre_service)}</h2>
-      <p class="modal-sub">${esc(p.id)} · ${fmtDate(p.date_creation)} · <span class="badge ${esc(p.chatling_status)}">${esc(p.chatling_status)}</span></p>
-      <h3 style="font-size:14px;margin-top:16px;margin-bottom:6px">Description fournie</h3>
-      <div class="md-preview" style="max-height:120px">${esc(p.description_detaillee)}</div>
-      <h3 style="font-size:14px;margin-top:16px;margin-bottom:6px">Markdown généré par l'IA</h3>
-      <div class="md-preview">${esc(p.markdown_genere || '(en cours…)')}</div>
-      <div class="modal-actions"><button class="btn btn-primary" onclick="closeModal()">Fermer</button></div>
-    `, { large: true });
+  // Toggle d'expansion d'une ligne de la liste des pages services
+  function togglePageDetails(pageId) {
+    const row = document.getElementById('row-' + pageId);
+    if (!row) return;
+    const isOpen = row.classList.contains('expanded');
+
+    // Ferme les autres lignes pour ne pas surcharger la vue
+    document.querySelectorAll('.expand-row.expanded').forEach(r => {
+      if (r.id !== row.id) r.classList.remove('expanded');
+    });
+
+    if (isOpen) {
+      row.classList.remove('expanded');
+    } else {
+      row.classList.add('expanded');
+      // Petit scroll doux pour amener la ligne sous le header
+      setTimeout(() => {
+        const top = row.getBoundingClientRect().top + window.scrollY - 90;
+        window.scrollTo({ top, behavior: 'smooth' });
+      }, 120);
+    }
   }
 
   async function deleteMyPage(pageId) {
-    if (!confirm('Supprimer cette page ?')) return;
-    showLoader('Suppression…');
+    if (!confirm("Supprimer cette page définitivement ?\n\nLa page sera retirée de la base de connaissance de l'agent IA. L'IA cessera donc de la recommander immédiatement.\n\nCette action est irréversible.")) return;
+    showLoader('Suppression en cours…');
     const r = await api('deleteMyPage', { company_id: state.user.id, token: state.user.token, page_id: pageId });
     hideLoader();
     if (!r.ok) return toast('error', r.error);
-    toast('success', 'Page supprimée');
+    if (r.chatling && r.chatling.ok === false) {
+      toast('warning', "Page supprimée localement, mais la suppression Chatling a échoué. L'admin pourra réessayer.");
+    } else {
+      toast('success', 'Page supprimée (Annuaire et base IA)');
+    }
     renderProPages();
   }
 
@@ -2488,7 +2843,7 @@
       <aside class="sidebar">
         <div class="sidebar-user">
           <div class="sidebar-user-name">Administration</div>
-          <div class="sidebar-user-id">Annuaire YOUPI® v0.4</div>
+          <div class="sidebar-user-id">Annuaire YOUPI® ${APP.version}</div>
         </div>
         <nav class="sidebar-nav">
           ${items.map(i => `
@@ -2644,25 +2999,88 @@
   }
 
   function adminViewCompany(id) {
+    navigate('admin-company-detail', { company_id: id });
+  }
+
+  function renderAdminCompanyDetail(params) {
+    if (!state.user || state.user.type !== 'admin') return navigate('home');
+    const id = params && params.company_id;
+    if (!id) return navigate('admin-companies');
+
     const c = (window._adminCompanies || []).find(x => x.id === id);
-    if (!c) return;
-    openModal(`
-      <h2>${esc(c.nom_entreprise)}</h2>
-      <p class="modal-sub">${esc(c.id)} · ${esc(c.region)}</p>
-      <div class="form-grid">
-        <div><label>Secteur</label><div>${esc(c.secteur)}</div></div>
-        <div><label>Ville</label><div>${esc(c.ville)}</div></div>
-        <div><label>Téléphone</label><div>${esc(c.telephone)}</div></div>
-        <div><label>Email</label><div>${esc(c.email)}</div></div>
-        <div class="field-full"><label>Description</label><div>${esc(c.description)}</div></div>
+    if (!c) {
+      // Données pas en cache, recharger la liste puis afficher
+      document.getElementById('main').innerHTML = `
+        <div class="container-narrow">
+          <p class="text-muted">Chargement…</p>
+        </div>`;
+      api('listCompanies', { token: state.user.token }).then(r => {
+        if (r && r.ok) {
+          window._adminCompanies = r.companies;
+          renderAdminCompanyDetail(params);
+        } else {
+          toast('error', 'Entreprise introuvable');
+          navigate('admin-companies');
+        }
+      });
+      return;
+    }
+
+    document.getElementById('main').innerHTML = `
+      <div class="dashboard-grid">
+        ${adminSidebar('admin-companies')}
+        <section>
+          <div class="page-header">
+            <div>
+              <button class="btn btn-ghost btn-sm" onclick="navigate('admin-companies')" style="margin-bottom:8px">← Retour à la liste</button>
+              <h1>${esc(c.nom_entreprise)}</h1>
+              <div class="text-sm text-muted mt-8">
+                <span class="mono">${esc(c.id)}</span> · ${esc(c.region)} · 
+                <span class="badge ${esc(c.statut)}">${esc(c.statut)}</span>
+                <span class="badge ${esc(c.chatling_status)}">${esc(c.chatling_status)}</span>
+              </div>
+            </div>
+            <div class="row-actions">
+              <button class="btn btn-secondary btn-sm" onclick="adminReprocess('${esc(c.id)}')">↻ Rejouer IA + Chatling</button>
+            </div>
+          </div>
+
+          <div class="card">
+            <h2>Informations entreprise</h2>
+            <div class="form-grid">
+              <div><label>Nom</label><div>${esc(c.nom_entreprise)}</div></div>
+              <div><label>Secteur</label><div>${esc(c.secteur)}</div></div>
+              <div><label>Téléphone</label><div>${esc(c.telephone) || '—'}</div></div>
+              <div><label>Email</label><div>${esc(c.email)}</div></div>
+              <div><label>Ville</label><div>${esc(c.ville)}</div></div>
+              <div><label>Site web</label><div>${c.site_web ? `<a href="${esc(c.site_web)}" target="_blank">${esc(c.site_web)}</a>` : '—'}</div></div>
+              <div class="field-full"><label>Adresse complète</label><div>${esc(c.adresse_complete) || '—'}</div></div>
+              <div class="field-full"><label>Description</label><div>${esc(c.description)}</div></div>
+              <div class="field-full"><label>Services proposés</label><div style="white-space:pre-wrap">${esc(c.liste_services)}</div></div>
+              <div class="field-full"><label>Horaires</label><div style="white-space:pre-wrap">${esc(c.horaires)}</div></div>
+              <div><label>Facebook</label><div>${c.facebook ? `<a href="${esc(c.facebook)}" target="_blank">${esc(c.facebook)}</a>` : '—'}</div></div>
+              <div><label>Instagram</label><div>${c.instagram ? `<a href="${esc(c.instagram)}" target="_blank">${esc(c.instagram)}</a>` : '—'}</div></div>
+            </div>
+          </div>
+
+          <div class="card">
+            <h2>Métadonnées pipeline IA</h2>
+            <div class="form-grid">
+              <div><label>Date d'inscription</label><div>${fmtDate(c.date_inscription)}</div></div>
+              <div><label>Dernier traitement Chatling</label><div>${fmtDate(c.chatling_processed_at)}</div></div>
+              <div><label>Statut Chatling</label><div><span class="badge ${esc(c.chatling_status)}">${esc(c.chatling_status)}</span></div></div>
+              <div><label>Source ID Chatling</label><div class="mono text-sm">${esc(c.chatling_source_id) || '—'}</div></div>
+            </div>
+          </div>
+
+          <div class="card">
+            <h2>Markdown généré (base de connaissance IA)</h2>
+            <p class="subtitle">Voici exactement ce que voit l'agent IA Annuaire YOUPI® concernant cette entreprise.</p>
+            <div class="md-preview" style="max-height:600px">${esc(c.markdown_genere || '(aucun markdown généré pour l\'instant)')}</div>
+          </div>
+        </section>
       </div>
-      <h3 style="margin-top:20px">Markdown IA</h3>
-      <div class="md-preview">${esc(c.markdown_genere || '(non généré)')}</div>
-      <div class="modal-actions">
-        <button class="btn btn-secondary" onclick="adminReprocess('${esc(c.id)}')">↻ Rejouer IA + Chatling</button>
-        <button class="btn btn-primary" onclick="closeModal()">Fermer</button>
-      </div>
-    `, { large: true });
+    `;
   }
 
   async function adminReprocess(id) {
@@ -2672,8 +3090,16 @@
     hideLoader();
     if (!r.ok) return toast('error', r.error);
     toast('success', 'Markdown régénéré et poussé sur Chatling');
-    closeModal();
-    renderAdminCompanies();
+
+    // Rafraîchir la liste en cache + revenir/rafraîchir la vue actuelle
+    const fresh = await api('listCompanies', { token: state.user.token });
+    if (fresh && fresh.ok) window._adminCompanies = fresh.companies;
+
+    if (state.view === 'admin-company-detail') {
+      renderAdminCompanyDetail({ company_id: id });
+    } else {
+      renderAdminCompanies();
+    }
   }
 
   async function renderAdminPages() {
@@ -2683,33 +3109,105 @@
       <div class="dashboard-grid">
         ${adminSidebar('admin-pages')}
         <section>
-          <div class="page-header"><h1>Pages services</h1></div>
-          <div id="admin-pages-table" class="card"><p class="text-muted">Chargement…</p></div>
+          <div class="page-header">
+            <h1>Pages services</h1>
+            <button class="btn btn-secondary btn-sm" onclick="renderAdminPages()">↻ Rafraîchir</button>
+          </div>
+          <div id="admin-pages-list"><p class="text-muted">Chargement…</p></div>
         </section>
       </div>
     `;
 
-    const r = await api('listAllPages', { token: state.user.token });
-    if (!r.ok) { document.getElementById('admin-pages-table').innerHTML = `<p>${esc(r.error)}</p>`; return; }
+    // Charger pages + entreprises en parallèle pour joindre les noms
+    const [pagesRes, companiesRes] = await Promise.all([
+      api('listAllPages', { token: state.user.token }),
+      api('listCompanies', { token: state.user.token })
+    ]);
 
-    document.getElementById('admin-pages-table').innerHTML = `
-      <div class="table-wrap"><table class="data">
-        <thead><tr><th>ID</th><th>Titre</th><th>Entreprise</th><th>Chatling</th><th>Date</th><th></th></tr></thead>
-        <tbody>
-          ${r.pages.map(p => `
-            <tr>
-              <td data-label="ID" class="mono">${esc(p.id)}</td>
-              <td data-label="Titre"><strong>${esc(p.titre_service)}</strong></td>
-              <td data-label="Entreprise" class="mono">${esc(p.company_id)}</td>
-              <td data-label="Chatling"><span class="badge ${esc(p.chatling_status)}">${esc(p.chatling_status)}</span></td>
-              <td data-label="Date">${fmtDate(p.date_creation)}</td>
-              <td data-label=""><button class="btn btn-secondary btn-sm" onclick="adminReprocessPage('${esc(p.id)}')">↻ IA</button></td>
-            </tr>
-          `).join('')}
-          ${r.pages.length === 0 ? '<tr><td colspan="6" style="text-align:center;padding:24px">Aucune page.</td></tr>' : ''}
-        </tbody>
-      </table></div>
+    const wrap = document.getElementById('admin-pages-list');
+    if (!pagesRes.ok) { wrap.innerHTML = `<div class="card"><p class="text-muted">${esc(pagesRes.error)}</p></div>`; return; }
+
+    // Map company_id → nom_entreprise
+    const companyMap = {};
+    if (companiesRes && companiesRes.ok) {
+      companiesRes.companies.forEach(c => { companyMap[c.id] = c.nom_entreprise; });
+      window._adminCompanies = companiesRes.companies; // cache pour adminViewCompany
+    }
+
+    if (pagesRes.pages.length === 0) {
+      wrap.innerHTML = `<div class="card"><p class="text-muted">Aucune page service créée pour l'instant.</p></div>`;
+      return;
+    }
+
+    // Tri : pages les plus récentes en premier
+    const sorted = pagesRes.pages.slice().sort((a, b) =>
+      String(b.date_creation).localeCompare(String(a.date_creation))
+    );
+
+    wrap.innerHTML = `
+      <div class="expand-list">
+        ${sorted.map(p => {
+          const companyName = companyMap[p.company_id] || '(entreprise inconnue)';
+          return `
+          <div class="expand-row" id="adminrow-${esc(p.id)}">
+            <div class="expand-row-header" onclick="toggleAdminPageDetails('${esc(p.id)}')">
+              <div class="expand-row-main">
+                <div class="expand-row-title">${esc(p.titre_service)}</div>
+                <div class="expand-row-meta">
+                  <span class="text-sm" style="font-weight:600;color:var(--teal-800)">${esc(companyName)}</span>
+                  <span class="badge ${esc(p.chatling_status)}">${esc(p.chatling_status)}</span>
+                  <span class="text-xs text-muted">${fmtDate(p.date_creation)}</span>
+                </div>
+              </div>
+              <span class="expand-row-chevron">▾</span>
+            </div>
+            <div class="expand-row-body" id="admindetails-${esc(p.id)}">
+              <div class="expand-section">
+                <h3>Description fournie par l'entreprise</h3>
+                <div class="md-preview" style="max-height:200px">${esc(p.description_detaillee)}</div>
+              </div>
+              <div class="expand-section">
+                <h3>Markdown généré par l'IA (base de connaissance)</h3>
+                <div class="md-preview" style="max-height:400px">${esc(p.markdown_genere || '(non généré)')}</div>
+              </div>
+              <div class="expand-section">
+                <h3>Métadonnées</h3>
+                <div class="text-sm" style="color:var(--text-2);line-height:1.8">
+                  <div><strong>ID page :</strong> <span class="mono">${esc(p.id)}</span></div>
+                  <div><strong>Entreprise liée :</strong> <span class="mono">${esc(p.company_id)}</span></div>
+                  <div><strong>Source Chatling :</strong> <span class="mono">${esc(p.chatling_source_id) || '—'}</span></div>
+                  <div><strong>Dernier push Chatling :</strong> ${fmtDate(p.chatling_processed_at)}</div>
+                </div>
+              </div>
+              <div class="expand-actions">
+                <button class="btn btn-secondary btn-sm" onclick="adminReprocessPage('${esc(p.id)}')">↻ Régénérer IA + Chatling</button>
+              </div>
+            </div>
+          </div>`;
+        }).join('')}
+      </div>
     `;
+  }
+
+  // Toggle d'expansion d'une ligne admin pages services
+  function toggleAdminPageDetails(pageId) {
+    const row = document.getElementById('adminrow-' + pageId);
+    if (!row) return;
+    const isOpen = row.classList.contains('expanded');
+
+    document.querySelectorAll('#admin-pages-list .expand-row.expanded').forEach(r => {
+      if (r.id !== row.id) r.classList.remove('expanded');
+    });
+
+    if (isOpen) {
+      row.classList.remove('expanded');
+    } else {
+      row.classList.add('expanded');
+      setTimeout(() => {
+        const top = row.getBoundingClientRect().top + window.scrollY - 90;
+        window.scrollTo({ top, behavior: 'smooth' });
+      }, 120);
+    }
   }
 
   async function adminReprocessPage(id) {
@@ -3043,44 +3541,67 @@
   }
 
   // ============================================================
-  //  BOOT
+  //  BOOT — Affichage instantané, config en arrière-plan
   // ============================================================
-  async function boot() {
+  function boot() {
     document.getElementById('footer-version').textContent = APP.version;
 
-    // Charger la session si présente
+    // 1. Charger la session si présente (synchrone, localStorage)
     loadSession();
 
-    // Charger la config publique (régions + secteurs)
-    const cfg = await api('getConfig');
-    if (cfg && cfg.ok) {
-      state.config = cfg;
-    } else {
-      // Fallback offline
-      state.config = {
-        sectors: ['Restauration & Cafés','Auto & Mécanique','Beauté & Bien-être','BTP & Travaux','Tourisme & Loisirs','Santé & Paramédical','Services à la personne','Commerce & Boutiques','Numérique & Tech','Autre'],
-        regions: [
-          { code: 'MQ', name: 'Martinique', status: 'active' },
-          { code: 'GP', name: 'Guadeloupe', status: 'soon' },
-          { code: 'GF', name: 'Guyane',     status: 'planned' }
-        ]
-      };
-    }
+    // 2. Définir un state.config SYNCHRONE avec le fallback offline
+    //    → la home peut être rendue immédiatement, pas d'attente réseau
+    state.config = {
+      sectors: [
+        'Restauration & Cafés','Hôtellerie & Hébergement','Tourisme & Loisirs',
+        'BTP & Travaux','Auto & Mécanique','Beauté & Bien-être',
+        'Santé & Paramédical','Services à la personne','Commerce & Boutiques',
+        'Alimentation & Épicerie','Mode & Vêtements','Artisanat & Création',
+        'Numérique & Tech','Conseil & Services pro','Éducation & Formation',
+        'Transport & Logistique','Immobilier','Événementiel','Sport & Fitness',
+        'Animaux','Autre'
+      ],
+      regions: [
+        { code: 'MQ', name: 'Martinique', status: 'active' },
+        { code: 'GP', name: 'Guadeloupe', status: 'soon' },
+        { code: 'GF', name: 'Guyane',     status: 'planned' }
+      ]
+    };
 
-    // Si user en session, on essaie de rafraîchir ses données
-    if (state.user && state.user.type === 'company') {
-      const r = await api('getCompanyData', { company_id: state.user.id, token: state.user.token });
-      if (r && r.ok) { state.user.data = r.company; saveSession(); }
-      else { clearSession(); }
-    }
-
-    // Vue initiale
+    // 3. NAVIGUER IMMÉDIATEMENT (l'utilisateur voit la page instantanément)
     if (state.user && state.user.type === 'company') navigate('pro-dashboard');
     else if (state.user && state.user.type === 'admin') navigate('admin-dashboard');
     else navigate('home');
+
+    // 4. En ARRIÈRE-PLAN : récupérer la vraie config et rafraîchir si besoin
+    api('getConfig').then(cfg => {
+      if (!cfg || !cfg.ok) return;
+      const regionsChanged   = JSON.stringify(cfg.regions)   !== JSON.stringify(state.config.regions);
+      const sectorsChanged   = JSON.stringify(cfg.sectors)   !== JSON.stringify(state.config.sectors);
+      state.config = cfg;
+      // Re-render silencieusement uniquement si on est sur une page qui dépend de la config
+      if (state.view === 'home' && regionsChanged) renderHome();
+      if (state.view === 'register' && sectorsChanged) renderRegisterForm();
+    }).catch(() => { /* fallback déjà actif, rien à faire */ });
+
+    // 5. Si user en session, rafraîchir ses données en arrière-plan
+    //    (le dashboard s'est déjà affiché avec les données du localStorage)
+    if (state.user && state.user.type === 'company') {
+      api('getCompanyData', { company_id: state.user.id, token: state.user.token }).then(r => {
+        if (r && r.ok) {
+          state.user.data = r.company;
+          saveSession();
+          if (state.view === 'pro-dashboard') renderProDashboard();
+        } else {
+          // Token expiré ou invalide
+          clearSession();
+          if (state.view !== 'home') navigate('home');
+        }
+      }).catch(() => { /* on garde les données locales */ });
+    }
   }
 
-  // Démarrage
+  // Démarrage immédiat (pas d'async/await au niveau de boot pour éviter le décalage)
   boot();
   </script>
 </body>
