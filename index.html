@@ -2966,7 +2966,7 @@
 
   const APP = {
     name: 'Annuaire YOUPI',
-    version: 'v2.5.3',
+    version: 'v2.5.4',
     versionDate: '15 mai 2026',
     BACKEND_URL: 'https://script.google.com/macros/s/AKfycbzQNSOAGCJp1QmZU0IE1FYiKmKCcGgTUpqKa3RJG9lwiAND_EC5dGdbh2XCu26ZTMoxtw/exec'
   };
@@ -2979,7 +2979,7 @@
   // ------------------------------------------------------------
   const CHANGELOG = [
     {
-      version: 'v2.5.3',
+      version: 'v2.5.4',
       date: '15 mai 2026',
       title: "🛠️ Améliorations internes",
       entries: [
@@ -7203,9 +7203,9 @@
         <div id="crm-send-recipients-list" style="display:none;margin-top:12px"></div>
       </div>
 
-      <label class="crm-confirm-check" style="display:flex;align-items:flex-start;gap:10px;padding:12px;background:white;border:2px solid var(--border);border-radius:var(--radius);cursor:pointer;margin-bottom:14px">
-        <input type="checkbox" ${_crm.sendConfirmed ? 'checked' : ''} onchange="_crm.sendConfirmed = this.checked; updateSendButton()" style="margin-top:2px;flex-shrink:0">
-        <span style="font-size:13px;line-height:1.5">
+      <label class="crm-confirm-check" style="display:flex;align-items:flex-start;gap:10px;padding:14px 16px;background:white;border:2px solid var(--border);border-radius:var(--radius);cursor:pointer;margin-bottom:14px">
+        <input type="checkbox" ${_crm.sendConfirmed ? 'checked' : ''} onchange="_crm.sendConfirmed = this.checked; updateSendButton()" style="margin-top:2px;flex-shrink:0;width:18px;height:18px;cursor:pointer">
+        <span style="font-size:13px;line-height:1.5;flex:1;min-width:0">
           J'ai vérifié le contenu du mail et la liste des destinataires.<br>
           <span style="color:var(--text-2)">Je confirme l'envoi de <strong>${_crm.sendCount} mail${_crm.sendCount > 1 ? 's' : ''}</strong> aux entreprises du segment <strong>${esc(seg.name)}</strong>.</span>
         </span>
