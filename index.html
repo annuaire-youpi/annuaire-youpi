@@ -2999,7 +2999,7 @@
 
   const APP = {
     name: 'Annuaire YOUPI',
-    version: 'v2.8.0',
+    version: 'v2.8.1',
     versionDate: '15 mai 2026',
     BACKEND_URL: 'https://script.google.com/macros/s/AKfycbzQNSOAGCJp1QmZU0IE1FYiKmKCcGgTUpqKa3RJG9lwiAND_EC5dGdbh2XCu26ZTMoxtw/exec'
   };
@@ -3922,13 +3922,21 @@
     const docId = (params && params.doc) || 'mentions';
     const doc = LEGAL_DOCS.find(d => d.id === docId) || LEGAL_DOCS[0];
 
-    // Menu latéral des documents
+    // Menu latéral des documents (desktop) + dropdown (mobile)
     let menu = '<nav class="legal-nav">';
     LEGAL_DOCS.forEach(function(d) {
       const active = d.id === doc.id ? ' active' : '';
       menu += `<a class="legal-nav-item${active}" onclick="navigate('legal', {doc: '${d.id}'})">${d.icon} ${esc(d.label)}</a>`;
     });
     menu += '</nav>';
+
+    // Menu dropdown pour mobile
+    let mobileMenu = '<div class="legal-nav-mobile"><select onchange="navigate(\'legal\', {doc: this.value})">';
+    LEGAL_DOCS.forEach(function(d) {
+      const selected = d.id === doc.id ? ' selected' : '';
+      mobileMenu += `<option value="${d.id}"${selected}>${d.icon} ${esc(d.label)}</option>`;
+    });
+    mobileMenu += '</select></div>';
 
     // Contenu du document
     let content = '';
@@ -3947,7 +3955,10 @@
         </div>
         <div class="legal-layout">
           ${menu}
-          <article class="legal-content">${content}</article>
+          <div>
+            ${mobileMenu}
+            <article class="legal-content">${content}</article>
+          </div>
         </div>
       </div>
     `;
@@ -4074,19 +4085,77 @@
 
         @media (max-width: 900px) {
           .legal-layout { grid-template-columns: 1fr; }
-          .legal-nav {
-            position: static;
-            flex-direction: row;
-            flex-wrap: wrap;
-            overflow-x: auto;
+          .legal-nav { display: none; }
+          .legal-nav-mobile { display: block; }
+          .legal-content { padding: 18px 14px; font-size: 14px; }
+          .legal-title { font-size: 20px; line-height: 1.3; }
+          .legal-content h2 { font-size: 17px; padding-left: 10px; margin-top: 24px; }
+          .legal-content h3 { font-size: 14px; }
+          .legal-content ul, .legal-content ol { padding-left: 18px; }
+          /* Conversion tableaux → cartes empilées sur mobile */
+          .legal-content table,
+          .legal-content thead,
+          .legal-content tbody,
+          .legal-content tr,
+          .legal-content th,
+          .legal-content td {
+            display: block;
+            width: 100% !important;
+            box-sizing: border-box;
           }
-          .legal-nav-item {
-            white-space: nowrap;
-            font-size: 13px;
-            padding: 8px 12px;
+          .legal-content thead { display: none; } /* on cache les en-têtes, on les répète via data-attr */
+          .legal-content tr {
+            margin-bottom: 12px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+            background: var(--card);
           }
-          .legal-content { padding: 24px 20px; font-size: 14px; }
-          .legal-title { font-size: 22px; }
+          .legal-content td {
+            border: none;
+            border-bottom: 1px solid var(--border);
+            padding: 10px 14px;
+          }
+          .legal-content td:last-child { border-bottom: none; }
+          .legal-content td::before {
+            content: attr(data-label);
+            display: block;
+            font-weight: 600;
+            color: var(--teal-700);
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            margin-bottom: 4px;
+          }
+          /* Les tableaux à 2 colonnes (clé / valeur) gardent un rendu compact :
+             on cache le label ::before et on met la 1ère colonne en gras */
+          .legal-content tr.kv td:first-child {
+            background: var(--sand-50);
+            font-weight: 600;
+            color: var(--teal-900);
+            border-bottom: 1px solid var(--border);
+          }
+          .legal-content tr.kv td::before { display: none; }
+          .legal-price-box { padding: 16px; margin: 14px 0; }
+          .legal-price-box .price { font-size: 30px; }
+        }
+        .legal-nav-mobile { display: none; }
+        .legal-nav-mobile select {
+          width: 100%;
+          padding: 12px 14px;
+          font-size: 14px;
+          font-weight: 600;
+          background: var(--card);
+          border: 1px solid var(--border);
+          border-radius: var(--radius);
+          color: var(--text-1);
+          margin-bottom: 16px;
+          appearance: none;
+          background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%232563eb' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+          background-repeat: no-repeat;
+          background-position: right 12px center;
+          background-size: 16px;
+          padding-right: 40px;
         }
       `;
       document.head.appendChild(style);
@@ -4102,14 +4171,14 @@
 
 <h2>1. Éditeur du site</h2>
 <table>
-  <tr><th>Dénomination</th><td>Annuaire YOUPI®</td></tr>
-  <tr><th>Forme juridique</th><td>Entreprise individuelle</td></tr>
-  <tr><th>Responsable</th><td>Olivier COURTY</td></tr>
-  <tr><th>SIRET (siège)</th><td>395 370 182 00036</td></tr>
-  <tr><th>Adresse postale</th><td>Route du Vert Pré, 97232 Le Lamentin, Martinique (France)</td></tr>
-  <tr><th>Courrier électronique</th><td><a href="mailto:contact@annuaire-youpi.ai">contact@annuaire-youpi.ai</a></td></tr>
-  <tr><th>Site web officiel</th><td><a href="https://www.annuaire-youpi.ai">https://www.annuaire-youpi.ai</a></td></tr>
-  <tr><th>Directeur de la publication</th><td>Olivier COURTY</td></tr>
+  <tr class="kv"><th>Dénomination</th><td>Annuaire YOUPI®</td></tr>
+  <tr class="kv"><th>Forme juridique</th><td>Entreprise individuelle</td></tr>
+  <tr class="kv"><th>Responsable</th><td>Olivier COURTY</td></tr>
+  <tr class="kv"><th>SIRET (siège)</th><td>395 370 182 00036</td></tr>
+  <tr class="kv"><th>Adresse postale</th><td>Route du Vert Pré, 97232 Le Lamentin, Martinique (France)</td></tr>
+  <tr class="kv"><th>Courrier électronique</th><td><a href="mailto:contact@annuaire-youpi.ai">contact@annuaire-youpi.ai</a></td></tr>
+  <tr class="kv"><th>Site web officiel</th><td><a href="https://www.annuaire-youpi.ai">https://www.annuaire-youpi.ai</a></td></tr>
+  <tr class="kv"><th>Directeur de la publication</th><td>Olivier COURTY</td></tr>
 </table>
 <p>Pour toute question relative au site, vous pouvez nous contacter par courrier électronique à l'adresse indiquée ci-dessus.</p>
 
@@ -4117,16 +4186,16 @@
 <h3>Site web (interface publique)</h3>
 <p>Le site est hébergé par <strong>GitHub Pages</strong>, service fourni par&nbsp;:</p>
 <table>
-  <tr><th>Hébergeur</th><td>GitHub, Inc.</td></tr>
-  <tr><th>Adresse</th><td>88 Colin P. Kelly Jr Street, San Francisco, CA 94107, États-Unis</td></tr>
-  <tr><th>Site web</th><td><a href="https://github.com" target="_blank">https://github.com</a></td></tr>
+  <tr class="kv"><th>Hébergeur</th><td>GitHub, Inc.</td></tr>
+  <tr class="kv"><th>Adresse</th><td>88 Colin P. Kelly Jr Street, San Francisco, CA 94107, États-Unis</td></tr>
+  <tr class="kv"><th>Site web</th><td><a href="https://github.com" target="_blank">https://github.com</a></td></tr>
 </table>
 <h3>Services applicatifs (backend)</h3>
 <p>Les services applicatifs (traitement des données, base de données, envois automatisés) sont fournis par&nbsp;:</p>
 <table>
-  <tr><th>Prestataire</th><td>Google LLC (Google Workspace, Apps Script, Sheets)</td></tr>
-  <tr><th>Adresse</th><td>1600 Amphitheatre Parkway, Mountain View, CA 94043, États-Unis</td></tr>
-  <tr><th>Site web</th><td><a href="https://workspace.google.com" target="_blank">https://workspace.google.com</a></td></tr>
+  <tr class="kv"><th>Prestataire</th><td>Google LLC (Google Workspace, Apps Script, Sheets)</td></tr>
+  <tr class="kv"><th>Adresse</th><td>1600 Amphitheatre Parkway, Mountain View, CA 94043, États-Unis</td></tr>
+  <tr class="kv"><th>Site web</th><td><a href="https://workspace.google.com" target="_blank">https://workspace.google.com</a></td></tr>
 </table>
 
 <h2>3. Propriété intellectuelle</h2>
@@ -4178,10 +4247,10 @@
 <table>
   <tr><th>Nom</th><th>Type</th><th>Finalité</th><th>Durée</th></tr>
   <tr>
-    <td><code>youpi_session</code></td>
-    <td>localStorage</td>
-    <td>Maintenir votre session connectée à votre espace professionnel ou administrateur entre les rechargements de page.</td>
-    <td>Jusqu'à votre déconnexion ou la suppression manuelle</td>
+    <td data-label="Nom"><code>youpi_session</code></td>
+    <td data-label="Type">localStorage</td>
+    <td data-label="Finalité">Maintenir votre session connectée à votre espace professionnel ou administrateur entre les rechargements de page.</td>
+    <td data-label="Durée">Jusqu'à votre déconnexion ou la suppression manuelle</td>
   </tr>
 </table>
 <p>Ce stockage est <strong>strictement nécessaire</strong> au fonctionnement du service et n'est créé qu'après votre connexion volontaire à un espace privé (espace pro entreprise ou administration). Il ne nécessite pas votre consentement préalable en application de l'article 82 de la loi Informatique et Libertés, dans la mesure où il a pour finalité exclusive de permettre ou de faciliter la communication par voie électronique.</p>
@@ -4195,19 +4264,19 @@
 <table>
   <tr><th>Service</th><th>Finalité</th><th>Politique de cookies</th></tr>
   <tr>
-    <td>Chatling</td>
-    <td>Agent conversationnel IA (recherche d'entreprises par questions en langage naturel)</td>
-    <td><a href="https://chatling.ai" target="_blank">chatling.ai</a></td>
+    <td data-label="Service">Chatling</td>
+    <td data-label="Finalité">Agent conversationnel IA (recherche d'entreprises par questions en langage naturel)</td>
+    <td data-label="Politique de cookies"><a href="https://chatling.ai" target="_blank">chatling.ai</a></td>
   </tr>
   <tr>
-    <td>Stripe</td>
-    <td>Paiement sécurisé des services de mise en avant (boost Facebook)</td>
-    <td><a href="https://stripe.com/fr/privacy" target="_blank">stripe.com</a></td>
+    <td data-label="Service">Stripe</td>
+    <td data-label="Finalité">Paiement sécurisé des services de mise en avant (boost Facebook)</td>
+    <td data-label="Politique de cookies"><a href="https://stripe.com/fr/privacy" target="_blank">stripe.com</a></td>
   </tr>
   <tr>
-    <td>Facebook</td>
-    <td>Page officielle Annuaire YOUPI® et publications associées</td>
-    <td><a href="https://www.facebook.com/policies/cookies/" target="_blank">facebook.com</a></td>
+    <td data-label="Service">Facebook</td>
+    <td data-label="Finalité">Page officielle Annuaire YOUPI® et publications associées</td>
+    <td data-label="Politique de cookies"><a href="https://www.facebook.com/policies/cookies/" target="_blank">facebook.com</a></td>
   </tr>
 </table>
 <p>Annuaire YOUPI® n'exerce aucun contrôle sur les cookies déposés par ces services tiers. Nous vous invitons à consulter leurs politiques respectives pour plus d'informations.</p>
@@ -4267,11 +4336,11 @@
 
 <h2>2. Responsable du traitement</h2>
 <table>
-  <tr><th>Responsable</th><td>Olivier COURTY, en qualité d'entrepreneur individuel</td></tr>
-  <tr><th>Dénomination</th><td>Annuaire YOUPI®</td></tr>
-  <tr><th>SIRET</th><td>395 370 182 00036</td></tr>
-  <tr><th>Adresse</th><td>Route du Vert Pré, 97232 Le Lamentin, Martinique (France)</td></tr>
-  <tr><th>Courrier électronique</th><td><a href="mailto:contact@annuaire-youpi.ai">contact@annuaire-youpi.ai</a></td></tr>
+  <tr class="kv"><th>Responsable</th><td>Olivier COURTY, en qualité d'entrepreneur individuel</td></tr>
+  <tr class="kv"><th>Dénomination</th><td>Annuaire YOUPI®</td></tr>
+  <tr class="kv"><th>SIRET</th><td>395 370 182 00036</td></tr>
+  <tr class="kv"><th>Adresse</th><td>Route du Vert Pré, 97232 Le Lamentin, Martinique (France)</td></tr>
+  <tr class="kv"><th>Courrier électronique</th><td><a href="mailto:contact@annuaire-youpi.ai">contact@annuaire-youpi.ai</a></td></tr>
 </table>
 <p>En tant qu'entreprise individuelle de taille modeste, Annuaire YOUPI® n'est pas légalement tenue de désigner un Délégué à la Protection des Données (DPO). Toutes les demandes relatives à vos données personnelles sont à adresser directement au responsable du traitement à l'adresse ci-dessus.</p>
 
@@ -4281,9 +4350,9 @@
 <h3>3.1 Données collectées lors de l'inscription d'une entreprise</h3>
 <p>Lorsqu'une entreprise s'inscrit dans l'annuaire, les données suivantes sont collectées&nbsp;:</p>
 <table>
-  <tr><th>Données obligatoires</th><td>Nom de l'entreprise, secteur d'activité, description, ville, région, adresse électronique de contact, numéro de téléphone, liste des services proposés, image illustrative</td></tr>
-  <tr><th>Données facultatives</th><td>Site web, adresse postale complète, horaires d'ouverture, liens vers les réseaux sociaux (Facebook, Instagram), prénom du contact</td></tr>
-  <tr><th>Données générées par le système</th><td>Identifiant unique de la fiche, date d'inscription, statut de la fiche, code PIN d'accès (haché et salé, jamais stocké en clair), contenu structuré généré automatiquement par intelligence artificielle à partir des informations fournies</td></tr>
+  <tr class="kv"><th>Données obligatoires</th><td>Nom de l'entreprise, secteur d'activité, description, ville, région, adresse électronique de contact, numéro de téléphone, liste des services proposés, image illustrative</td></tr>
+  <tr class="kv"><th>Données facultatives</th><td>Site web, adresse postale complète, horaires d'ouverture, liens vers les réseaux sociaux (Facebook, Instagram), prénom du contact</td></tr>
+  <tr class="kv"><th>Données générées par le système</th><td>Identifiant unique de la fiche, date d'inscription, statut de la fiche, code PIN d'accès (haché et salé, jamais stocké en clair), contenu structuré généré automatiquement par intelligence artificielle à partir des informations fournies</td></tr>
 </table>
 
 <div class="legal-warning">
@@ -4306,51 +4375,51 @@
 <p>Vos données sont traitées pour les finalités suivantes&nbsp;:</p>
 <table>
   <tr><th>Finalité</th><th>Données concernées</th></tr>
-  <tr><td><strong>Référencer votre entreprise dans l'annuaire public</strong></td><td>Toutes les données d'inscription destinées à être publiées</td></tr>
-  <tr><td><strong>Permettre la consultation de l'annuaire par les visiteurs</strong>, y compris via l'agent conversationnel IA</td><td>Données publiques de la fiche entreprise et des pages de services</td></tr>
-  <tr><td><strong>Vous permettre de gérer votre fiche</strong> via votre espace professionnel</td><td>Email, code PIN haché, identifiant de fiche</td></tr>
-  <tr><td><strong>Publier votre entreprise</strong> sur la page Facebook officielle d'Annuaire YOUPI®</td><td>Informations publiques de la fiche, image illustrative</td></tr>
-  <tr><td><strong>Vous adresser des communications opérationnelles</strong> (confirmation d'inscription, code PIN, expiration de visibilité, etc.)</td><td>Email, prénom du contact, nom de l'entreprise</td></tr>
-  <tr><td><strong>Vous adresser des communications informatives et commerciales</strong> relatives au service (relances, nouveautés, services additionnels)</td><td>Email, prénom du contact, nom de l'entreprise, secteur, ville, région</td></tr>
-  <tr><td><strong>Traiter votre paiement</strong> pour les services payants (boost Facebook)</td><td>Données bancaires (traitées exclusivement par Stripe)</td></tr>
-  <tr><td><strong>Améliorer le service</strong> et tenir un historique opérationnel (journal d'audit interne)</td><td>Actions effectuées sur le service, horodatage</td></tr>
-  <tr><td><strong>Répondre à nos obligations légales</strong></td><td>Toutes données nécessaires</td></tr>
+  <tr><td data-label="Finalité"><strong>Référencer votre entreprise dans l'annuaire public</strong></td><td data-label="Données concernées">Toutes les données d'inscription destinées à être publiées</td></tr>
+  <tr><td data-label="Finalité"><strong>Permettre la consultation de l'annuaire par les visiteurs</strong>, y compris via l'agent conversationnel IA</td><td data-label="Données concernées">Données publiques de la fiche entreprise et des pages de services</td></tr>
+  <tr><td data-label="Finalité"><strong>Vous permettre de gérer votre fiche</strong> via votre espace professionnel</td><td data-label="Données concernées">Email, code PIN haché, identifiant de fiche</td></tr>
+  <tr><td data-label="Finalité"><strong>Publier votre entreprise</strong> sur la page Facebook officielle d'Annuaire YOUPI®</td><td data-label="Données concernées">Informations publiques de la fiche, image illustrative</td></tr>
+  <tr><td data-label="Finalité"><strong>Vous adresser des communications opérationnelles</strong> (confirmation d'inscription, code PIN, expiration de visibilité, etc.)</td><td data-label="Données concernées">Email, prénom du contact, nom de l'entreprise</td></tr>
+  <tr><td data-label="Finalité"><strong>Vous adresser des communications informatives et commerciales</strong> relatives au service (relances, nouveautés, services additionnels)</td><td data-label="Données concernées">Email, prénom du contact, nom de l'entreprise, secteur, ville, région</td></tr>
+  <tr><td data-label="Finalité"><strong>Traiter votre paiement</strong> pour les services payants (boost Facebook)</td><td data-label="Données concernées">Données bancaires (traitées exclusivement par Stripe)</td></tr>
+  <tr><td data-label="Finalité"><strong>Améliorer le service</strong> et tenir un historique opérationnel (journal d'audit interne)</td><td data-label="Données concernées">Actions effectuées sur le service, horodatage</td></tr>
+  <tr><td data-label="Finalité"><strong>Répondre à nos obligations légales</strong></td><td data-label="Données concernées">Toutes données nécessaires</td></tr>
 </table>
 
 <h2>5. Bases légales du traitement</h2>
 <p>Conformément à l'article 6 du RGPD, chaque traitement repose sur une base légale précise&nbsp;:</p>
 <table>
   <tr><th>Traitement</th><th>Base légale</th></tr>
-  <tr><td>Référencement de votre entreprise et gestion de votre fiche</td><td>Exécution du contrat (article 6.1.b RGPD) — vous demandez le service en vous inscrivant</td></tr>
-  <tr><td>Communications opérationnelles indispensables (PIN, expiration, confirmation)</td><td>Exécution du contrat (article 6.1.b RGPD)</td></tr>
-  <tr><td>Communications commerciales et de relance par email</td><td>Intérêt légitime (article 6.1.f RGPD) — vous êtes un client professionnel d'un service auquel vous êtes activement abonné, et vous pouvez vous y opposer à tout moment</td></tr>
-  <tr><td>Publication sur Facebook</td><td>Intérêt légitime (article 6.1.f RGPD) — promotion du service au bénéfice mutuel</td></tr>
-  <tr><td>Traitement des paiements</td><td>Exécution du contrat (article 6.1.b RGPD)</td></tr>
-  <tr><td>Conservation du journal d'audit interne</td><td>Intérêt légitime (article 6.1.f RGPD) — sécurité du service et lutte contre la fraude</td></tr>
+  <tr><td data-label="Traitement">Référencement de votre entreprise et gestion de votre fiche</td><td data-label="Base légale">Exécution du contrat (article 6.1.b RGPD) — vous demandez le service en vous inscrivant</td></tr>
+  <tr><td data-label="Traitement">Communications opérationnelles indispensables (PIN, expiration, confirmation)</td><td data-label="Base légale">Exécution du contrat (article 6.1.b RGPD)</td></tr>
+  <tr><td data-label="Traitement">Communications commerciales et de relance par email</td><td data-label="Base légale">Intérêt légitime (article 6.1.f RGPD) — vous êtes un client professionnel d'un service auquel vous êtes activement abonné, et vous pouvez vous y opposer à tout moment</td></tr>
+  <tr><td data-label="Traitement">Publication sur Facebook</td><td data-label="Base légale">Intérêt légitime (article 6.1.f RGPD) — promotion du service au bénéfice mutuel</td></tr>
+  <tr><td data-label="Traitement">Traitement des paiements</td><td data-label="Base légale">Exécution du contrat (article 6.1.b RGPD)</td></tr>
+  <tr><td data-label="Traitement">Conservation du journal d'audit interne</td><td data-label="Base légale">Intérêt légitime (article 6.1.f RGPD) — sécurité du service et lutte contre la fraude</td></tr>
 </table>
 
 <h2>6. Durée de conservation</h2>
 <table>
   <tr><th>Donnée</th><th>Durée</th></tr>
-  <tr><td>Fiche entreprise active</td><td>Tant que la fiche est active dans l'annuaire</td></tr>
-  <tr><td>Fiche entreprise archivée (suite à suppression)</td><td>Conservation dans nos archives sous forme de trace historique, sans diffusion publique. Anonymisation possible sur demande (voir section 10)</td></tr>
-  <tr><td>Historique d'envoi des emails (campagnes, automatisations)</td><td>3 ans à compter du dernier envoi</td></tr>
-  <tr><td>Journal d'audit technique</td><td>2 ans à compter de l'événement</td></tr>
-  <tr><td>Données de paiement</td><td>Annuaire YOUPI® ne stocke aucune donnée de paiement. La durée de conservation chez Stripe est régie par leur propre politique</td></tr>
-  <tr><td>Factures et documents comptables (obligations légales)</td><td>10 ans à compter de la fin de l'exercice comptable (article L123-22 du Code de commerce)</td></tr>
+  <tr><td data-label="Donnée">Fiche entreprise active</td><td data-label="Durée">Tant que la fiche est active dans l'annuaire</td></tr>
+  <tr><td data-label="Donnée">Fiche entreprise archivée (suite à suppression)</td><td data-label="Durée">Conservation dans nos archives sous forme de trace historique, sans diffusion publique. Anonymisation possible sur demande (voir section 10)</td></tr>
+  <tr><td data-label="Donnée">Historique d'envoi des emails (campagnes, automatisations)</td><td data-label="Durée">3 ans à compter du dernier envoi</td></tr>
+  <tr><td data-label="Donnée">Journal d'audit technique</td><td data-label="Durée">2 ans à compter de l'événement</td></tr>
+  <tr><td data-label="Donnée">Données de paiement</td><td data-label="Durée">Annuaire YOUPI® ne stocke aucune donnée de paiement. La durée de conservation chez Stripe est régie par leur propre politique</td></tr>
+  <tr><td data-label="Donnée">Factures et documents comptables (obligations légales)</td><td data-label="Durée">10 ans à compter de la fin de l'exercice comptable (article L123-22 du Code de commerce)</td></tr>
 </table>
 
 <h2>7. Destinataires et sous-traitants</h2>
 <p>Vos données ne sont jamais vendues, louées ou cédées à des tiers à des fins commerciales. Cependant, certaines de vos données sont communiquées à nos sous-traitants techniques pour les besoins du service&nbsp;:</p>
 <table>
   <tr><th>Sous-traitant</th><th>Rôle</th><th>Données traitées</th><th>Localisation</th></tr>
-  <tr><td><strong>Google LLC</strong><br>(Google Workspace, Apps Script, Sheets, Gmail)</td><td>Hébergement du backend, stockage des données, envoi des emails</td><td>Toutes les données d'inscription, contenus, emails</td><td>États-Unis</td></tr>
-  <tr><td><strong>GitHub, Inc.</strong> (filiale de Microsoft)</td><td>Hébergement du site web public</td><td>Aucune donnée personnelle&nbsp;: le site servi est statique</td><td>États-Unis</td></tr>
-  <tr><td><strong>Anthropic, PBC</strong></td><td>Génération automatique de contenu structuré et de publications par IA (Claude)</td><td>Informations publiques de la fiche entreprise et des pages de services</td><td>États-Unis</td></tr>
-  <tr><td><strong>Chatling</strong></td><td>Agent conversationnel IA accessible aux visiteurs</td><td>Informations publiques de la fiche, contenu des conversations avec les visiteurs</td><td>États-Unis</td></tr>
-  <tr><td><strong>Reve.com</strong></td><td>Génération d'images illustratives par intelligence artificielle</td><td>Brève description de l'entreprise ou du service (pour générer une image)</td><td>États-Unis</td></tr>
-  <tr><td><strong>Meta Platforms, Inc.</strong> (Facebook)</td><td>Publication automatique des fiches sur la page Facebook officielle d'Annuaire YOUPI®</td><td>Informations publiques de la fiche, image illustrative</td><td>États-Unis / Irlande (UE)</td></tr>
-  <tr><td><strong>Stripe, Inc.</strong></td><td>Traitement sécurisé des paiements pour les services payants</td><td>Données bancaires (collectées et traitées directement par Stripe, sans transit par Annuaire YOUPI®)</td><td>États-Unis / Irlande (UE)</td></tr>
+  <tr><td data-label="Sous-traitant"><strong>Google LLC</strong><br>(Google Workspace, Apps Script, Sheets, Gmail)</td><td data-label="Rôle">Hébergement du backend, stockage des données, envoi des emails</td><td data-label="Données traitées">Toutes les données d'inscription, contenus, emails</td><td data-label="Localisation">États-Unis</td></tr>
+  <tr><td data-label="Sous-traitant"><strong>GitHub, Inc.</strong> (filiale de Microsoft)</td><td data-label="Rôle">Hébergement du site web public</td><td data-label="Données traitées">Aucune donnée personnelle&nbsp;: le site servi est statique</td><td data-label="Localisation">États-Unis</td></tr>
+  <tr><td data-label="Sous-traitant"><strong>Anthropic, PBC</strong></td><td data-label="Rôle">Génération automatique de contenu structuré et de publications par IA (Claude)</td><td data-label="Données traitées">Informations publiques de la fiche entreprise et des pages de services</td><td data-label="Localisation">États-Unis</td></tr>
+  <tr><td data-label="Sous-traitant"><strong>Chatling</strong></td><td data-label="Rôle">Agent conversationnel IA accessible aux visiteurs</td><td data-label="Données traitées">Informations publiques de la fiche, contenu des conversations avec les visiteurs</td><td data-label="Localisation">États-Unis</td></tr>
+  <tr><td data-label="Sous-traitant"><strong>Reve.com</strong></td><td data-label="Rôle">Génération d'images illustratives par intelligence artificielle</td><td data-label="Données traitées">Brève description de l'entreprise ou du service (pour générer une image)</td><td data-label="Localisation">États-Unis</td></tr>
+  <tr><td data-label="Sous-traitant"><strong>Meta Platforms, Inc.</strong> (Facebook)</td><td data-label="Rôle">Publication automatique des fiches sur la page Facebook officielle d'Annuaire YOUPI®</td><td data-label="Données traitées">Informations publiques de la fiche, image illustrative</td><td data-label="Localisation">États-Unis / Irlande (UE)</td></tr>
+  <tr><td data-label="Sous-traitant"><strong>Stripe, Inc.</strong></td><td data-label="Rôle">Traitement sécurisé des paiements pour les services payants</td><td data-label="Données traitées">Données bancaires (collectées et traitées directement par Stripe, sans transit par Annuaire YOUPI®)</td><td data-label="Localisation">États-Unis / Irlande (UE)</td></tr>
 </table>
 <p>Chacun de ces sous-traitants est lié par ses propres engagements en matière de protection des données et publie sa propre politique de confidentialité, consultable sur son site web officiel.</p>
 <p>Annuaire YOUPI® peut également être amené à communiquer vos données aux autorités publiques ou judiciaires en cas de demande légalement fondée.</p>
@@ -4419,9 +4488,9 @@ Route du Vert Pré, 97232 Le Lamentin, Martinique<br>
 <h3>13.2 Réclamation auprès de la CNIL</h3>
 <p>Si vous estimez, après nous avoir contactés, que vos droits ne sont pas respectés, vous pouvez adresser une réclamation à la Commission Nationale de l'Informatique et des Libertés (CNIL)&nbsp;:</p>
 <table>
-  <tr><th>CNIL</th><td>3 Place de Fontenoy, TSA 80715, 75334 PARIS CEDEX 07</td></tr>
-  <tr><th>Téléphone</th><td>01 53 73 22 22</td></tr>
-  <tr><th>Site web</th><td><a href="https://www.cnil.fr" target="_blank">https://www.cnil.fr</a></td></tr>
+  <tr class="kv"><th>CNIL</th><td>3 Place de Fontenoy, TSA 80715, 75334 PARIS CEDEX 07</td></tr>
+  <tr class="kv"><th>Téléphone</th><td>01 53 73 22 22</td></tr>
+  <tr class="kv"><th>Site web</th><td><a href="https://www.cnil.fr" target="_blank">https://www.cnil.fr</a></td></tr>
 </table>
     `;
   }
@@ -4437,13 +4506,13 @@ Route du Vert Pré, 97232 Le Lamentin, Martinique<br>
 
 <h2>2. Définitions</h2>
 <table>
-  <tr><th>Éditeur</th><td>Olivier COURTY, exploitant l'entreprise individuelle Annuaire YOUPI® (SIRET 395 370 182 00036)</td></tr>
-  <tr><th>Site</th><td>Le site Annuaire YOUPI® accessible à l'adresse <a href="https://www.annuaire-youpi.ai">https://www.annuaire-youpi.ai</a> et ses services associés</td></tr>
-  <tr><th>Service</th><td>L'annuaire en ligne des entreprises ultra-marines proposé par l'Éditeur</td></tr>
-  <tr><th>Visiteur</th><td>Toute personne consultant librement le Site sans inscription</td></tr>
-  <tr><th>Entreprise référencée</th><td>Toute entreprise inscrite dans l'annuaire</td></tr>
-  <tr><th>Utilisateur</th><td>Toute personne accédant au Site, qu'elle soit Visiteur ou représentant d'une Entreprise référencée</td></tr>
-  <tr><th>Contenu</th><td>L'ensemble des informations, textes, images, liens et autres éléments présents sur le Site</td></tr>
+  <tr class="kv"><th>Éditeur</th><td>Olivier COURTY, exploitant l'entreprise individuelle Annuaire YOUPI® (SIRET 395 370 182 00036)</td></tr>
+  <tr class="kv"><th>Site</th><td>Le site Annuaire YOUPI® accessible à l'adresse <a href="https://www.annuaire-youpi.ai">https://www.annuaire-youpi.ai</a> et ses services associés</td></tr>
+  <tr class="kv"><th>Service</th><td>L'annuaire en ligne des entreprises ultra-marines proposé par l'Éditeur</td></tr>
+  <tr class="kv"><th>Visiteur</th><td>Toute personne consultant librement le Site sans inscription</td></tr>
+  <tr class="kv"><th>Entreprise référencée</th><td>Toute entreprise inscrite dans l'annuaire</td></tr>
+  <tr class="kv"><th>Utilisateur</th><td>Toute personne accédant au Site, qu'elle soit Visiteur ou représentant d'une Entreprise référencée</td></tr>
+  <tr class="kv"><th>Contenu</th><td>L'ensemble des informations, textes, images, liens et autres éléments présents sur le Site</td></tr>
 </table>
 
 <h2>3. Acceptation des conditions</h2>
@@ -4648,12 +4717,12 @@ Route du Vert Pré, 97232 Le Lamentin, Martinique<br>
 
 <h2>2. Définitions</h2>
 <table>
-  <tr><th>Prestataire</th><td>Olivier COURTY, exploitant l'entreprise individuelle Annuaire YOUPI® (SIRET 395 370 182 00036)</td></tr>
-  <tr><th>Client</th><td>Toute entreprise référencée dans l'annuaire YOUPI® qui souscrit au service Boost Facebook</td></tr>
-  <tr><th>Service</th><td>Le service «&nbsp;Boost Facebook&nbsp;» objet des présentes CGV</td></tr>
-  <tr><th>Publication boostée</th><td>La publication concernée par le service de mise en avant payante</td></tr>
-  <tr><th>Page Facebook</th><td>La page Facebook officielle de l'Annuaire YOUPI®, accessible à l'adresse <a href="https://www.facebook.com/annuaire.youpi/" target="_blank">facebook.com/annuaire.youpi</a></td></tr>
-  <tr><th>Facebook</th><td>Le réseau social exploité par Meta Platforms, Inc.</td></tr>
+  <tr class="kv"><th>Prestataire</th><td>Olivier COURTY, exploitant l'entreprise individuelle Annuaire YOUPI® (SIRET 395 370 182 00036)</td></tr>
+  <tr class="kv"><th>Client</th><td>Toute entreprise référencée dans l'annuaire YOUPI® qui souscrit au service Boost Facebook</td></tr>
+  <tr class="kv"><th>Service</th><td>Le service «&nbsp;Boost Facebook&nbsp;» objet des présentes CGV</td></tr>
+  <tr class="kv"><th>Publication boostée</th><td>La publication concernée par le service de mise en avant payante</td></tr>
+  <tr class="kv"><th>Page Facebook</th><td>La page Facebook officielle de l'Annuaire YOUPI®, accessible à l'adresse <a href="https://www.facebook.com/annuaire.youpi/" target="_blank">facebook.com/annuaire.youpi</a></td></tr>
+  <tr class="kv"><th>Facebook</th><td>Le réseau social exploité par Meta Platforms, Inc.</td></tr>
 </table>
 
 <h2>3. Acceptation des conditions</h2>
@@ -4665,11 +4734,11 @@ Route du Vert Pré, 97232 Le Lamentin, Martinique<br>
 <h3>4.2 Contenu de la prestation</h3>
 <table>
   <tr><th>Élément</th><th>Détail</th></tr>
-  <tr><td><strong>Publication boostée</strong></td><td>La publication désignée par le Client lors de sa commande (sa fiche entreprise ou l'une de ses pages de services, articles, publications ou annonces déjà publiées sur l'annuaire)</td></tr>
-  <tr><td><strong>Durée du boost</strong></td><td>4 jours consécutifs</td></tr>
-  <tr><td><strong>Budget publicitaire Facebook</strong></td><td>8 € par jour, soit 32 € au total reversés à Facebook Ads</td></tr>
-  <tr><td><strong>Ciblage</strong></td><td>Audience locale du territoire concerné (Martinique, Guadeloupe, Guyane), selon les paramètres définis par le Prestataire pour optimiser la portée auprès des utilisateurs susceptibles d'être intéressés par l'activité du Client</td></tr>
-  <tr><td><strong>Format</strong></td><td>Publication standard de la page Facebook de l'Annuaire YOUPI®, sponsorisée via Facebook Ads</td></tr>
+  <tr><td data-label="Élément"><strong>Publication boostée</strong></td><td data-label="Détail">La publication désignée par le Client lors de sa commande (sa fiche entreprise ou l'une de ses pages de services, articles, publications ou annonces déjà publiées sur l'annuaire)</td></tr>
+  <tr><td data-label="Élément"><strong>Durée du boost</strong></td><td data-label="Détail">4 jours consécutifs</td></tr>
+  <tr><td data-label="Élément"><strong>Budget publicitaire Facebook</strong></td><td data-label="Détail">8 € par jour, soit 32 € au total reversés à Facebook Ads</td></tr>
+  <tr><td data-label="Élément"><strong>Ciblage</strong></td><td data-label="Détail">Audience locale du territoire concerné (Martinique, Guadeloupe, Guyane), selon les paramètres définis par le Prestataire pour optimiser la portée auprès des utilisateurs susceptibles d'être intéressés par l'activité du Client</td></tr>
+  <tr><td data-label="Élément"><strong>Format</strong></td><td data-label="Détail">Publication standard de la page Facebook de l'Annuaire YOUPI®, sponsorisée via Facebook Ads</td></tr>
 </table>
 
 <h2>5. Prix et modalités de paiement</h2>
