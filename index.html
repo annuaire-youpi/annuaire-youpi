@@ -613,6 +613,104 @@
     @media (max-width: 900px) {
       .dashboard-grid { grid-template-columns: 1fr; }
     }
+    /* ─── Cards d'abonnement Pro / Pro+ (v2.9.0) ─── */
+    .sub-plans-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+    }
+    @media (max-width: 800px) {
+      .sub-plans-grid { grid-template-columns: 1fr; }
+    }
+    .sub-plan-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      overflow: hidden;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .sub-plan-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.08); }
+    .sub-plan-featured {
+      border: 2px solid #7c3aed;
+    }
+    .sub-plan-ribbon {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      background: #fbbf24;
+      color: #78350f;
+      padding: 3px 10px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.4px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    }
+    .sub-plan-header {
+      padding: 24px 20px;
+      color: white;
+      text-align: center;
+    }
+    .sub-plan-label {
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      opacity: 0.9;
+      margin-bottom: 6px;
+    }
+    .sub-plan-price {
+      font-size: 38px;
+      font-weight: 800;
+      line-height: 1;
+      margin-bottom: 8px;
+    }
+    .sub-plan-price span {
+      font-size: 16px;
+      font-weight: 500;
+      opacity: 0.85;
+    }
+    .sub-plan-desc {
+      font-size: 13px;
+      opacity: 0.95;
+      line-height: 1.4;
+    }
+    .sub-plan-body {
+      padding: 24px 22px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+    .sub-features {
+      list-style: none;
+      padding: 0;
+      margin: 0 0 20px 0;
+      flex: 1;
+    }
+    .sub-features li {
+      padding: 9px 0;
+      font-size: 14px;
+      line-height: 1.5;
+      border-bottom: 1px solid var(--sand-50);
+    }
+    .sub-features li:last-child { border-bottom: none; }
+    .sub-plan-cta {
+      display: block;
+      text-align: center;
+      text-decoration: none;
+      padding: 12px;
+      font-size: 15px;
+      font-weight: 700;
+    }
+    .sub-plan-note {
+      margin-top: 10px;
+      font-size: 11px;
+      color: var(--text-2);
+      text-align: center;
+      line-height: 1.5;
+    }
     .sidebar {
       background: var(--card);
       border: 1px solid var(--border);
@@ -2999,7 +3097,7 @@
 
   const APP = {
     name: 'Annuaire YOUPI',
-    version: 'v2.8.1',
+    version: 'v2.9.0',
     versionDate: '15 mai 2026',
     BACKEND_URL: 'https://script.google.com/macros/s/AKfycbzQNSOAGCJp1QmZU0IE1FYiKmKCcGgTUpqKa3RJG9lwiAND_EC5dGdbh2XCu26ZTMoxtw/exec'
   };
@@ -3642,6 +3740,7 @@
       case 'pro-pages':           renderProPages(); break;
       case 'pro-add-page':        renderProAddPage(params); break;
       case 'pro-settings':        renderProSettings(); break;
+      case 'pro-subscription':    renderProSubscription(); break;
       case 'admin-dashboard':     renderAdminDashboard(); break;
       case 'admin-companies':     renderAdminCompanies(); break;
       case 'admin-add-company':   renderAdminAddCompany(); break;
@@ -5318,10 +5417,11 @@ SIRET : 395 370 182 00036<br>
   function proSidebar(activeView) {
     const u = state.user.data;
     const items = [
-      { view: 'pro-dashboard', icon: '🏠', label: 'Tableau de bord' },
-      { view: 'pro-edit',      icon: '✏️', label: 'Modifier ma fiche' },
-      { view: 'pro-pages',     icon: '📄', label: 'Mes pages services' },
-      { view: 'pro-settings',  icon: '⚙️', label: 'Paramètres' }
+      { view: 'pro-dashboard',    icon: '🏠', label: 'Tableau de bord' },
+      { view: 'pro-edit',         icon: '✏️', label: 'Modifier ma fiche' },
+      { view: 'pro-pages',        icon: '📄', label: 'Mes pages services' },
+      { view: 'pro-subscription', icon: '💎', label: 'Mon abonnement' },
+      { view: 'pro-settings',     icon: '⚙️', label: 'Paramètres' }
     ];
     return `
       <aside class="sidebar">
@@ -6199,6 +6299,235 @@ SIRET : 395 370 182 00036<br>
     toast('success', 'Contenu créé ✅');
     navigate('pro-pages');
   }
+
+  // ============================================================
+  //  PAGE "MON ABONNEMENT" (espace pro) — v2.9.0
+  // ============================================================
+  //
+  // Affiche le statut de l'abonnement Pro / Pro+ de l'entreprise :
+  //  - Si gratuit : présentation des 2 formules + boutons "Devenir Pro / Pro+"
+  //  - Si Pro / Pro+ : statut actuel + bouton "Gérer mon abonnement" (portail Stripe)
+  //
+  // Les Payment Links Stripe sont stockés dans les constantes ci-dessous.
+  // Pour identifier l'entreprise lors du paiement, on pré-remplit l'email
+  // via le paramètre ?prefilled_email=<email>.
+  //
+  const STRIPE_LINKS = {
+    pro:      'https://buy.stripe.com/14AfZj1T8cki2CWgNu5sA04',
+    pro_plus: 'https://buy.stripe.com/3cI8wR9lA9861ySbta5sA02'
+  };
+
+  async function renderProSubscription() {
+    if (!state.user || state.user.type !== 'company') return navigate('home');
+    var c = state.user.data;
+
+    // Affichage immédiat avec un loader
+    document.getElementById('main').innerHTML = `
+      <div class="dashboard-grid">
+        ${proSidebar('pro-subscription')}
+        <section>
+          <div class="page-header">
+            <h1>💎 Mon abonnement</h1>
+          </div>
+          <div class="card" style="text-align:center;padding:40px">
+            <div style="font-size:32px;margin-bottom:8px">⏳</div>
+            <div>Chargement de votre abonnement...</div>
+          </div>
+        </section>
+      </div>
+    `;
+
+    // Fetch des infos d'abonnement
+    var r;
+    try {
+      r = await api('getMySubscription', { token: state.user.token });
+    } catch (err) {
+      toast('error', 'Erreur réseau : ' + err.message);
+      return;
+    }
+    if (!r.ok) {
+      toast('error', r.error || 'Erreur de chargement');
+      return;
+    }
+
+    var plan = r.plan || '';
+    var isPro = r.is_pro;
+    var isProPlus = r.is_pro_plus;
+    var detail = r.detail;
+    var endDate = r.subscription_end_date;
+    var cancelAtEnd = detail && detail.cancel_at_period_end;
+    var stripeCustomerExists = r.has_stripe_customer;
+
+    var content;
+    if (plan === 'pro' || plan === 'pro_plus') {
+      content = renderActiveSubscriptionCard_(plan, isPro || isProPlus, endDate, cancelAtEnd, stripeCustomerExists);
+    } else {
+      content = renderUpgradeOptionsCard_(c.email);
+    }
+
+    document.getElementById('main').innerHTML = `
+      <div class="dashboard-grid">
+        ${proSidebar('pro-subscription')}
+        <section>
+          <div class="page-header">
+            <h1>💎 Mon abonnement</h1>
+          </div>
+          ${content}
+        </section>
+      </div>
+    `;
+  }
+
+  function renderActiveSubscriptionCard_(plan, isActive, endDate, cancelAtEnd, hasStripeCustomer) {
+    var planLabel = plan === 'pro_plus' ? 'Pro+' : 'Pro';
+    var planPrice = plan === 'pro_plus' ? '149€' : '39€';
+    var planBadgeBg = plan === 'pro_plus' ? 'linear-gradient(135deg,#7c3aed 0%,#5b21b6 100%)' : 'linear-gradient(135deg,#2563eb 0%,#1d4ed8 100%)';
+    var endFormatted = endDate ? formatDateLong_(endDate) : '—';
+
+    var statusMessage;
+    if (cancelAtEnd) {
+      statusMessage = '<div style="background:#fef3c7;border-left:4px solid #f59e0b;padding:14px 18px;margin:16px 0;border-radius:6px;font-size:14px;color:#92400e">'
+        + '⚠️ <strong>Annulation programmée.</strong> Votre abonnement prendra fin le <strong>' + endFormatted + '</strong>. '
+        + 'Vous conservez tous les avantages ' + planLabel + ' jusqu\'à cette date.'
+        + '</div>';
+    } else if (isActive) {
+      statusMessage = '<div style="background:#dcfce7;border-left:4px solid #16a34a;padding:14px 18px;margin:16px 0;border-radius:6px;font-size:14px;color:#166534">'
+        + '✅ <strong>Abonnement actif.</strong> Prochain renouvellement le <strong>' + endFormatted + '</strong>.'
+        + '</div>';
+    } else {
+      statusMessage = '<div style="background:#fee2e2;border-left:4px solid #dc2626;padding:14px 18px;margin:16px 0;border-radius:6px;font-size:14px;color:#991b1b">'
+        + '⚠️ <strong>Abonnement expiré.</strong> Réactivez votre abonnement pour retrouver les avantages ' + planLabel + '.'
+        + '</div>';
+    }
+
+    var portalButton = hasStripeCustomer
+      ? '<button class="btn btn-primary" onclick="openCustomerPortal()">🔧 Gérer mon abonnement</button>'
+      : '<div style="color:var(--text-2);font-size:13px;padding:10px;background:var(--sand-50);border-radius:6px">La gestion d\'abonnement sera disponible après votre premier paiement Stripe.</div>';
+
+    return ''
+      + '<div class="card" style="text-align:center;padding:32px 24px;margin-bottom:20px">'
+      +   '<div style="display:inline-block;background:' + planBadgeBg + ';color:white;padding:6px 18px;border-radius:20px;font-size:13px;font-weight:700;letter-spacing:0.5px;margin-bottom:16px">FORMULE ' + planLabel.toUpperCase() + '</div>'
+      +   '<div style="font-size:42px;font-weight:800;color:var(--teal-900);margin:8px 0">' + planPrice + '<span style="font-size:18px;color:var(--text-2);font-weight:500">/mois</span></div>'
+      +   statusMessage
+      +   '<div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:18px">'
+      +     portalButton
+      +   '</div>'
+      +   '<div style="margin-top:14px;font-size:12px;color:var(--text-2)">'
+      +     'La gestion (changement de plan, mise à jour CB, annulation, factures) se fait via le portail sécurisé Stripe.'
+      +   '</div>'
+      + '</div>'
+      + renderPlanBenefits_(plan);
+  }
+
+  function renderUpgradeOptionsCard_(userEmail) {
+    var emailParam = userEmail ? '?prefilled_email=' + encodeURIComponent(userEmail) : '';
+    var proUrl = STRIPE_LINKS.pro + emailParam;
+    var proPlusUrl = STRIPE_LINKS.pro_plus + emailParam;
+
+    return ''
+      + '<div class="card" style="margin-bottom:20px;background:#eff6ff;border-left:4px solid #2563eb">'
+      +   '<div style="font-size:15px;line-height:1.6;color:#1e3a8a">'
+      +     '🚀 <strong>Vous êtes en formule gratuite</strong> — votre fiche et vos pages illimitées sont déjà actives. '
+      +     'Passez à une formule supérieure pour débloquer des outils de gestion avancés pour votre entreprise.'
+      +   '</div>'
+      + '</div>'
+      + '<div class="sub-plans-grid">'
+      +   renderPlanCard_('pro', proUrl)
+      +   renderPlanCard_('pro_plus', proPlusUrl)
+      + '</div>';
+  }
+
+  function renderPlanCard_(plan, ctaUrl) {
+    var isPlus = plan === 'pro_plus';
+    var label = isPlus ? 'Pro+' : 'Pro';
+    var price = isPlus ? '149€' : '39€';
+    var bg = isPlus ? 'linear-gradient(135deg,#7c3aed 0%,#5b21b6 100%)' : 'linear-gradient(135deg,#2563eb 0%,#1d4ed8 100%)';
+    var description = isPlus
+      ? 'Pour les entreprises ambitieuses qui veulent automatiser leur relation client.'
+      : 'Pour les entreprises qui veulent gagner du temps au quotidien.';
+    var features = isPlus ? proPlusFeatures_() : proFeatures_();
+    var ctaText = isPlus ? 'Devenir Pro+' : 'Devenir Pro';
+
+    var featuresHtml = '<ul class="sub-features">';
+    features.forEach(function(f) {
+      featuresHtml += '<li>' + f + '</li>';
+    });
+    featuresHtml += '</ul>';
+
+    return ''
+      + '<div class="sub-plan-card' + (isPlus ? ' sub-plan-featured' : '') + '">'
+      +   (isPlus ? '<div class="sub-plan-ribbon">⭐ TOUT INCLUS</div>' : '')
+      +   '<div class="sub-plan-header" style="background:' + bg + '">'
+      +     '<div class="sub-plan-label">FORMULE ' + label.toUpperCase() + '</div>'
+      +     '<div class="sub-plan-price">' + price + '<span>/mois</span></div>'
+      +     '<div class="sub-plan-desc">' + description + '</div>'
+      +   '</div>'
+      +   '<div class="sub-plan-body">'
+      +     featuresHtml
+      +     '<a class="btn btn-primary sub-plan-cta" href="' + ctaUrl + '" target="_blank" rel="noopener">' + ctaText + ' →</a>'
+      +     '<div class="sub-plan-note">Paiement sécurisé par Stripe · Annulation possible à tout moment</div>'
+      +   '</div>'
+      + '</div>';
+  }
+
+  function renderPlanBenefits_(currentPlan) {
+    var features = currentPlan === 'pro_plus' ? proPlusFeatures_() : proFeatures_();
+    var html = '<div class="card"><h3 style="margin-top:0">✨ Vos avantages</h3><ul class="sub-features">';
+    features.forEach(function(f) { html += '<li>' + f + '</li>'; });
+    html += '</ul></div>';
+    return html;
+  }
+
+  function proFeatures_() {
+    return [
+      '📬 <strong>Mini-CRM intégré</strong> pour gérer vos contacts et prospects',
+      '🌐 <strong>Mini-site partageable</strong> personnalisable (URL dédiée)',
+      '📊 <strong>Statistiques</strong> détaillées sur votre activité',
+      '🚀 <strong>1 boost Facebook offert tous les 2 mois</strong> (valeur 234€/an)',
+      '💸 <strong>-30%</strong> sur tous les boosts supplémentaires (27€ au lieu de 39€)',
+      '📞 <strong>Support prioritaire</strong> par email (réponse sous 24h)'
+    ];
+  }
+
+  function proPlusFeatures_() {
+    return [
+      '✅ <strong>Tous les avantages de la formule Pro</strong>',
+      '🤖 <strong>Agent IA dédié à votre entreprise</strong> (votre propre assistant intelligent)',
+      '🚀 <strong>1 boost Facebook offert chaque mois</strong> (valeur 468€/an)',
+      '📈 <strong>Statistiques avancées</strong> + comparaison avec votre secteur',
+      '🎨 <strong>Personnalisation poussée</strong> de votre mini-site',
+      '📞 <strong>Support téléphonique</strong> sous 4h ouvré'
+    ];
+  }
+
+  function formatDateLong_(iso) {
+    if (!iso) return '—';
+    try {
+      var d = new Date(iso);
+      return d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+    } catch (e) {
+      return iso;
+    }
+  }
+
+  async function openCustomerPortal() {
+    toast('info', '⏳ Ouverture du portail Stripe...');
+    try {
+      var r = await api('createCustomerPortalSession', {
+        token: state.user.token,
+        return_url: window.location.href
+      });
+      if (!r.ok) {
+        toast('error', r.error || 'Impossible d\'ouvrir le portail');
+        return;
+      }
+      window.location.href = r.url;
+    } catch (err) {
+      toast('error', 'Erreur réseau : ' + err.message);
+    }
+  }
+  window.openCustomerPortal = openCustomerPortal;
+
 
   function renderProSettings() {
     if (!state.user || state.user.type !== 'company') return navigate('home');
