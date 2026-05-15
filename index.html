@@ -2966,7 +2966,7 @@
 
   const APP = {
     name: 'Annuaire YOUPI',
-    version: 'v2.5.2',
+    version: 'v2.5.3',
     versionDate: '15 mai 2026',
     BACKEND_URL: 'https://script.google.com/macros/s/AKfycbzQNSOAGCJp1QmZU0IE1FYiKmKCcGgTUpqKa3RJG9lwiAND_EC5dGdbh2XCu26ZTMoxtw/exec'
   };
@@ -2979,7 +2979,7 @@
   // ------------------------------------------------------------
   const CHANGELOG = [
     {
-      version: 'v2.5.2',
+      version: 'v2.5.3',
       date: '15 mai 2026',
       title: "🛠️ Améliorations internes",
       entries: [
@@ -5828,7 +5828,18 @@
     segPreviewCount: null,    // nombre d'entreprises matchant les filtres en cours
     segPreviewSample: [],     // échantillon de 50 entreprises pour la liste détaillée
     segPreviewLoading: false, // pour éviter les appels concurrents
-    segPreviewTimer: null     // debounce timer pour le preview
+    segPreviewTimer: null,    // debounce timer pour le preview
+    // ─── Send (étape 4) ─────────────────────
+    sendStep: 'compose',      // 'compose' | 'history'
+    sendTemplateId: null,
+    sendSegmentId: null,      // null = aucun segment choisi, '__none__' = pas de filtre = TOUS
+    sendCount: null,          // nombre de destinataires matchant
+    sendSample: [],           // échantillon 50 entreprises
+    sendLoading: false,
+    sendConfirmed: false,     // checkbox "j'ai vérifié"
+    sendQuotaRemaining: null, // mails restants aujourd'hui
+    sendResult: null,         // résultat du dernier envoi { sent, failed, errors }
+    sendCampaigns: []         // historique
   };
 
   // Statuts d'entreprises disponibles
@@ -6047,6 +6058,21 @@
           color: var(--text-2);
         }
         .btn-mini:hover { border-color: var(--teal-700); color: var(--teal-700); }
+        .crm-step-num {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          width: 28px;
+          height: 28px;
+          border-radius: 50%;
+          background: var(--teal-700);
+          color: white;
+          font-weight: 700;
+          font-size: 14px;
+          flex-shrink: 0;
+        }
+        .crm-confirm-check:hover { border-color: var(--teal-700); }
+        .crm-confirm-check input[type="checkbox"]:checked ~ span strong { color: var(--teal-700); }
       `;
       document.head.appendChild(style);
     }
@@ -6063,6 +6089,13 @@
     _crm.segDraft = null;
     _crm.segPreviewCount = null;
     _crm.segPreviewSample = [];
+    _crm.sendStep = 'compose';
+    _crm.sendTemplateId = null;
+    _crm.sendSegmentId = null;
+    _crm.sendCount = null;
+    _crm.sendSample = [];
+    _crm.sendConfirmed = false;
+    _crm.sendResult = null;
     await renderAdminCrm();
   }
   window.switchCrmTab = switchCrmTab;
@@ -6076,14 +6109,7 @@
     } else if (_crm.tab === 'segments') {
       await renderCrmSegments(container);
     } else if (_crm.tab === 'send') {
-      container.innerHTML = `
-        <div class="card crm-empty">
-          <div style="font-size:48px;margin-bottom:12px">📤</div>
-          <h3 style="margin:0 0 8px 0">Envoyer une campagne</h3>
-          <p style="margin:0">Cette fonctionnalité sera disponible prochainement.</p>
-          <p style="margin:8px 0 0 0;font-size:13px">Elle permettra de choisir un modèle, cibler des entreprises et envoyer un mail groupé.</p>
-        </div>
-      `;
+      await renderCrmSend(container);
     }
   }
 
@@ -6971,6 +6997,540 @@
     }
   }
   window.saveMailSegment = saveMailSegment;
+
+  // ─── SOUS-SECTION : ENVOYER UNE CAMPAGNE ────────────────────
+
+  async function renderCrmSend(container) {
+    if (_crm.sendStep === 'history') {
+      await renderCrmSendHistory(container);
+      return;
+    }
+
+    container.innerHTML = `
+      <div class="card crm-empty">
+        <div style="font-size:32px;margin-bottom:8px">⏳</div>
+        <div>Chargement...</div>
+      </div>
+    `;
+
+    // Charge en parallèle : templates, segments, quota
+    try {
+      const [tplR, segR, quotaR] = await Promise.all([
+        api('adminListMailTemplates', { token: state.user.token }),
+        api('adminListMailSegments', { token: state.user.token }),
+        api('adminGetMailQuota', { token: state.user.token })
+      ]);
+      if (!tplR.ok) throw new Error(tplR.error || 'Erreur chargement modèles');
+      if (!segR.ok) throw new Error(segR.error || 'Erreur chargement segments');
+      _crm.templates = tplR.templates || [];
+      _crm.segments = segR.segments || [];
+      _crm.sendQuotaRemaining = (quotaR.ok ? quotaR.remaining : null);
+    } catch (err) {
+      container.innerHTML = `<div class="card"><div style="color:#dc2626">Erreur : ${esc(err.message)}</div></div>`;
+      return;
+    }
+
+    renderCrmSendUI(container);
+  }
+
+  function renderCrmSendUI(container) {
+    const tpl = _crm.sendTemplateId ? _crm.templates.find(function(t) { return t.id === _crm.sendTemplateId; }) : null;
+    const seg = _crm.sendSegmentId && _crm.sendSegmentId !== '__none__'
+      ? _crm.segments.find(function(s) { return s.id === _crm.sendSegmentId; })
+      : null;
+
+    // Si le dernier envoi a réussi, afficher l'écran de résultat
+    if (_crm.sendResult) {
+      renderCrmSendResult(container);
+      return;
+    }
+
+    // Banniere quota
+    const quota = _crm.sendQuotaRemaining;
+    let quotaBadge = '';
+    if (quota !== null) {
+      const lowQuota = quota < 20;
+      quotaBadge = `
+        <div style="padding:10px 14px;background:${lowQuota ? '#fef3c7' : 'var(--sand-50)'};border:1px solid ${lowQuota ? '#fcd34d' : 'var(--border)'};border-radius:var(--radius);font-size:13px;display:flex;align-items:center;gap:8px;margin-bottom:16px">
+          <span style="font-size:18px">${lowQuota ? '⚠️' : '📬'}</span>
+          <span>
+            <strong>${quota}</strong> mail${quota > 1 ? 's' : ''} restant${quota > 1 ? 's' : ''} aujourd'hui
+            ${lowQuota ? '<span style="color:#92400e"> — quota Gmail bientôt épuisé</span>' : ''}
+          </span>
+        </div>
+      `;
+    }
+
+    // Construire dropdown modèles
+    let tplOptions = '<option value="">— Choisir un modèle —</option>';
+    _crm.templates.forEach(function(t) {
+      tplOptions += `<option value="${esc(t.id)}" ${t.id === _crm.sendTemplateId ? 'selected' : ''}>${esc(t.name)}</option>`;
+    });
+
+    // Construire dropdown segments
+    let segOptions = '<option value="">— Choisir un segment —</option>';
+    _crm.segments.forEach(function(s) {
+      segOptions += `<option value="${esc(s.id)}" ${s.id === _crm.sendSegmentId ? 'selected' : ''}>${esc(s.name)}</option>`;
+    });
+
+    // Sections étapes
+    let html = `
+      ${quotaBadge}
+
+      <div class="card" style="margin-bottom:14px">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+          <span class="crm-step-num">1</span>
+          <h3 style="margin:0">Choisir le modèle de mail</h3>
+        </div>
+        ${_crm.templates.length === 0
+          ? `<div style="color:#dc2626;font-size:13px">Aucun modèle disponible. <a href="#" onclick="switchCrmTab('templates');return false">Créez un modèle</a> avant de pouvoir envoyer.</div>`
+          : `<select id="crm-send-tpl" onchange="onCrmSendTemplateChange(this.value)" style="width:100%;padding:10px;border:1px solid var(--border);border-radius:var(--radius);font-size:14px;background:white">${tplOptions}</select>`
+        }
+        ${tpl ? renderTemplatePreviewBox(tpl) : ''}
+      </div>
+
+      <div class="card" style="margin-bottom:14px">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+          <span class="crm-step-num">2</span>
+          <h3 style="margin:0">Choisir le segment à cibler</h3>
+        </div>
+        ${_crm.segments.length === 0
+          ? `<div style="color:#dc2626;font-size:13px">Aucun segment disponible. <a href="#" onclick="switchCrmTab('segments');return false">Créez un segment</a> avant de pouvoir envoyer.</div>`
+          : `<select id="crm-send-seg" onchange="onCrmSendSegmentChange(this.value)" style="width:100%;padding:10px;border:1px solid var(--border);border-radius:var(--radius);font-size:14px;background:white">${segOptions}</select>`
+        }
+        ${seg ? renderSegmentPreviewBox(seg) : ''}
+      </div>
+
+      <div class="card" style="margin-bottom:14px">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+          <span class="crm-step-num">3</span>
+          <h3 style="margin:0">Vérifier et envoyer</h3>
+        </div>
+        <div id="crm-send-summary">${renderSendSummary(tpl, seg)}</div>
+      </div>
+
+      <div style="text-align:center;margin-top:24px;padding-top:16px;border-top:1px solid var(--border)">
+        <button class="btn btn-ghost btn-sm" onclick="goToCrmHistory()">📜 Voir l'historique des campagnes envoyées</button>
+      </div>
+    `;
+
+    container.innerHTML = html;
+  }
+
+  function renderTemplatePreviewBox(tpl) {
+    if (!tpl) return '';
+    return `
+      <div style="margin-top:12px;padding:12px;background:var(--sand-50);border-radius:var(--radius);font-size:13px">
+        <div style="margin-bottom:6px"><strong style="color:var(--text-2)">Objet :</strong> ${esc(tpl.subject)}</div>
+        <details>
+          <summary style="cursor:pointer;color:var(--teal-700);font-size:12px">Voir le corps du mail</summary>
+          <div style="margin-top:10px;padding:12px;background:white;border-radius:6px;border:1px solid var(--border);max-height:200px;overflow-y:auto;font-size:13px;line-height:1.5">
+            ${tpl.body}
+          </div>
+        </details>
+      </div>
+    `;
+  }
+
+  function renderSegmentPreviewBox(seg) {
+    if (!seg) return '';
+    const summary = summarizeFilters(seg.filters || {});
+    let countLine = '';
+    if (_crm.sendLoading) {
+      countLine = '<div style="margin-top:10px;color:var(--text-2);font-size:13px">⏳ Calcul des destinataires...</div>';
+    } else if (_crm.sendCount !== null) {
+      const color = _crm.sendCount > 0 ? 'var(--teal-700)' : '#dc2626';
+      countLine = `
+        <div style="margin-top:10px;display:flex;align-items:center;gap:10px;font-size:14px">
+          <span style="font-size:24px;font-weight:700;color:${color}">${_crm.sendCount}</span>
+          <span style="color:var(--text-2)">entreprise${_crm.sendCount > 1 ? 's' : ''} ciblée${_crm.sendCount > 1 ? 's' : ''}</span>
+        </div>
+      `;
+    }
+    return `
+      <div style="margin-top:12px;padding:12px;background:var(--sand-50);border-radius:var(--radius);font-size:13px">
+        ${seg.description ? `<div style="margin-bottom:8px;color:var(--text-2)">${esc(seg.description)}</div>` : ''}
+        <div style="line-height:1.5">${summary}</div>
+        ${countLine}
+      </div>
+    `;
+  }
+
+  function renderSendSummary(tpl, seg) {
+    if (!tpl) {
+      return '<div style="color:var(--text-2);font-size:13px">Choisissez d\'abord un modèle de mail (étape 1).</div>';
+    }
+    if (!seg) {
+      return '<div style="color:var(--text-2);font-size:13px">Choisissez ensuite un segment (étape 2).</div>';
+    }
+    if (_crm.sendLoading) {
+      return '<div style="color:var(--text-2);font-size:13px">⏳ Calcul des destinataires en cours...</div>';
+    }
+    if (_crm.sendCount === null) {
+      return '<div style="color:var(--text-2);font-size:13px">Calcul des destinataires...</div>';
+    }
+    if (_crm.sendCount === 0) {
+      return `
+        <div style="padding:12px;background:#fee2e2;border-radius:var(--radius);font-size:13px;color:#991b1b">
+          ❌ Aucune entreprise ne correspond aux critères de ce segment. Modifiez le segment ou choisissez-en un autre.
+        </div>
+      `;
+    }
+    const quota = _crm.sendQuotaRemaining;
+    const overQuota = (quota !== null && _crm.sendCount > quota);
+
+    let warning = '';
+    if (overQuota) {
+      warning = `
+        <div style="padding:12px;background:#fee2e2;border-radius:var(--radius);font-size:13px;color:#991b1b;margin-bottom:12px">
+          ⚠️ Vous voulez envoyer ${_crm.sendCount} mails mais il ne vous reste que ${quota} envois aujourd'hui. Veuillez réduire le segment ou attendre demain.
+        </div>
+      `;
+    }
+
+    return `
+      ${warning}
+      <div style="padding:14px;background:var(--sand-50);border-radius:var(--radius);margin-bottom:14px">
+        <div style="font-size:14px;line-height:1.7">
+          Vous allez envoyer le mail<br>
+          <strong style="color:var(--teal-700)">« ${esc(tpl.name)} »</strong><br>
+          à <strong style="color:var(--teal-700)">${_crm.sendCount} entreprise${_crm.sendCount > 1 ? 's' : ''}</strong>
+          du segment <strong>${esc(seg.name)}</strong>.
+        </div>
+        <div style="margin-top:10px">
+          <button class="btn btn-ghost btn-sm" onclick="toggleSendRecipientsList()" id="crm-send-toggle-list">📋 Voir la liste des destinataires</button>
+        </div>
+        <div id="crm-send-recipients-list" style="display:none;margin-top:12px"></div>
+      </div>
+
+      <label class="crm-confirm-check" style="display:flex;align-items:flex-start;gap:10px;padding:12px;background:white;border:2px solid var(--border);border-radius:var(--radius);cursor:pointer;margin-bottom:14px">
+        <input type="checkbox" ${_crm.sendConfirmed ? 'checked' : ''} onchange="_crm.sendConfirmed = this.checked; updateSendButton()" style="margin-top:2px;flex-shrink:0">
+        <span style="font-size:13px;line-height:1.5">
+          J'ai vérifié le contenu du mail et la liste des destinataires.<br>
+          <span style="color:var(--text-2)">Je confirme l'envoi de <strong>${_crm.sendCount} mail${_crm.sendCount > 1 ? 's' : ''}</strong> aux entreprises du segment <strong>${esc(seg.name)}</strong>.</span>
+        </span>
+      </label>
+
+      <button id="crm-send-btn" class="btn btn-primary" onclick="confirmAndSendCampaign()"
+        ${(!_crm.sendConfirmed || overQuota) ? 'disabled' : ''}
+        style="width:100%;padding:14px;font-size:15px;font-weight:600">
+        📤 Envoyer la campagne (${_crm.sendCount} mail${_crm.sendCount > 1 ? 's' : ''})
+      </button>
+    `;
+  }
+
+  async function onCrmSendTemplateChange(tplId) {
+    _crm.sendTemplateId = tplId || null;
+    _crm.sendConfirmed = false;
+    renderCrmSendUI(document.getElementById('crm-content'));
+  }
+  window.onCrmSendTemplateChange = onCrmSendTemplateChange;
+
+  async function onCrmSendSegmentChange(segId) {
+    _crm.sendSegmentId = segId || null;
+    _crm.sendCount = null;
+    _crm.sendSample = [];
+    _crm.sendConfirmed = false;
+    if (!segId) {
+      renderCrmSendUI(document.getElementById('crm-content'));
+      return;
+    }
+    // Re-render avec loading
+    _crm.sendLoading = true;
+    renderCrmSendUI(document.getElementById('crm-content'));
+    // Charge le preview
+    const seg = _crm.segments.find(function(s) { return s.id === segId; });
+    if (!seg) { _crm.sendLoading = false; return; }
+    try {
+      const r = await api('adminPreviewCrmRecipients', {
+        token: state.user.token,
+        filters: seg.filters || {}
+      });
+      _crm.sendLoading = false;
+      if (!r.ok) {
+        toast('error', 'Erreur : ' + (r.error || 'inconnue'));
+        renderCrmSendUI(document.getElementById('crm-content'));
+        return;
+      }
+      _crm.sendCount = r.count;
+      _crm.sendSample = (r.recipients || []).slice(0, 50);
+    } catch (err) {
+      _crm.sendLoading = false;
+      toast('error', 'Erreur réseau : ' + err.message);
+    }
+    renderCrmSendUI(document.getElementById('crm-content'));
+  }
+  window.onCrmSendSegmentChange = onCrmSendSegmentChange;
+
+  function updateSendButton() {
+    const btn = document.getElementById('crm-send-btn');
+    if (!btn) return;
+    const overQuota = (_crm.sendQuotaRemaining !== null && _crm.sendCount > _crm.sendQuotaRemaining);
+    btn.disabled = !_crm.sendConfirmed || overQuota;
+  }
+  window.updateSendButton = updateSendButton;
+
+  function toggleSendRecipientsList() {
+    const listEl = document.getElementById('crm-send-recipients-list');
+    const toggleBtn = document.getElementById('crm-send-toggle-list');
+    if (!listEl) return;
+    if (listEl.style.display === 'none') {
+      listEl.style.display = 'block';
+      if (toggleBtn) toggleBtn.textContent = '🔼 Masquer la liste';
+      renderSendRecipientsList();
+    } else {
+      listEl.style.display = 'none';
+      if (toggleBtn) toggleBtn.textContent = '📋 Voir la liste des destinataires';
+    }
+  }
+  window.toggleSendRecipientsList = toggleSendRecipientsList;
+
+  function renderSendRecipientsList() {
+    const listEl = document.getElementById('crm-send-recipients-list');
+    if (!listEl) return;
+    const sample = _crm.sendSample || [];
+    const total = _crm.sendCount || 0;
+    if (sample.length === 0) {
+      listEl.innerHTML = '<div style="color:var(--text-2);font-size:13px;text-align:center;padding:16px">Aucune entreprise</div>';
+      return;
+    }
+    let html = '<div style="font-size:12px;color:var(--text-2);margin-bottom:8px">' +
+      (total > 50 ? `Aperçu des 50 premiers (sur ${total})` : `${sample.length} destinataire${sample.length > 1 ? 's' : ''}`) + ' :</div>';
+    html += '<div style="border:1px solid var(--border);border-radius:8px;overflow:hidden;max-height:300px;overflow-y:auto">';
+    sample.forEach(function(c, i) {
+      html += `
+        <div style="padding:8px 12px;font-size:12px;border-bottom:${i < sample.length - 1 ? '1px solid var(--border)' : 'none'};background:${i % 2 ? 'var(--sand-50)' : 'transparent'}">
+          <div style="font-weight:600">${esc(c.nom_entreprise || '(sans nom)')}</div>
+          <div style="color:var(--text-2);font-size:11px">${esc(c.email || '(pas d\'email)')} · ${esc(c.secteur || '')} · ${esc(c.ville || '')}</div>
+        </div>
+      `;
+    });
+    html += '</div>';
+    listEl.innerHTML = html;
+  }
+
+  // ─── ENVOI EFFECTIF ─────────────────────────────────────────
+
+  async function confirmAndSendCampaign() {
+    if (!_crm.sendTemplateId || !_crm.sendSegmentId) return;
+    if (!_crm.sendConfirmed) {
+      toast('error', 'Veuillez confirmer que vous avez vérifié le contenu');
+      return;
+    }
+    if (_crm.sendCount === 0) {
+      toast('error', 'Aucun destinataire à envoyer');
+      return;
+    }
+
+    const tpl = _crm.templates.find(function(t) { return t.id === _crm.sendTemplateId; });
+    const seg = _crm.segments.find(function(s) { return s.id === _crm.sendSegmentId; });
+    if (!tpl || !seg) return;
+
+    // Double confirmation native
+    const msg = `⚠️ DERNIÈRE CONFIRMATION\n\n`
+      + `Envoyer le mail « ${tpl.name} »\n`
+      + `à ${_crm.sendCount} entreprise${_crm.sendCount > 1 ? 's' : ''}\n`
+      + `du segment « ${seg.name} » ?\n\n`
+      + `Cette action est irréversible.`;
+    if (!confirm(msg)) return;
+
+    // Récupère la liste exhaustive des company_ids matchant le segment
+    // (sendSample est limité à 50, on a besoin de tous)
+    let companyIds = [];
+    try {
+      const previewR = await api('adminPreviewCrmRecipients', {
+        token: state.user.token,
+        filters: seg.filters || {}
+      });
+      if (!previewR.ok) {
+        toast('error', 'Erreur préparation : ' + (previewR.error || 'inconnue'));
+        return;
+      }
+      companyIds = (previewR.recipients || []).map(function(r) { return r.id; });
+    } catch (err) {
+      toast('error', 'Erreur réseau : ' + err.message);
+      return;
+    }
+
+    if (companyIds.length === 0) {
+      toast('error', 'Plus aucun destinataire (la liste a changé)');
+      return;
+    }
+
+    // Affichage en cours d'envoi
+    const btn = document.getElementById('crm-send-btn');
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = '⏳ Envoi en cours, merci de patienter...';
+    }
+
+    try {
+      const r = await api('adminSendCrmCampaign', {
+        token: state.user.token,
+        template_id: _crm.sendTemplateId,
+        company_ids: companyIds,
+        segment_id: _crm.sendSegmentId,
+        segment_name: seg.name,
+        filters: seg.filters
+      });
+      if (!r.ok) {
+        toast('error', 'Erreur : ' + (r.error || 'inconnue'));
+        if (btn) {
+          btn.disabled = false;
+          btn.textContent = '📤 Envoyer la campagne (' + _crm.sendCount + ' mails)';
+        }
+        return;
+      }
+      _crm.sendResult = {
+        sent: r.sent,
+        failed: r.failed,
+        errors: r.errors || [],
+        campaign_id: r.campaign_id,
+        quota_remaining: r.quota_remaining
+      };
+      _crm.sendQuotaRemaining = r.quota_remaining;
+      renderCrmSendUI(document.getElementById('crm-content'));
+    } catch (err) {
+      toast('error', 'Erreur réseau : ' + err.message);
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = '📤 Envoyer la campagne (' + _crm.sendCount + ' mails)';
+      }
+    }
+  }
+  window.confirmAndSendCampaign = confirmAndSendCampaign;
+
+  function renderCrmSendResult(container) {
+    const r = _crm.sendResult;
+    const total = r.sent + r.failed;
+    const allOk = r.failed === 0;
+    container.innerHTML = `
+      <div class="card" style="text-align:center;padding:32px 24px">
+        <div style="font-size:64px;margin-bottom:8px">${allOk ? '✅' : '⚠️'}</div>
+        <h2 style="margin:0 0 8px 0">${allOk ? 'Campagne envoyée avec succès' : 'Campagne envoyée avec des erreurs'}</h2>
+        <div style="color:var(--text-2);font-size:14px;margin-bottom:24px">${total} envoi${total > 1 ? 's' : ''} traité${total > 1 ? 's' : ''}</div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;max-width:400px;margin:0 auto 20px">
+          <div style="padding:16px;background:#dcfce7;border-radius:var(--radius)">
+            <div style="font-size:32px;font-weight:700;color:#166534;line-height:1">${r.sent}</div>
+            <div style="font-size:12px;color:#166534;margin-top:4px">envoyé${r.sent > 1 ? 's' : ''}</div>
+          </div>
+          <div style="padding:16px;background:${r.failed > 0 ? '#fee2e2' : 'var(--sand-50)'};border-radius:var(--radius)">
+            <div style="font-size:32px;font-weight:700;color:${r.failed > 0 ? '#991b1b' : 'var(--text-2)'};line-height:1">${r.failed}</div>
+            <div style="font-size:12px;color:${r.failed > 0 ? '#991b1b' : 'var(--text-2)'};margin-top:4px">échec${r.failed > 1 ? 's' : ''}</div>
+          </div>
+        </div>
+
+        ${r.errors && r.errors.length > 0 ? `
+          <details style="text-align:left;margin-bottom:20px">
+            <summary style="cursor:pointer;color:#dc2626;font-size:13px">Voir le détail des erreurs (${r.errors.length})</summary>
+            <ul style="margin-top:10px;padding-left:20px;font-size:12px;color:var(--text-1);line-height:1.6">
+              ${r.errors.map(function(e) { return '<li>' + esc(e) + '</li>'; }).join('')}
+            </ul>
+          </details>
+        ` : ''}
+
+        <div style="padding:10px 14px;background:var(--sand-50);border-radius:var(--radius);font-size:13px;color:var(--text-2);margin-bottom:24px">
+          📬 Il vous reste <strong>${r.quota_remaining}</strong> mail${r.quota_remaining > 1 ? 's' : ''} à envoyer aujourd'hui
+        </div>
+
+        <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
+          <button class="btn btn-primary" onclick="resetCrmSend()">📤 Envoyer une autre campagne</button>
+          <button class="btn btn-secondary" onclick="goToCrmHistory()">📜 Voir l'historique</button>
+        </div>
+      </div>
+    `;
+  }
+
+  function resetCrmSend() {
+    _crm.sendTemplateId = null;
+    _crm.sendSegmentId = null;
+    _crm.sendCount = null;
+    _crm.sendSample = [];
+    _crm.sendConfirmed = false;
+    _crm.sendResult = null;
+    renderCrmContent();
+  }
+  window.resetCrmSend = resetCrmSend;
+
+  // ─── HISTORIQUE DES CAMPAGNES ──────────────────────────────
+
+  async function goToCrmHistory() {
+    _crm.sendStep = 'history';
+    await renderCrmContent();
+  }
+  window.goToCrmHistory = goToCrmHistory;
+
+  async function leaveCrmHistory() {
+    _crm.sendStep = 'compose';
+    await renderCrmContent();
+  }
+  window.leaveCrmHistory = leaveCrmHistory;
+
+  async function renderCrmSendHistory(container) {
+    container.innerHTML = `
+      <div class="card crm-empty">
+        <div style="font-size:32px;margin-bottom:8px">⏳</div>
+        <div>Chargement de l'historique...</div>
+      </div>
+    `;
+    try {
+      const r = await api('adminListMailCampaigns', { token: state.user.token });
+      if (!r.ok) {
+        container.innerHTML = `<div class="card"><div style="color:#dc2626">Erreur : ${esc(r.error || 'inconnue')}</div></div>`;
+        return;
+      }
+      _crm.sendCampaigns = r.campaigns || [];
+    } catch (err) {
+      container.innerHTML = `<div class="card"><div style="color:#dc2626">Erreur réseau : ${esc(err.message)}</div></div>`;
+      return;
+    }
+
+    let html = `
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:12px">
+        <div>
+          <h3 style="margin:0">📜 Historique des campagnes</h3>
+          <div style="color:var(--text-2);font-size:13px;margin-top:4px">${_crm.sendCampaigns.length} campagne${_crm.sendCampaigns.length > 1 ? 's' : ''} enregistrée${_crm.sendCampaigns.length > 1 ? 's' : ''}</div>
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="leaveCrmHistory()">← Retour</button>
+      </div>
+    `;
+
+    if (_crm.sendCampaigns.length === 0) {
+      html += `
+        <div class="card crm-empty">
+          <div style="font-size:48px;margin-bottom:12px">📜</div>
+          <p style="margin:0">Aucune campagne n'a encore été envoyée.</p>
+        </div>
+      `;
+    } else {
+      html += '<div>';
+      _crm.sendCampaigns.forEach(function(c) {
+        const total = (c.success_count || 0) + (c.error_count || 0);
+        const successPct = total > 0 ? Math.round((c.success_count / total) * 100) : 0;
+        html += `
+          <div class="crm-template-card">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap">
+              <div style="flex:1;min-width:0">
+                <div style="font-weight:600;font-size:14px;margin-bottom:4px">${esc(c.template_name || '(modèle supprimé)')}</div>
+                <div style="color:var(--text-2);font-size:12px;margin-bottom:6px">
+                  ${formatDateShort(c.date)} · Segment : ${esc(c.segment_name || '—')}
+                </div>
+                <div style="display:flex;gap:14px;font-size:12px;flex-wrap:wrap">
+                  <span><strong style="color:#16a34a">${c.success_count || 0}</strong> envoyé${(c.success_count || 0) > 1 ? 's' : ''}</span>
+                  ${c.error_count > 0 ? `<span><strong style="color:#dc2626">${c.error_count}</strong> échec${c.error_count > 1 ? 's' : ''}</span>` : ''}
+                  <span style="color:var(--text-2)">Taux de réussite : ${successPct}%</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+      });
+      html += '</div>';
+    }
+
+    container.innerHTML = html;
+  }
 
 
 
