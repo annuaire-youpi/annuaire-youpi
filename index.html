@@ -2966,7 +2966,7 @@
 
   const APP = {
     name: 'Annuaire YOUPI',
-    version: 'v2.4.0',
+    version: 'v2.5.0',
     versionDate: '15 mai 2026',
     BACKEND_URL: 'https://script.google.com/macros/s/AKfycbzQNSOAGCJp1QmZU0IE1FYiKmKCcGgTUpqKa3RJG9lwiAND_EC5dGdbh2XCu26ZTMoxtw/exec'
   };
@@ -2978,6 +2978,14 @@
   //  → Pour ajouter une nouvelle version, demander à Claude.
   // ------------------------------------------------------------
   const CHANGELOG = [
+    {
+      version: 'v2.5.0',
+      date: '15 mai 2026',
+      title: "🛠️ Améliorations internes",
+      entries: [
+        { type: 'feature', text: "Améliorations internes et outils administrateurs renforcés pour offrir un meilleur suivi et une meilleure expérience aux entreprises référencées." }
+      ]
+    },
     {
       version: 'v2.4.0',
       date: '15 mai 2026',
@@ -3598,6 +3606,7 @@
       case 'admin-company-created': renderAdminCompanyCreated(params); break;
       case 'admin-company-detail':renderAdminCompanyDetail(params); break;
       case 'admin-pages':         renderAdminPages(); break;
+      case 'admin-crm':           renderAdminCrm(params); break;
       case 'admin-prompts':       navigate('admin-ai'); return;
       case 'admin-ai':            renderAdminAiDashboard(); break;
       case 'admin-logs':          renderAdminLogs(); break;
@@ -5191,6 +5200,7 @@
       { view: 'admin-dashboard', icon: '📊', label: 'Tableau de bord' },
       { view: 'admin-companies', icon: '🏢', label: 'Entreprises' },
       { view: 'admin-pages',     icon: '📄', label: 'Pages services' },
+      { view: 'admin-crm',       icon: '✉️', label: 'CRM mailing' },
       { view: 'admin-ai',        icon: '🤖', label: 'Configuration IA' },
       { view: 'admin-logs',      icon: '📋', label: 'Journal d\'audit' }
     ];
@@ -5802,6 +5812,573 @@
     }
     renderAdminPages();
   }
+
+  // ============================================================
+  //  CRM MAILING — Espace administrateur (v2.5.0)
+  // ============================================================
+  // État local CRM
+  let _crm = {
+    tab: 'templates',         // 'templates' | 'segments' | 'send'
+    templates: [],            // liste chargée depuis backend
+    editingId: null,          // id du modèle en cours d'édition (null = nouveau)
+    editorDraft: null         // { name, subject, body } en cours d'édition
+  };
+
+  // Variables disponibles pour l'interpolation des mails
+  const CRM_VARIABLES = [
+    { key: 'prenom_contact',  label: 'Prénom du contact', example: 'Marie' },
+    { key: 'nom_entreprise',  label: 'Nom de l\'entreprise', example: 'Le Ti Punch' },
+    { key: 'secteur',         label: 'Secteur', example: 'Restauration & Cafés' },
+    { key: 'ville',           label: 'Ville', example: 'Fort-de-France' },
+    { key: 'region',          label: 'Région', example: 'MQ' },
+    { key: 'email',           label: 'Email', example: 'contact@example.mq' },
+    { key: 'telephone',       label: 'Téléphone', example: '0596 00 00 00' },
+    { key: 'site_web',        label: 'Site web', example: 'https://example.mq' }
+  ];
+
+  // Données d'exemple pour l'aperçu (entreprise fictive)
+  const CRM_PREVIEW_COMPANY = {
+    prenom_contact: 'Marie',
+    nom_entreprise: 'Le Ti Punch',
+    secteur: 'Restauration & Cafés',
+    ville: 'Fort-de-France',
+    region: 'MQ',
+    email: 'contact@letipunch.mq',
+    telephone: '0596 00 00 00',
+    site_web: 'https://letipunch.mq'
+  };
+
+  async function renderAdminCrm(params) {
+    if (!state.user || state.user.type !== 'admin') return navigate('home');
+    if (params && params.tab) _crm.tab = params.tab;
+
+    document.getElementById('main').innerHTML = `
+      <div class="dashboard-grid">
+        ${adminSidebar('admin-crm')}
+        <section>
+          <div class="card" style="margin-bottom:16px">
+            <h2 style="margin:0 0 4px 0">✉️ CRM mailing</h2>
+            <div style="color:var(--text-2);font-size:14px">
+              Créez des modèles de mails et envoyez des campagnes ciblées aux entreprises référencées.
+            </div>
+          </div>
+
+          <div class="crm-tabs" style="display:flex;gap:8px;margin-bottom:16px;border-bottom:1px solid var(--border)">
+            <button class="crm-tab ${_crm.tab === 'templates' ? 'active' : ''}" onclick="switchCrmTab('templates')">📝 Modèles</button>
+            <button class="crm-tab ${_crm.tab === 'segments' ? 'active' : ''}" onclick="switchCrmTab('segments')">🎯 Segments</button>
+            <button class="crm-tab ${_crm.tab === 'send' ? 'active' : ''}" onclick="switchCrmTab('send')">📤 Envoyer une campagne</button>
+          </div>
+
+          <div id="crm-content"></div>
+        </section>
+      </div>
+    `;
+
+    // Style des tabs (injecté une seule fois)
+    if (!document.getElementById('crm-tabs-style')) {
+      const style = document.createElement('style');
+      style.id = 'crm-tabs-style';
+      style.textContent = `
+        .crm-tab {
+          padding: 12px 18px;
+          background: transparent;
+          border: none;
+          border-bottom: 3px solid transparent;
+          cursor: pointer;
+          font-size: 14px;
+          font-weight: 500;
+          color: var(--text-2);
+          transition: all 0.2s;
+        }
+        .crm-tab:hover { color: var(--teal-700); }
+        .crm-tab.active {
+          color: var(--teal-700);
+          border-bottom-color: var(--teal-700);
+        }
+        .crm-template-card {
+          padding: 16px;
+          background: var(--card);
+          border: 1px solid var(--border);
+          border-radius: var(--radius);
+          margin-bottom: 12px;
+        }
+        .crm-template-card:hover { box-shadow: var(--shadow); }
+        .crm-rich-toolbar {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 4px;
+          padding: 8px;
+          background: var(--sand-50);
+          border: 1px solid var(--border);
+          border-bottom: none;
+          border-radius: var(--radius) var(--radius) 0 0;
+        }
+        .crm-rich-toolbar button {
+          padding: 6px 12px;
+          background: var(--card);
+          border: 1px solid var(--border);
+          border-radius: 6px;
+          cursor: pointer;
+          font-size: 13px;
+        }
+        .crm-rich-toolbar button:hover { background: var(--teal-700); color: white; border-color: var(--teal-700); }
+        .crm-editor {
+          min-height: 280px;
+          padding: 16px;
+          border: 1px solid var(--border);
+          border-top: none;
+          border-radius: 0 0 var(--radius) var(--radius);
+          background: white;
+          font-size: 14px;
+          line-height: 1.6;
+          outline: none;
+        }
+        .crm-editor:focus { border-color: var(--teal-700); }
+        .crm-editor p { margin: 0 0 12px 0; }
+        .crm-editor ul, .crm-editor ol { margin: 0 0 12px 0; padding-left: 24px; }
+        .crm-var-btn {
+          display: inline-block;
+          padding: 6px 10px;
+          margin: 2px;
+          background: var(--sand-50);
+          border: 1px solid var(--border);
+          border-radius: 6px;
+          cursor: pointer;
+          font-size: 12px;
+          color: var(--text-1);
+        }
+        .crm-var-btn:hover { background: var(--teal-700); color: white; border-color: var(--teal-700); }
+        .crm-preview-box {
+          background: #f1f5f9;
+          padding: 16px;
+          border-radius: var(--radius);
+          border: 1px solid var(--border);
+          max-height: 600px;
+          overflow-y: auto;
+        }
+        .crm-empty {
+          text-align: center;
+          padding: 48px 24px;
+          color: var(--text-2);
+        }
+        @media (max-width: 900px) {
+          .crm-tab { padding: 10px 12px; font-size: 13px; }
+        }
+      `;
+      document.head.appendChild(style);
+    }
+
+    await renderCrmContent();
+  }
+  window.renderAdminCrm = renderAdminCrm;
+
+  async function switchCrmTab(tab) {
+    _crm.tab = tab;
+    _crm.editingId = null;
+    _crm.editorDraft = null;
+    await renderAdminCrm();
+  }
+  window.switchCrmTab = switchCrmTab;
+
+  async function renderCrmContent() {
+    const container = document.getElementById('crm-content');
+    if (!container) return;
+
+    if (_crm.tab === 'templates') {
+      await renderCrmTemplates(container);
+    } else if (_crm.tab === 'segments') {
+      container.innerHTML = `
+        <div class="card crm-empty">
+          <div style="font-size:48px;margin-bottom:12px">🎯</div>
+          <h3 style="margin:0 0 8px 0">Segments de ciblage</h3>
+          <p style="margin:0">Cette fonctionnalité sera disponible prochainement.</p>
+          <p style="margin:8px 0 0 0;font-size:13px">Elle permettra de sauvegarder des filtres réutilisables (ex. « Restos MQ inscrits +30j »).</p>
+        </div>
+      `;
+    } else if (_crm.tab === 'send') {
+      container.innerHTML = `
+        <div class="card crm-empty">
+          <div style="font-size:48px;margin-bottom:12px">📤</div>
+          <h3 style="margin:0 0 8px 0">Envoyer une campagne</h3>
+          <p style="margin:0">Cette fonctionnalité sera disponible prochainement.</p>
+          <p style="margin:8px 0 0 0;font-size:13px">Elle permettra de choisir un modèle, cibler des entreprises et envoyer un mail groupé.</p>
+        </div>
+      `;
+    }
+  }
+
+  // ─── SOUS-SECTION : MODÈLES DE MAILS ────────────────────────
+
+  async function renderCrmTemplates(container) {
+    // Si on est en mode édition, afficher l'éditeur
+    if (_crm.editingId !== null) {
+      renderCrmTemplateEditor(container);
+      return;
+    }
+
+    container.innerHTML = `
+      <div class="card crm-empty">
+        <div style="font-size:32px;margin-bottom:8px">⏳</div>
+        <div>Chargement des modèles...</div>
+      </div>
+    `;
+
+    // Charge les templates depuis le backend
+    try {
+      const r = await api('adminListMailTemplates', { token: state.user.token });
+      if (!r.ok) {
+        container.innerHTML = `<div class="card"><div style="color:#dc2626">Erreur : ${esc(r.error || 'inconnue')}</div></div>`;
+        return;
+      }
+      _crm.templates = r.templates || [];
+    } catch (err) {
+      container.innerHTML = `<div class="card"><div style="color:#dc2626">Erreur de connexion : ${esc(err.message)}</div></div>`;
+      return;
+    }
+
+    // Affiche la liste
+    let html = `
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:12px">
+        <div style="color:var(--text-2);font-size:14px">
+          ${_crm.templates.length} modèle${_crm.templates.length > 1 ? 's' : ''} enregistré${_crm.templates.length > 1 ? 's' : ''}
+        </div>
+        <button class="btn btn-primary" onclick="startNewMailTemplate()">+ Nouveau modèle</button>
+      </div>
+    `;
+
+    if (_crm.templates.length === 0) {
+      html += `
+        <div class="card crm-empty">
+          <div style="font-size:48px;margin-bottom:12px">📝</div>
+          <h3 style="margin:0 0 8px 0">Aucun modèle pour l'instant</h3>
+          <p style="margin:0 0 16px 0">Créez votre premier modèle de mail à envoyer aux entreprises.</p>
+          <button class="btn btn-primary" onclick="startNewMailTemplate()">+ Créer un modèle</button>
+        </div>
+      `;
+    } else {
+      html += '<div>';
+      _crm.templates.forEach(function(t) {
+        const usedText = t.times_used > 0
+          ? `<span style="color:var(--teal-700)">Envoyé ${t.times_used} fois</span>`
+          : '<span style="color:var(--text-2)">Jamais envoyé</span>';
+        const lastUsedText = t.last_used_at
+          ? ' · ' + formatDateShort(t.last_used_at)
+          : '';
+        html += `
+          <div class="crm-template-card">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap">
+              <div style="flex:1;min-width:0">
+                <div style="font-weight:600;font-size:15px;margin-bottom:4px">${esc(t.name)}</div>
+                <div style="color:var(--text-2);font-size:13px;margin-bottom:6px;overflow:hidden;text-overflow:ellipsis">
+                  <strong>Objet :</strong> ${esc(t.subject)}
+                </div>
+                <div style="font-size:12px">${usedText}${lastUsedText}</div>
+              </div>
+              <div style="display:flex;gap:6px;flex-wrap:wrap">
+                <button class="btn btn-secondary btn-sm" onclick="editMailTemplate('${esc(t.id)}')">✏️ Modifier</button>
+                <button class="btn btn-ghost btn-sm" onclick="duplicateMailTemplate('${esc(t.id)}')">📋 Dupliquer</button>
+                <button class="btn btn-ghost btn-sm" onclick="deleteMailTemplate('${esc(t.id)}', '${esc(t.name)}')" style="color:#dc2626">🗑️</button>
+              </div>
+            </div>
+          </div>
+        `;
+      });
+      html += '</div>';
+    }
+
+    container.innerHTML = html;
+  }
+
+  function startNewMailTemplate() {
+    _crm.editingId = 'new';
+    _crm.editorDraft = {
+      name: '',
+      subject: '',
+      body: '<p>Bonjour {{prenom_contact}},</p><p></p><p>Cordialement,<br>L\'équipe Annuaire YOUPI®</p>'
+    };
+    renderCrmContent();
+  }
+  window.startNewMailTemplate = startNewMailTemplate;
+
+  function editMailTemplate(id) {
+    const t = _crm.templates.find(function(x) { return x.id === id; });
+    if (!t) return;
+    _crm.editingId = id;
+    _crm.editorDraft = { name: t.name, subject: t.subject, body: t.body };
+    renderCrmContent();
+  }
+  window.editMailTemplate = editMailTemplate;
+
+  function duplicateMailTemplate(id) {
+    const t = _crm.templates.find(function(x) { return x.id === id; });
+    if (!t) return;
+    _crm.editingId = 'new';
+    _crm.editorDraft = {
+      name: t.name + ' (copie)',
+      subject: t.subject,
+      body: t.body
+    };
+    renderCrmContent();
+  }
+  window.duplicateMailTemplate = duplicateMailTemplate;
+
+  async function deleteMailTemplate(id, name) {
+    if (!confirm('Supprimer définitivement le modèle « ' + name + ' » ?')) return;
+    try {
+      const r = await api('adminDeleteMailTemplate', { token: state.user.token, id: id });
+      if (!r.ok) {
+        toast('error', 'Erreur : ' + (r.error || 'inconnue'));
+        return;
+      }
+      toast('success', 'Modèle supprimé');
+      _crm.templates = _crm.templates.filter(function(x) { return x.id !== id; });
+      renderCrmContent();
+    } catch (err) {
+      toast('error', 'Erreur réseau : ' + err.message);
+    }
+  }
+  window.deleteMailTemplate = deleteMailTemplate;
+
+  function cancelMailTemplateEdit() {
+    if (_crm.editorDraft && (_crm.editorDraft.name || _crm.editorDraft.subject)) {
+      if (!confirm('Annuler les modifications en cours ?')) return;
+    }
+    _crm.editingId = null;
+    _crm.editorDraft = null;
+    renderCrmContent();
+  }
+  window.cancelMailTemplateEdit = cancelMailTemplateEdit;
+
+  // ─── ÉDITEUR DE MODÈLE ──────────────────────────────────────
+
+  function renderCrmTemplateEditor(container) {
+    const isNew = _crm.editingId === 'new';
+    const d = _crm.editorDraft || { name: '', subject: '', body: '' };
+
+    let varBtns = '';
+    CRM_VARIABLES.forEach(function(v) {
+      varBtns += `<span class="crm-var-btn" onclick="insertCrmVariable('${v.key}')" title="${esc(v.label)}">{{${v.key}}}</span>`;
+    });
+
+    container.innerHTML = `
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px" id="crm-editor-grid">
+        <!-- COLONNE GAUCHE : éditeur -->
+        <div>
+          <div class="card">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+              <h3 style="margin:0">${isNew ? '➕ Nouveau modèle' : '✏️ Modifier le modèle'}</h3>
+              <button class="btn btn-ghost btn-sm" onclick="cancelMailTemplateEdit()">← Retour</button>
+            </div>
+
+            <label style="display:block;font-size:13px;font-weight:600;margin-bottom:6px">Nom du modèle</label>
+            <input type="text" id="crm-edit-name" value="${esc(d.name)}" placeholder="Ex. Relance fiche incomplète"
+              oninput="_crm.editorDraft.name = this.value"
+              style="width:100%;padding:10px;border:1px solid var(--border);border-radius:var(--radius);font-size:14px;margin-bottom:14px">
+
+            <label style="display:block;font-size:13px;font-weight:600;margin-bottom:6px">Objet du mail</label>
+            <input type="text" id="crm-edit-subject" value="${esc(d.subject)}" placeholder="Ex. Bienvenue {{nom_entreprise}} !"
+              oninput="_crm.editorDraft.subject = this.value; updateCrmPreview()"
+              style="width:100%;padding:10px;border:1px solid var(--border);border-radius:var(--radius);font-size:14px;margin-bottom:14px">
+
+            <label style="display:block;font-size:13px;font-weight:600;margin-bottom:6px">Corps du mail</label>
+            <div class="crm-rich-toolbar">
+              <button type="button" onclick="crmFormat('bold')" title="Gras"><strong>G</strong></button>
+              <button type="button" onclick="crmFormat('italic')" title="Italique"><em>I</em></button>
+              <button type="button" onclick="crmInsertLink()" title="Lien">🔗 Lien</button>
+              <button type="button" onclick="crmFormat('insertUnorderedList')" title="Liste à puces">• Liste</button>
+              <button type="button" onclick="crmFormat('insertOrderedList')" title="Liste numérotée">1. Liste</button>
+              <button type="button" onclick="crmFormat('formatBlock', 'p')" title="Paragraphe">¶</button>
+            </div>
+            <div id="crm-edit-body" class="crm-editor" contenteditable="true"
+              oninput="_crm.editorDraft.body = this.innerHTML; updateCrmPreview()"
+              onblur="_crm.editorDraft.body = this.innerHTML">${d.body}</div>
+
+            <div style="margin-top:14px;padding:12px;background:var(--sand-50);border-radius:var(--radius)">
+              <div style="font-size:12px;color:var(--text-2);margin-bottom:8px;font-weight:600">
+                💡 Variables disponibles (cliquez pour insérer dans le corps)
+              </div>
+              <div>${varBtns}</div>
+            </div>
+
+            <div style="display:flex;gap:8px;margin-top:16px;flex-wrap:wrap">
+              <button class="btn btn-primary" onclick="saveMailTemplate()">${isNew ? 'Créer le modèle' : 'Enregistrer les modifications'}</button>
+              <button class="btn btn-ghost" onclick="cancelMailTemplateEdit()">Annuler</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- COLONNE DROITE : aperçu -->
+        <div>
+          <div class="card">
+            <h3 style="margin:0 0 4px 0">👁️ Aperçu du mail</h3>
+            <div style="font-size:12px;color:var(--text-2);margin-bottom:14px">
+              Rendu avec une entreprise d'exemple. Variables remplacées automatiquement.
+            </div>
+            <div id="crm-preview-subject" style="padding:10px 12px;background:var(--sand-50);border-radius:var(--radius);font-size:13px;margin-bottom:12px">
+              <strong style="color:var(--text-2)">Objet : </strong><span id="crm-preview-subject-text"></span>
+            </div>
+            <div class="crm-preview-box">
+              <iframe id="crm-preview-iframe" style="width:100%;height:560px;border:none;background:white;border-radius:8px"></iframe>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+
+    // Sur mobile : empile les colonnes
+    if (window.innerWidth < 900) {
+      const grid = document.getElementById('crm-editor-grid');
+      if (grid) grid.style.gridTemplateColumns = '1fr';
+    }
+
+    // Met à jour l'aperçu
+    setTimeout(updateCrmPreview, 50);
+  }
+
+  // ─── ÉDITEUR : ACTIONS ──────────────────────────────────────
+
+  function crmFormat(cmd, value) {
+    document.execCommand(cmd, false, value || null);
+    const editor = document.getElementById('crm-edit-body');
+    if (editor) {
+      _crm.editorDraft.body = editor.innerHTML;
+      updateCrmPreview();
+      editor.focus();
+    }
+  }
+  window.crmFormat = crmFormat;
+
+  function crmInsertLink() {
+    const url = prompt('URL du lien (ex. https://annuaire-youpi.github.io/annuaire-youpi/) :');
+    if (!url) return;
+    document.execCommand('createLink', false, url);
+    const editor = document.getElementById('crm-edit-body');
+    if (editor) {
+      _crm.editorDraft.body = editor.innerHTML;
+      updateCrmPreview();
+    }
+  }
+  window.crmInsertLink = crmInsertLink;
+
+  function insertCrmVariable(key) {
+    const editor = document.getElementById('crm-edit-body');
+    if (!editor) return;
+    editor.focus();
+    // Tente d'insérer à la position du curseur
+    const sel = window.getSelection();
+    if (sel && sel.rangeCount > 0 && editor.contains(sel.anchorNode)) {
+      document.execCommand('insertText', false, '{{' + key + '}}');
+    } else {
+      // Pas de curseur dans l'éditeur : ajoute à la fin
+      editor.innerHTML = editor.innerHTML + '{{' + key + '}}';
+    }
+    _crm.editorDraft.body = editor.innerHTML;
+    updateCrmPreview();
+  }
+  window.insertCrmVariable = insertCrmVariable;
+
+  // Interpolation côté client pour l'aperçu
+  function crmInterpolate(text, company) {
+    if (!text) return '';
+    return String(text)
+      .replace(/\{\{nom_entreprise\}\}/g, company.nom_entreprise || '')
+      .replace(/\{\{prenom_contact\}\}/g, company.prenom_contact || '')
+      .replace(/\{\{secteur\}\}/g, company.secteur || '')
+      .replace(/\{\{ville\}\}/g, company.ville || '')
+      .replace(/\{\{region\}\}/g, company.region || '')
+      .replace(/\{\{email\}\}/g, company.email || '')
+      .replace(/\{\{telephone\}\}/g, company.telephone || '')
+      .replace(/\{\{site_web\}\}/g, company.site_web || '');
+  }
+
+  // Reconstruit le template HTML complet (header + corps + footer)
+  // pour l'aperçu. Doit rester aligné avec crmBuildEmailHtml_ côté backend.
+  function crmBuildPreviewHtml(subject, bodyHtml) {
+    const siteUrl = 'https://annuaire-youpi.github.io/annuaire-youpi/';
+    return '<!DOCTYPE html><html><head><meta charset="UTF-8">'
+      + '<meta name="viewport" content="width=device-width,initial-scale=1">'
+      + '<title>' + escapeHtmlSafe(subject) + '</title></head>'
+      + '<body style="margin:0;padding:0;background:#f1f5f9;font-family:-apple-system,BlinkMacSystemFont,\'Segoe UI\',Roboto,sans-serif;color:#1e293b;">'
+      +   '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#f1f5f9;padding:24px 0;">'
+      +     '<tr><td align="center">'
+      +       '<table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="max-width:600px;background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.06);">'
+      +         '<tr><td style="padding:24px 32px;background:linear-gradient(135deg,#0d9488 0%,#0f766e 100%);text-align:center;">'
+      +           '<a href="' + siteUrl + '" style="text-decoration:none;color:#ffffff;font-size:22px;font-weight:700;letter-spacing:-0.3px;">Annuaire YOUPI<span style="font-size:14px;vertical-align:super;">®</span></a>'
+      +           '<div style="color:rgba(255,255,255,0.85);font-size:13px;margin-top:4px;">L\'annuaire des entreprises ultra-marines</div>'
+      +         '</td></tr>'
+      +         '<tr><td style="padding:32px;color:#1e293b;font-size:15px;line-height:1.6;">'
+      +           bodyHtml
+      +         '</td></tr>'
+      +         '<tr><td style="padding:20px 32px;background:#f8fafc;border-top:1px solid #e2e8f0;text-align:center;color:#64748b;font-size:12px;line-height:1.5;">'
+      +           'Vous recevez ce message car votre entreprise est référencée dans l\'Annuaire YOUPI®.<br>'
+      +           '<a href="' + siteUrl + '" style="color:#0f766e;text-decoration:none;">' + siteUrl + '</a>'
+      +         '</td></tr>'
+      +       '</table>'
+      +     '</td></tr>'
+      +   '</table>'
+      + '</body></html>';
+  }
+
+  function escapeHtmlSafe(s) {
+    return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
+  function updateCrmPreview() {
+    const d = _crm.editorDraft || {};
+    const subjEl = document.getElementById('crm-preview-subject-text');
+    const iframe = document.getElementById('crm-preview-iframe');
+    if (!subjEl || !iframe) return;
+
+    const interpSubject = crmInterpolate(d.subject || '', CRM_PREVIEW_COMPANY) || '(pas d\'objet)';
+    const interpBody = crmInterpolate(d.body || '', CRM_PREVIEW_COMPANY);
+    subjEl.textContent = interpSubject;
+
+    const html = crmBuildPreviewHtml(interpSubject, interpBody);
+    iframe.srcdoc = html;
+  }
+  window.updateCrmPreview = updateCrmPreview;
+
+  async function saveMailTemplate() {
+    const d = _crm.editorDraft || {};
+    if (!d.name || !d.name.trim()) { toast('error', 'Le nom du modèle est requis'); return; }
+    if (!d.subject || !d.subject.trim()) { toast('error', 'L\'objet du mail est requis'); return; }
+    if (!d.body || !d.body.trim() || d.body === '<br>') { toast('error', 'Le corps du mail est requis'); return; }
+
+    const payload = {
+      token: state.user.token,
+      name: d.name.trim(),
+      subject: d.subject.trim(),
+      body: d.body
+    };
+    if (_crm.editingId !== 'new') payload.id = _crm.editingId;
+
+    try {
+      const r = await api('adminSaveMailTemplate', payload);
+      if (!r.ok) {
+        toast('error', 'Erreur : ' + (r.error || 'inconnue'));
+        return;
+      }
+      toast('success', r.created ? 'Modèle créé ✅' : 'Modifications enregistrées ✅');
+      _crm.editingId = null;
+      _crm.editorDraft = null;
+      await renderCrmContent();
+    } catch (err) {
+      toast('error', 'Erreur réseau : ' + err.message);
+    }
+  }
+  window.saveMailTemplate = saveMailTemplate;
+
+  // Helper : date courte FR
+  function formatDateShort(iso) {
+    if (!iso) return '';
+    try {
+      const d = new Date(iso);
+      return d.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' });
+    } catch (e) {
+      return iso;
+    }
+  }
+
 
   // ============================================================
   //  CONFIGURATION IA — Dashboard admin
