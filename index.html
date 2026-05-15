@@ -2966,7 +2966,7 @@
 
   const APP = {
     name: 'Annuaire YOUPI',
-    version: 'v2.7.0',
+    version: 'v2.7.1',
     versionDate: '15 mai 2026',
     BACKEND_URL: 'https://script.google.com/macros/s/AKfycbzQNSOAGCJp1QmZU0IE1FYiKmKCcGgTUpqKa3RJG9lwiAND_EC5dGdbh2XCu26ZTMoxtw/exec'
   };
@@ -2979,7 +2979,7 @@
   // ------------------------------------------------------------
   const CHANGELOG = [
     {
-      version: 'v2.7.0',
+      version: 'v2.7.1',
       date: '15 mai 2026',
       title: "🛠️ Améliorations internes",
       entries: [
@@ -6433,11 +6433,11 @@
     const safeText = text.trim().replace(/</g, '&lt;').replace(/>/g, '&gt;');
     const safeUrl = url.trim().replace(/"/g, '&quot;');
 
-    // Bouton avec <table> pour compatibilité Outlook
+    // Bouton avec <table> pour compatibilité Outlook (centré)
     const cta =
-      '<table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center" style="margin:24px auto;">' +
-        '<tr><td style="background:linear-gradient(135deg,#2563eb 0%,#1d4ed8 100%);border-radius:8px;box-shadow:0 4px 12px rgba(37,99,235,0.25);">' +
-          '<a href="' + safeUrl + '" target="_blank" style="display:inline-block;padding:14px 32px;color:#ffffff;font-size:15px;font-weight:700;text-decoration:none;letter-spacing:0.2px;">' +
+      '<table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center" style="margin:24px auto;border-collapse:separate;">' +
+        '<tr><td align="center" style="background:linear-gradient(135deg,#2563eb 0%,#1d4ed8 100%);border-radius:8px;box-shadow:0 4px 12px rgba(37,99,235,0.25);text-align:center;">' +
+          '<a href="' + safeUrl + '" target="_blank" style="display:inline-block;padding:14px 32px;color:#ffffff;font-size:15px;font-weight:700;text-decoration:none;letter-spacing:0.2px;text-align:center;mso-padding-alt:0;line-height:1.2;">' +
             safeText +
           '</a>' +
         '</td></tr>' +
@@ -8121,6 +8121,40 @@
   }
   window.setAutoQueueFilter = setAutoQueueFilter;
 
+  async function cleanupQueueFromUI() {
+    const choice = prompt(
+      '🗑️ Nettoyage de la file d\'attente\n\n' +
+      'Choisissez l\'âge minimum des entrées à supprimer :\n' +
+      '  0  = tout (envoyés, annulés, erreurs)\n' +
+      '  7  = plus de 7 jours\n' +
+      '  30 = plus de 30 jours (recommandé)\n' +
+      '  90 = plus de 90 jours\n\n' +
+      'Les entrées « En attente » ne sont JAMAIS supprimées.\n' +
+      'Saisissez le nombre de jours :',
+      '30'
+    );
+    if (choice === null) return; // Annulation
+    const days = parseInt(choice, 10);
+    if (isNaN(days) || days < 0) {
+      toast('error', 'Nombre invalide');
+      return;
+    }
+    if (!confirm('Supprimer définitivement les entrées traitées de plus de ' + days + ' jours ?\n\nCette action est irréversible.')) return;
+    try {
+      const r = await api('adminCleanupQueue', {
+        token: state.user.token,
+        filter: 'all_done',
+        older_than_days: days
+      });
+      if (!r.ok) { toast('error', 'Erreur : ' + (r.error || 'inconnue')); return; }
+      toast('success', r.deleted + ' entrée' + (r.deleted > 1 ? 's' : '') + ' supprimée' + (r.deleted > 1 ? 's' : ''));
+      renderCrmContent();
+    } catch (err) {
+      toast('error', 'Erreur réseau : ' + err.message);
+    }
+  }
+  window.cleanupQueueFromUI = cleanupQueueFromUI;
+
   async function renderCrmAutomationQueue(container) {
     container.innerHTML = `
       <div class="card crm-empty">
@@ -8165,7 +8199,10 @@
           <h3 style="margin:0">📋 File d'attente</h3>
           <div style="color:var(--text-2);font-size:13px;margin-top:4px">${_crm.autoQueueItems.length} entrée${_crm.autoQueueItems.length > 1 ? 's' : ''}</div>
         </div>
-        <button class="btn btn-ghost btn-sm" onclick="leaveAutomationQueue()">← Retour</button>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <button class="btn btn-ghost btn-sm" onclick="cleanupQueueFromUI()" style="color:#dc2626" title="Supprimer les entrées traitées (envoyés, erreurs, annulés) anciennes">🗑️ Nettoyer</button>
+          <button class="btn btn-ghost btn-sm" onclick="leaveAutomationQueue()">← Retour</button>
+        </div>
       </div>
       ${filterBar}
     `;
