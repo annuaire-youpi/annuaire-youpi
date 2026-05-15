@@ -2105,6 +2105,95 @@
       line-height: 1.4;
     }
 
+    /* ============================================================
+     * IMAGE MODE TABS — Onglets pour ajouter une image (URL / Upload / IA)
+     * ============================================================ */
+    .image-mode-tabs {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .image-mode-tab {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      padding: 12px 8px;
+      background: var(--card);
+      border: 2px solid var(--border);
+      border-radius: var(--radius);
+      cursor: pointer;
+      transition: all .15s ease;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-2);
+      text-align: center;
+    }
+    .image-mode-tab:hover {
+      border-color: var(--teal-600);
+      color: var(--teal-700);
+    }
+    .image-mode-tab.active {
+      border-color: var(--teal-700);
+      background: linear-gradient(135deg, rgba(37,99,235,.04), rgba(37,99,235,.02));
+      color: var(--teal-900);
+      box-shadow: var(--shadow);
+    }
+    .image-mode-tab-icon {
+      font-size: 22px;
+      line-height: 1;
+    }
+    .image-mode-panel {
+      display: none;
+      padding: 14px;
+      background: var(--sand-50);
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+    }
+    .image-mode-panel.active {
+      display: block;
+    }
+    .image-preview-wrapper {
+      margin-top: 12px;
+      padding: 10px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      text-align: center;
+    }
+    .image-preview-wrapper img {
+      max-width: 100%;
+      max-height: 280px;
+      border-radius: 6px;
+      display: block;
+      margin: 0 auto;
+    }
+    .image-preview-caption {
+      margin-top: 8px;
+      font-size: 12px;
+      color: var(--text-2);
+    }
+    .image-mode-loader {
+      padding: 20px;
+      text-align: center;
+      color: var(--text-2);
+      font-size: 14px;
+    }
+    .image-mode-loader::before {
+      content: '⏳';
+      display: block;
+      font-size: 28px;
+      margin-bottom: 8px;
+      animation: imgPulse 1.5s ease-in-out infinite;
+    }
+    @keyframes imgPulse {
+      0%, 100% { opacity: 0.4; }
+      50% { opacity: 1; }
+    }
+
+
     /* Badges d'expiration sur les cards de pages */
     .badge-expiration {
       display: inline-flex;
@@ -2797,7 +2886,7 @@
 
   <!-- ====================== FOOTER ====================== -->
   <footer class="footer">
-    <div>Annuaire YOUPI<span style="color:var(--teal-700)">®</span> · <a id="footer-version-link" onclick="navigate('changelog')" style="cursor:pointer;text-decoration:underline"><span id="footer-version">v2.2.3</span></a> · <a onclick="navigate('changelog')" style="cursor:pointer;text-decoration:underline">📰 Nouveautés</a></div>
+    <div>Annuaire YOUPI<span style="color:var(--teal-700)">®</span> · <a id="footer-version-link" onclick="navigate('changelog')" style="cursor:pointer;text-decoration:underline"><span id="footer-version">v2.3.0</span></a> · <a onclick="navigate('changelog')" style="cursor:pointer;text-decoration:underline">📰 Nouveautés</a></div>
     <div class="mt-16 text-xs">Conçu pour les entreprises ultra-marines · Martinique 🇲🇶 · Guadeloupe 🇬🇵 · Guyane 🇬🇫</div>
     <div class="footer-admin">
       <a onclick="openLoginAdmin()" style="cursor:pointer">Administration</a>
@@ -2825,8 +2914,8 @@
 
   const APP = {
     name: 'Annuaire YOUPI',
-    version: 'v2.2.3',
-    versionDate: '14 mai 2026',
+    version: 'v2.3.0',
+    versionDate: '15 mai 2026',
     BACKEND_URL: 'https://script.google.com/macros/s/AKfycbzQNSOAGCJp1QmZU0IE1FYiKmKCcGgTUpqKa3RJG9lwiAND_EC5dGdbh2XCu26ZTMoxtw/exec'
   };
 
@@ -2837,6 +2926,15 @@
   //  → Pour ajouter une nouvelle version, demander à Claude.
   // ------------------------------------------------------------
   const CHANGELOG = [
+    {
+      version: 'v2.3.0',
+      date: '15 mai 2026',
+      title: "✨ Création d'images facilitée pour vos pages services",
+      entries: [
+        { type: 'feature', text: "Lors de la création d'une page service, vous pouvez désormais choisir parmi 3 façons d'ajouter l'image : coller une URL externe (comme avant), téléverser une image depuis votre ordinateur ou smartphone, ou la générer automatiquement avec l'intelligence artificielle à partir de votre fiche entreprise et du service décrit." },
+        { type: 'feature', text: "Les images téléversées et générées sont stockées sur les serveurs sécurisés de l'Annuaire YOUPI® et disponibles immédiatement pour l'agent IA et les publications Facebook." }
+      ]
+    },
     {
       version: 'v2.2.3',
       date: '14 mai 2026',
@@ -4495,9 +4593,46 @@
             <div class="hint">C'est le champ le plus important. Plus c'est détaillé, plus l'IA pourra vous recommander.</div>
           </div>
           <div class="field">
-            <label>URL d'une image illustrant ce service</label>
-            <input name="image_url" type="url" placeholder="https://…" />
-            <div class="hint">L'image apparaîtra dans le fil de discussion de l'agent IA.</div>
+            <label>Image illustrant ce service <span style="font-weight:normal;color:var(--text-2);font-size:13px">(optionnel)</span></label>
+            <div class="hint" style="margin-bottom:10px">Choisissez comment ajouter votre image. Elle apparaîtra dans le fil de discussion de l'agent IA et sur la publication Facebook.</div>
+            <div class="image-mode-tabs">
+              <div class="image-mode-tab" data-mode="url" onclick="selectImageMode('url')">
+                <span class="image-mode-tab-icon">🔗</span>
+                <span>URL</span>
+              </div>
+              <div class="image-mode-tab" data-mode="upload" onclick="selectImageMode('upload')">
+                <span class="image-mode-tab-icon">📤</span>
+                <span>Téléverser</span>
+              </div>
+              <div class="image-mode-tab" data-mode="ai" onclick="selectImageMode('ai')">
+                <span class="image-mode-tab-icon">✨</span>
+                <span>Générer avec l'IA</span>
+              </div>
+            </div>
+
+            <div class="image-mode-panel" data-panel="url">
+              <input type="url" id="img_url_input" placeholder="https://…" oninput="onImageUrlInput(this.value)" />
+              <div class="hint" style="margin-top:6px">Collez l'URL d'une image existante (clic droit sur une image → "Copier l'adresse de l'image").</div>
+            </div>
+
+            <div class="image-mode-panel" data-panel="upload">
+              <input type="file" id="img_file_input" accept="image/png,image/jpeg,image/jpg,image/webp" onchange="onImageFileSelected(this)" style="display:block;width:100%" />
+              <div class="hint" style="margin-top:6px">Choisissez une image depuis votre appareil (PNG, JPG ou WebP, max 7 Mo).</div>
+            </div>
+
+            <div class="image-mode-panel" data-panel="ai">
+              <p style="margin:0 0 10px;font-size:13px;color:var(--text-2)">
+                L'IA va créer une image professionnelle 9:16 adaptée à votre service, sans personnes,
+                dans le contexte visuel de votre ville. La génération prend environ 15 à 30 secondes.
+              </p>
+              <button type="button" class="btn-primary" onclick="generateServiceImageWithAI()" id="btn-generate-ai">
+                ✨ Générer l'image avec l'IA
+              </button>
+            </div>
+
+            <div id="img_preview_zone"></div>
+
+            <input type="hidden" name="image_url" id="img_hidden_input" value="" />
           </div>
         `;
 
@@ -4630,6 +4765,172 @@
           </div>
         `;
     }
+  }
+
+  // ============================================================
+  //  IMAGE MODE — gestion des 3 façons d'ajouter une image
+  //  pour une page service : URL externe / upload depuis appareil
+  //  / génération via reve.com (v2.3.0)
+  // ============================================================
+
+  /** Bascule entre les 3 modes URL / Upload / IA */
+  function selectImageMode(mode) {
+    // Active/désactive les onglets
+    document.querySelectorAll('.image-mode-tab').forEach(el => {
+      el.classList.toggle('active', el.dataset.mode === mode);
+    });
+    // Affiche le bon panneau
+    document.querySelectorAll('.image-mode-panel').forEach(el => {
+      el.classList.toggle('active', el.dataset.panel === mode);
+    });
+    // Reset de l'image et du champ caché quand on change de mode
+    document.getElementById('img_preview_zone').innerHTML = '';
+    const hidden = document.getElementById('img_hidden_input');
+    if (hidden) hidden.value = '';
+    // Reset des inputs selon le mode
+    if (mode !== 'url') {
+      const urlInput = document.getElementById('img_url_input');
+      if (urlInput) urlInput.value = '';
+    }
+    if (mode !== 'upload') {
+      const fileInput = document.getElementById('img_file_input');
+      if (fileInput) fileInput.value = '';
+    }
+  }
+
+  /** Mode URL : on copie la valeur dans le champ caché et on affiche un preview */
+  function onImageUrlInput(value) {
+    const url = String(value || '').trim();
+    document.getElementById('img_hidden_input').value = url;
+    if (url && /^https?:\/\//i.test(url)) {
+      renderImagePreview(url, 'URL externe');
+    } else {
+      document.getElementById('img_preview_zone').innerHTML = '';
+    }
+  }
+
+  /** Mode Upload : on convertit en base64 et on envoie au backend pour le déposer sur Drive */
+  async function onImageFileSelected(input) {
+    if (!input.files || !input.files[0]) return;
+    const file = input.files[0];
+
+    // Limite de taille côté client : 7 Mo
+    if (file.size > 7 * 1024 * 1024) {
+      toast('error', 'Image trop volumineuse (max 7 Mo)');
+      input.value = '';
+      return;
+    }
+
+    // Vérif type
+    if (!/^image\/(png|jpe?g|webp)$/i.test(file.type)) {
+      toast('error', 'Format non supporté. Utilisez PNG, JPG ou WebP.');
+      input.value = '';
+      return;
+    }
+
+    // Affichage loader
+    const preview = document.getElementById('img_preview_zone');
+    preview.innerHTML = '<div class="image-mode-loader">Téléversement en cours…</div>';
+
+    // Conversion en base64
+    let base64;
+    try {
+      base64 = await fileToBase64(file);
+    } catch (err) {
+      preview.innerHTML = '';
+      toast('error', 'Lecture du fichier impossible');
+      return;
+    }
+
+    // Envoi au backend
+    const r = await api('uploadImageToDrive', {
+      company_id: state.user.id,
+      token: state.user.token,
+      image_base64: base64,
+      filename_hint: file.name
+    });
+
+    if (!r.ok) {
+      preview.innerHTML = '';
+      toast('error', r.error || 'Échec du téléversement');
+      input.value = '';
+      return;
+    }
+
+    document.getElementById('img_hidden_input').value = r.image_url;
+    renderImagePreview(r.image_url, 'Image téléversée');
+    toast('success', 'Image téléversée ✅');
+  }
+
+  /** Mode IA : appelle reve.com via le backend */
+  async function generateServiceImageWithAI() {
+    const titre = document.querySelector('input[name="titre_service"]');
+    const desc  = document.querySelector('textarea[name="description_detaillee"]');
+    if (!titre || !titre.value.trim()) {
+      toast('error', 'Renseignez d\'abord le titre du service');
+      titre && titre.focus();
+      return;
+    }
+    if (!desc || !desc.value.trim()) {
+      toast('error', 'Renseignez d\'abord la description du service');
+      desc && desc.focus();
+      return;
+    }
+
+    const btn = document.getElementById('btn-generate-ai');
+    const preview = document.getElementById('img_preview_zone');
+
+    if (btn) { btn.disabled = true; btn.textContent = '⏳ Génération en cours…'; }
+    preview.innerHTML = '<div class="image-mode-loader">Génération de l\'image par l\'IA (15 à 30 secondes)…</div>';
+
+    const r = await api('generateImageWithReve', {
+      company_id: state.user.id,
+      token: state.user.token,
+      type_contenu: 'service',
+      titre_service: titre.value.trim(),
+      description_detaillee: desc.value.trim()
+    });
+
+    if (btn) { btn.disabled = false; btn.textContent = '✨ Générer l\'image avec l\'IA'; }
+
+    if (!r.ok) {
+      preview.innerHTML = '';
+      toast('error', r.error || 'Échec de la génération');
+      return;
+    }
+
+    document.getElementById('img_hidden_input').value = r.image_url;
+    let caption = 'Image générée par l\'IA';
+    if (r.credits_remaining != null) {
+      caption += ' · ' + r.credits_remaining + ' crédits restants';
+    }
+    renderImagePreview(r.image_url, caption);
+    toast('success', 'Image générée ✅');
+  }
+
+  /** Affiche un aperçu de l'image avec une légende */
+  function renderImagePreview(url, caption) {
+    const zone = document.getElementById('img_preview_zone');
+    if (!zone) return;
+    zone.innerHTML =
+      '<div class="image-preview-wrapper">' +
+        '<img src="' + esc(url) + '" alt="Aperçu" onerror="this.style.display=\'none\';this.nextElementSibling.textContent=\'⚠️ Image inaccessible à cette URL\'" />' +
+        '<div class="image-preview-caption">' + esc(caption || 'Aperçu') + '</div>' +
+      '</div>';
+  }
+
+  /** Convertit un File en chaîne base64 (sans préfixe data:) */
+  function fileToBase64(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const result = String(reader.result || '');
+        // Garde le préfixe : le backend sait le retirer
+        resolve(result);
+      };
+      reader.onerror = () => reject(new Error('Lecture impossible'));
+      reader.readAsDataURL(file);
+    });
   }
 
   async function submitAddPage(e, type) {
