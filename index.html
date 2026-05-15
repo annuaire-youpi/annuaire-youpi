@@ -818,6 +818,212 @@
     @media (max-width: 700px) {
       .crm-pro-card-head { flex-direction: column; }
     }
+    /* ─── Mini-site public partageable (v2.11.0) ─── */
+    .mini-site {
+      max-width: 920px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+      margin-top: 20px;
+      margin-bottom: 40px;
+    }
+    .mini-site-hero {
+      position: relative;
+      min-height: 280px;
+      background-size: cover;
+      background-position: center;
+      background-color: #1e3a8a;
+      display: flex;
+      align-items: flex-end;
+    }
+    .mini-site-hero-overlay {
+      width: 100%;
+      background: linear-gradient(to bottom, rgba(0,0,0,0) 30%, rgba(0,0,0,0.75) 100%);
+      padding: 60px 28px 28px 28px;
+    }
+    .mini-site-hero-noimg {
+      background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%);
+      padding: 48px 28px;
+    }
+    .mini-site-hero-noimg .mini-site-hero-content { color: white; }
+    .mini-site-hero-content { color: white; }
+    .mini-site-hero-region {
+      font-size: 14px;
+      opacity: 0.95;
+      letter-spacing: 0.5px;
+      margin-bottom: 6px;
+      font-weight: 600;
+    }
+    .mini-site-hero-title {
+      font-size: 32px;
+      font-weight: 800;
+      margin: 0 0 6px 0;
+      line-height: 1.2;
+      text-shadow: 0 2px 8px rgba(0,0,0,0.4);
+    }
+    .mini-site-hero-sector {
+      font-size: 15px;
+      opacity: 0.95;
+      font-weight: 500;
+    }
+    .mini-site-body {
+      padding: 28px;
+    }
+    .mini-site-ia {
+      text-align: center;
+      padding: 22px;
+      background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+      border-radius: 12px;
+      margin-bottom: 28px;
+      border: 1px solid #bfdbfe;
+    }
+    .mini-site-ia-btn {
+      font-size: 15px;
+      padding: 12px 24px;
+      font-weight: 700;
+    }
+    .mini-site-ia-help {
+      font-size: 12px;
+      color: var(--text-2);
+      margin-top: 10px;
+    }
+    .mini-site-section {
+      margin-bottom: 28px;
+      padding-bottom: 24px;
+      border-bottom: 1px solid var(--sand-50);
+    }
+    .mini-site-section:last-child {
+      border-bottom: none;
+      margin-bottom: 0;
+      padding-bottom: 0;
+    }
+    .mini-site-section h2 {
+      color: var(--teal-900);
+      font-size: 19px;
+      margin: 0 0 14px 0;
+      font-weight: 700;
+    }
+    .mini-site-pages-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 16px;
+    }
+    .mini-site-page-card {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      transition: box-shadow 0.15s, transform 0.15s;
+    }
+    .mini-site-page-card:hover {
+      box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+      transform: translateY(-2px);
+    }
+    .mini-site-page-img {
+      height: 160px;
+      background-size: cover;
+      background-position: center;
+      background-color: var(--sand-50);
+    }
+    .mini-site-page-body { padding: 14px 16px; }
+    .mini-site-page-type {
+      font-size: 11px;
+      color: var(--teal-700);
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+    }
+    .mini-site-page-title {
+      font-size: 16px;
+      margin: 0 0 6px 0;
+      color: var(--text-1);
+      line-height: 1.3;
+    }
+    .mini-site-page-prix {
+      display: inline-block;
+      background: var(--teal-700);
+      color: white;
+      padding: 3px 10px;
+      border-radius: 12px;
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+    .mini-site-page-desc {
+      font-size: 13px;
+      color: var(--text-1);
+      line-height: 1.5;
+    }
+    .mini-site-contact-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .mini-site-contact-item {
+      display: block;
+      padding: 12px 14px;
+      background: var(--sand-50);
+      border-radius: 8px;
+      color: var(--text-1);
+      text-decoration: none;
+      font-size: 14px;
+      transition: background 0.15s, color 0.15s;
+    }
+    .mini-site-contact-item:hover {
+      background: var(--teal-700);
+      color: white;
+    }
+    .mini-site-social-grid {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .mini-site-social {
+      flex: 1;
+      min-width: 140px;
+      padding: 12px 16px;
+      text-align: center;
+      color: white;
+      text-decoration: none;
+      border-radius: 10px;
+      font-weight: 600;
+      font-size: 14px;
+      transition: opacity 0.15s;
+    }
+    .mini-site-social:hover { opacity: 0.85; color: white; }
+    .mini-site-social-fb { background: #1877f2; }
+    .mini-site-social-ig {
+      background: linear-gradient(135deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+    }
+    .mini-site-footer-cta {
+      background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+      padding: 32px 28px;
+      text-align: center;
+      border-top: 2px solid #fbbf24;
+    }
+    .mini-site-footer-cta-emoji { font-size: 40px; margin-bottom: 8px; }
+    .mini-site-footer-cta h3 {
+      color: #78350f;
+      margin: 0 0 6px 0;
+      font-size: 18px;
+    }
+    .mini-site-footer-cta p {
+      color: #92400e;
+      margin: 0;
+      font-size: 14px;
+    }
+    @media (max-width: 700px) {
+      .mini-site-hero-title { font-size: 26px; }
+      .mini-site-body { padding: 22px 18px; }
+      .mini-site-pages-grid { grid-template-columns: 1fr; }
+      .mini-site-hero-overlay { padding: 50px 18px 22px 18px; }
+      .mini-site-hero-noimg { padding: 36px 18px; }
+    }
     .sidebar {
       background: var(--card);
       border: 1px solid var(--border);
@@ -3204,7 +3410,7 @@
 
   const APP = {
     name: 'Annuaire YOUPI',
-    version: 'v2.10.0',
+    version: 'v2.11.0',
     versionDate: '15 mai 2026',
     BACKEND_URL: 'https://script.google.com/macros/s/AKfycbzQNSOAGCJp1QmZU0IE1FYiKmKCcGgTUpqKa3RJG9lwiAND_EC5dGdbh2XCu26ZTMoxtw/exec'
   };
@@ -3216,6 +3422,17 @@
   //  → Pour ajouter une nouvelle version, demander à Claude.
   // ------------------------------------------------------------
   const CHANGELOG = [
+    {
+      version: 'v2.11.0',
+      date: '15 mai 2026',
+      title: "🌐 Chaque entreprise a maintenant sa vitrine en ligne",
+      entries: [
+        { type: 'feature', text: "Chaque entreprise référencée dispose désormais d'une URL publique partageable de type annuaire-youpi.ai/votre-entreprise pour mettre en avant son activité." },
+        { type: 'feature', text: "Cette mini-vitrine affiche votre fiche complète, vos services, vos pages publiées et permet à vos visiteurs de discuter directement avec l'agent IA YOUPI à propos de votre entreprise." },
+        { type: 'feature', text: "Depuis votre espace pro (tableau de bord), un nouveau bouton « Voir mon mini-site public » vous permet de récupérer et copier facilement votre URL." },
+        { type: 'feature', text: "Cette vitrine est accessible à toutes les entreprises (gratuites et payantes), dans l'esprit d'égalité de l'annuaire. La personnalisation avancée (couleurs, photo de couverture personnalisée) sera réservée aux formules Pro et Pro+." }
+      ]
+    },
     {
       version: 'v2.10.0',
       date: '15 mai 2026',
@@ -3893,6 +4110,7 @@
       case 'admin-ai':            renderAdminAiDashboard(); break;
       case 'admin-logs':          renderAdminLogs(); break;
       case 'legal':               renderLegalPage(params); break;
+      case 'public-company':      renderPublicCompany(params); break;
       default: renderHome();
     }
     renderHeader();
@@ -5634,6 +5852,7 @@ SIRET : 395 370 182 00036<br>
             })}
             <div class="modal-actions">
               <button class="btn btn-primary" onclick="navigate('pro-edit')">Modifier mes infos</button>
+              <button class="btn btn-secondary" onclick="showMiniSiteUrl()">🌐 Voir mon mini-site public</button>
             </div>
           </div>
         </section>
@@ -6440,6 +6659,379 @@ SIRET : 395 370 182 00036<br>
     toast('success', 'Contenu créé ✅');
     navigate('pro-pages');
   }
+
+  // ============================================================
+  //  MINI-SITE PUBLIC PARTAGEABLE (v2.11.0)
+  // ============================================================
+  //
+  // Affiche la vitrine publique d'une entreprise sur :
+  //   - annuaire-youpi.ai/le-ti-punch-fdf  (path direct, via 404.html GH Pages)
+  //   - annuaire-youpi.ai/?slug=le-ti-punch-fdf  (fallback paramètre)
+  //
+  // Accessible à TOUS (gratuit OU Pro), pas de connexion requise.
+  // Affiche : nom, secteur, ville, photo, description, services,
+  //           horaires, contact, FB/IG, pages publiées, bouton agent IA.
+  // ─────────────────────────────────────────────────────────────
+
+  /**
+   * Extrait le slug du mini-site depuis l'URL actuelle.
+   * Retourne null si on est sur la home (pas de slug).
+   *
+   * Cas gérés :
+   *  - /le-ti-punch-fdf            → "le-ti-punch-fdf"
+   *  - /?slug=le-ti-punch-fdf      → "le-ti-punch-fdf" (utilisé par 404.html GH Pages)
+   *  - /annuaire-youpi/            → null (path repo GH Pages racine)
+   *  - /annuaire-youpi/le-ti-punch → "le-ti-punch" (path GH Pages projet)
+   *  - /                           → null
+   */
+  function _extractMiniSiteSlug_() {
+    // Cas A : paramètre ?slug=
+    try {
+      var params = new URLSearchParams(window.location.search);
+      var qSlug = params.get('slug');
+      if (qSlug && /^[a-z0-9-]{2,80}$/.test(qSlug)) return qSlug;
+    } catch (e) {}
+
+    // Cas B : path direct
+    var path = (window.location.pathname || '').replace(/^\/+|\/+$/g, '');
+    if (!path) return null;
+
+    // Si on est sur GitHub Pages "projet" (ex. /annuaire-youpi/le-ti-punch),
+    // on enlève le préfixe du repo. On suppose que le préfixe est toujours
+    // le 1er segment ; si la 1ère partie n'est pas un slug d'entreprise valide
+    // ET qu'il y a un 2e segment, on prend le 2e.
+    var parts = path.split('/').filter(Boolean);
+    var candidate = parts[parts.length - 1]; // dernier segment
+
+    // Filtre : un slug valide est composé d'alphanum + tirets, 2-80 chars
+    if (!/^[a-z0-9-]{2,80}$/.test(candidate)) return null;
+    // Exclut les chemins "techniques"
+    var excluded = ['index.html', 'index', '404', '404.html', 'admin', 'api'];
+    if (excluded.indexOf(candidate) !== -1) return null;
+
+    return candidate;
+  }
+
+  async function renderPublicCompany(params) {
+    var slug = (params && params.slug) || _extractMiniSiteSlug_();
+    if (!slug) return navigate('home');
+
+    // Affichage immédiat avec un loader (le user voit quelque chose tout de suite)
+    document.getElementById('main').innerHTML = `
+      <div style="text-align:center;padding:80px 20px;color:var(--text-2)">
+        <div style="font-size:48px;margin-bottom:12px">⏳</div>
+        <div>Chargement de la fiche...</div>
+      </div>
+    `;
+
+    var r;
+    try {
+      r = await api('getPublicCompanyBySlug', { slug: slug });
+    } catch (err) {
+      document.getElementById('main').innerHTML = renderMiniSiteError_(
+        'Erreur réseau', 'Impossible de charger la fiche : ' + err.message
+      );
+      return;
+    }
+
+    if (!r.ok) {
+      if (r.not_found) {
+        document.getElementById('main').innerHTML = renderMiniSiteError_(
+          'Fiche introuvable',
+          'L\'entreprise « ' + slug + ' » n\'existe pas ou plus dans l\'annuaire.'
+        );
+      } else {
+        document.getElementById('main').innerHTML = renderMiniSiteError_(
+          'Erreur', r.error || 'Impossible de charger cette fiche.'
+        );
+      }
+      return;
+    }
+
+    document.getElementById('main').innerHTML = renderMiniSiteContent_(r.company, r.pages || []);
+
+    // Met à jour le titre de l'onglet
+    document.title = r.company.nom_entreprise + ' · Annuaire YOUPI®';
+  }
+  window.renderPublicCompany = renderPublicCompany;
+
+  function renderMiniSiteError_(title, message) {
+    return `
+      <div style="max-width:600px;margin:60px auto;padding:40px 24px;text-align:center;background:white;border-radius:14px;border:1px solid var(--border)">
+        <div style="font-size:64px;margin-bottom:12px">🤔</div>
+        <h1 style="color:var(--teal-900);margin:0 0 8px 0">${esc(title)}</h1>
+        <p style="color:var(--text-2);margin:0 0 24px 0;line-height:1.6">${esc(message)}</p>
+        <button class="btn btn-primary" onclick="navigate('home')">← Retour à l'accueil</button>
+      </div>
+    `;
+  }
+
+  /**
+   * Affiche un modal avec l'URL publique du mini-site de l'entreprise connectée.
+   * Permet de copier le lien ou de l'ouvrir dans un nouvel onglet.
+   */
+  async function showMiniSiteUrl() {
+    if (!state.user || state.user.type !== 'company') return;
+    toast('info', '⏳ Récupération de votre URL...');
+    var r;
+    try {
+      r = await api('getMyCompanySlug', {
+        token: state.user.token,
+        company_id: state.user.id
+      });
+    } catch (err) {
+      toast('error', 'Erreur réseau : ' + err.message);
+      return;
+    }
+    if (!r.ok) { toast('error', r.error || 'Erreur'); return; }
+
+    var baseUrl = window.location.origin + window.location.pathname.replace(/\/$/, '');
+    // Sur GitHub Pages projet, on doit garder le préfixe du repo
+    var fullUrl = baseUrl + '/' + r.slug;
+    // Mais pour partage et compatibilité, on propose aussi le format avec ?slug=
+    var shareUrl = window.location.origin + window.location.pathname + '?slug=' + r.slug;
+
+    // Modal HTML
+    var modal = document.getElementById('modal-zone');
+    if (!modal) return;
+    modal.innerHTML = `
+      <div class="modal-backdrop" onclick="closeMiniSiteUrlModal(event)">
+        <div class="modal-content" onclick="event.stopPropagation()" style="max-width:600px">
+          <div class="modal-header">
+            <h2 style="margin:0">🌐 Votre mini-site public</h2>
+            <button class="modal-close" onclick="closeMiniSiteUrlModal()">×</button>
+          </div>
+          <div style="padding:8px 4px">
+            <p style="color:var(--text-1);font-size:14px;line-height:1.6;margin:0 0 16px 0">
+              Voici l'<strong>URL publique</strong> de la vitrine de votre entreprise. Partagez-la sur vos réseaux, vos cartes de visite, vos signatures email&nbsp;:
+            </p>
+
+            <div style="background:var(--sand-50);padding:14px 16px;border-radius:10px;border:1px solid var(--border);margin-bottom:16px">
+              <div style="font-size:11px;color:var(--text-2);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;font-weight:600">URL à partager</div>
+              <div id="mini-site-url-text" style="font-family:monospace;font-size:14px;color:var(--teal-900);word-break:break-all;line-height:1.5">${esc(shareUrl)}</div>
+            </div>
+
+            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px">
+              <button class="btn btn-primary" onclick="copyMiniSiteUrl('${esc(shareUrl).replace(/'/g, "\\'")}')">
+                📋 Copier le lien
+              </button>
+              <a href="${esc(shareUrl)}" target="_blank" rel="noopener" class="btn btn-secondary" style="text-decoration:none">
+                👁️ Ouvrir l'aperçu
+              </a>
+            </div>
+
+            <div style="background:#eff6ff;border-left:4px solid #2563eb;padding:12px 16px;border-radius:6px;font-size:13px;color:#1e3a8a;line-height:1.6">
+              💡 <strong>Astuce&nbsp;:</strong> Plus votre fiche est complète et plus vous publiez de pages (services, articles, annonces), plus votre mini-site sera attractif pour vos visiteurs.
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+  window.showMiniSiteUrl = showMiniSiteUrl;
+
+  function closeMiniSiteUrlModal(event) {
+    if (event && event.target && !event.target.classList.contains('modal-backdrop')) return;
+    var modal = document.getElementById('modal-zone');
+    if (modal) modal.innerHTML = '';
+  }
+  window.closeMiniSiteUrlModal = closeMiniSiteUrlModal;
+
+  function copyMiniSiteUrl(url) {
+    try {
+      navigator.clipboard.writeText(url).then(function() {
+        toast('success', '✅ Lien copié !');
+      });
+    } catch (e) {
+      // Fallback ancien navigateur
+      var tmp = document.createElement('textarea');
+      tmp.value = url;
+      document.body.appendChild(tmp);
+      tmp.select();
+      try { document.execCommand('copy'); toast('success', '✅ Lien copié !'); }
+      catch (err) { toast('error', 'Copie impossible — sélectionnez et copiez manuellement.'); }
+      document.body.removeChild(tmp);
+    }
+  }
+  window.copyMiniSiteUrl = copyMiniSiteUrl;
+
+  function renderMiniSiteContent_(company, pages) {
+    var c = company;
+    var regionFlag = ({ MQ: '🇲🇶', GP: '🇬🇵', GF: '🇬🇫' })[c.region] || '🏝️';
+    var hasImage = !!c.image_url;
+    var ville = c.ville || '';
+    var regionLabel = ({ MQ: 'Martinique', GP: 'Guadeloupe', GF: 'Guyane' })[c.region] || '';
+    var emplacement = ville + (ville && regionLabel ? ' · ' : '') + regionLabel;
+
+    // Bandeau couverture
+    var heroHtml;
+    if (hasImage) {
+      heroHtml = `
+        <div class="mini-site-hero" style="background-image:url('${esc(c.image_url)}')">
+          <div class="mini-site-hero-overlay">
+            <div class="mini-site-hero-content">
+              <div class="mini-site-hero-region">${regionFlag} ${esc(emplacement)}</div>
+              <h1 class="mini-site-hero-title">${esc(c.nom_entreprise)}</h1>
+              <div class="mini-site-hero-sector">${esc(c.secteur || '')}</div>
+            </div>
+          </div>
+        </div>
+      `;
+    } else {
+      heroHtml = `
+        <div class="mini-site-hero mini-site-hero-noimg">
+          <div class="mini-site-hero-content">
+            <div class="mini-site-hero-region">${regionFlag} ${esc(emplacement)}</div>
+            <h1 class="mini-site-hero-title">${esc(c.nom_entreprise)}</h1>
+            <div class="mini-site-hero-sector">${esc(c.secteur || '')}</div>
+          </div>
+        </div>
+      `;
+    }
+
+    // Bouton agent IA
+    var iaQuestion = 'Parle-moi de ' + c.nom_entreprise + ' à ' + (c.ville || regionLabel);
+    var iaBtn = `
+      <div class="mini-site-ia">
+        <button class="btn btn-primary mini-site-ia-btn" onclick="askAI('${esc(iaQuestion).replace(/'/g, "\\'")}')">
+          🤖 Discuter avec l'agent IA YOUPI
+        </button>
+        <div class="mini-site-ia-help">Posez n'importe quelle question, l'IA vous répondra à partir des infos de l'annuaire.</div>
+      </div>
+    `;
+
+    // Description
+    var descHtml = c.description ? `
+      <section class="mini-site-section">
+        <h2>📝 À propos</h2>
+        <p style="white-space:pre-wrap;line-height:1.7">${esc(c.description)}</p>
+      </section>
+    ` : '';
+
+    // Services (liste textuelle de la fiche)
+    var servicesHtml = c.liste_services ? `
+      <section class="mini-site-section">
+        <h2>🛠️ Services proposés</h2>
+        <div style="white-space:pre-wrap;line-height:1.7">${esc(c.liste_services)}</div>
+      </section>
+    ` : '';
+
+    // Pages publiées (services détaillés / articles / annonces)
+    var pagesHtml = '';
+    if (pages && pages.length > 0) {
+      var pagesCardsHtml = '';
+      pages.forEach(function(p) {
+        var pageImg = p.image_url
+          ? `<div class="mini-site-page-img" style="background-image:url('${esc(p.image_url)}')"></div>`
+          : '';
+        var prixHtml = p.prix
+          ? `<div class="mini-site-page-prix">${esc(p.prix)}</div>`
+          : '';
+        var typeLabel = ({
+          'service': '🛠️ Service',
+          'article': '📰 Article',
+          'publication': '📱 Publication',
+          'annonce': '🏠 Annonce'
+        })[p.type] || '📄 Page';
+        var linkBtn = p.lien_externe
+          ? `<a href="${esc(p.lien_externe)}" target="_blank" rel="noopener" class="btn btn-secondary btn-sm" style="margin-top:10px">En savoir plus →</a>`
+          : '';
+        pagesCardsHtml += `
+          <div class="mini-site-page-card">
+            ${pageImg}
+            <div class="mini-site-page-body">
+              <div class="mini-site-page-type">${typeLabel}</div>
+              <h3 class="mini-site-page-title">${esc(p.titre)}</h3>
+              ${prixHtml}
+              <div class="mini-site-page-desc">${esc(p.description || '').replace(/\n/g, '<br>')}</div>
+              ${linkBtn}
+            </div>
+          </div>
+        `;
+      });
+      pagesHtml = `
+        <section class="mini-site-section">
+          <h2>📋 Nos publications (${pages.length})</h2>
+          <div class="mini-site-pages-grid">${pagesCardsHtml}</div>
+        </section>
+      `;
+    }
+
+    // Horaires
+    var horairesHtml = c.horaires ? `
+      <section class="mini-site-section">
+        <h2>⏰ Horaires d'ouverture</h2>
+        <div style="white-space:pre-wrap;line-height:1.8;font-family:monospace;background:var(--sand-50);padding:14px 16px;border-radius:8px">${esc(c.horaires)}</div>
+      </section>
+    ` : '';
+
+    // Contact (bloc consolidé)
+    var contactItems = [];
+    if (c.telephone) {
+      contactItems.push(`<a href="tel:${esc(c.telephone)}" class="mini-site-contact-item">📞 ${esc(c.telephone)}</a>`);
+    }
+    if (c.email) {
+      contactItems.push(`<a href="mailto:${esc(c.email)}" class="mini-site-contact-item">✉️ ${esc(c.email)}</a>`);
+    }
+    if (c.site_web) {
+      contactItems.push(`<a href="${esc(c.site_web)}" target="_blank" rel="noopener" class="mini-site-contact-item">🌐 ${esc(c.site_web)}</a>`);
+    }
+    if (c.adresse_complete) {
+      var mapsUrl = 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(c.adresse_complete);
+      contactItems.push(`<a href="${mapsUrl}" target="_blank" rel="noopener" class="mini-site-contact-item">📍 ${esc(c.adresse_complete)}</a>`);
+    }
+    var contactHtml = contactItems.length > 0 ? `
+      <section class="mini-site-section">
+        <h2>📬 Contact</h2>
+        <div class="mini-site-contact-grid">${contactItems.join('')}</div>
+      </section>
+    ` : '';
+
+    // Réseaux sociaux
+    var socialBtns = [];
+    if (c.facebook) {
+      socialBtns.push(`<a href="${esc(c.facebook)}" target="_blank" rel="noopener" class="mini-site-social mini-site-social-fb">📘 Facebook</a>`);
+    }
+    if (c.instagram) {
+      socialBtns.push(`<a href="${esc(c.instagram)}" target="_blank" rel="noopener" class="mini-site-social mini-site-social-ig">📷 Instagram</a>`);
+    }
+    var socialHtml = socialBtns.length > 0 ? `
+      <section class="mini-site-section">
+        <h2>📱 Suivez-nous</h2>
+        <div class="mini-site-social-grid">${socialBtns.join('')}</div>
+      </section>
+    ` : '';
+
+    // Footer YOUPI (CTA inscription)
+    var footerHtml = `
+      <div class="mini-site-footer-cta">
+        <div class="mini-site-footer-cta-emoji">💛</div>
+        <h3>Cette entreprise est référencée gratuitement sur Annuaire YOUPI®</h3>
+        <p>L'annuaire conversationnel des entreprises ultra-marines. Inscrivez la vôtre, c'est gratuit&nbsp;!</p>
+        <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:14px">
+          <button class="btn btn-primary" onclick="navigate('home')">Découvrir l'annuaire</button>
+          <button class="btn btn-secondary" onclick="navigate('register')">+ Inscrire mon entreprise</button>
+        </div>
+      </div>
+    `;
+
+    return `
+      <article class="mini-site">
+        ${heroHtml}
+        <div class="mini-site-body">
+          ${iaBtn}
+          ${descHtml}
+          ${servicesHtml}
+          ${pagesHtml}
+          ${horairesHtml}
+          ${contactHtml}
+          ${socialHtml}
+        </div>
+        ${footerHtml}
+      </article>
+    `;
+  }
+
 
   // ============================================================
   //  PAGE MES CONTACTS — MINI-CRM PRO (v2.10.0)
@@ -11657,17 +12249,26 @@ SIRET : 395 370 182 00036<br>
     };
 
     // 3. NAVIGUER IMMÉDIATEMENT (l'utilisateur voit la page instantanément)
-    //    Si l'URL contient un hash (#login-pro, #login-admin, #changelog, etc.),
-    //    on respecte ce hash et on navigue vers la vue correspondante.
-    const hash = (window.location.hash || '').replace(/^#/, '').trim();
-    const allowedHashRoutes = ['login-pro', 'login-admin', 'register', 'changelog', 'home'];
-    if (hash && allowedHashRoutes.indexOf(hash) !== -1) {
-      // Nettoie le hash après lecture (UX : pas de hash résiduel dans la barre d'adresse)
-      try { history.replaceState(null, '', window.location.pathname + window.location.search); } catch(e) {}
-      navigate(hash);
-    } else if (state.user && state.user.type === 'company') navigate('pro-dashboard');
-    else if (state.user && state.user.type === 'admin') navigate('admin-dashboard');
-    else navigate('home');
+    //    Priorité :
+    //      a) Path "/slug" non-vide → page publique mini-site (v2.11.0)
+    //         (gestion possible aussi via paramètre ?slug=xxx pour le 404.html GitHub Pages)
+    //      b) Hash routing (#login-pro, #login-admin, etc.)
+    //      c) Session active → dashboard
+    //      d) Sinon home
+    var pathSlug = _extractMiniSiteSlug_();
+    if (pathSlug) {
+      navigate('public-company', { slug: pathSlug });
+    } else {
+      const hash = (window.location.hash || '').replace(/^#/, '').trim();
+      const allowedHashRoutes = ['login-pro', 'login-admin', 'register', 'changelog', 'home'];
+      if (hash && allowedHashRoutes.indexOf(hash) !== -1) {
+        // Nettoie le hash après lecture (UX : pas de hash résiduel dans la barre d'adresse)
+        try { history.replaceState(null, '', window.location.pathname + window.location.search); } catch(e) {}
+        navigate(hash);
+      } else if (state.user && state.user.type === 'company') navigate('pro-dashboard');
+      else if (state.user && state.user.type === 'admin') navigate('admin-dashboard');
+      else navigate('home');
+    }
 
     // 4. En ARRIÈRE-PLAN : récupérer la vraie config et rafraîchir si besoin
     api('getConfig').then(cfg => {
