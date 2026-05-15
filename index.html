@@ -2966,7 +2966,7 @@
 
   const APP = {
     name: 'Annuaire YOUPI',
-    version: 'v2.5.0',
+    version: 'v2.5.1',
     versionDate: '15 mai 2026',
     BACKEND_URL: 'https://script.google.com/macros/s/AKfycbzQNSOAGCJp1QmZU0IE1FYiKmKCcGgTUpqKa3RJG9lwiAND_EC5dGdbh2XCu26ZTMoxtw/exec'
   };
@@ -2979,7 +2979,7 @@
   // ------------------------------------------------------------
   const CHANGELOG = [
     {
-      version: 'v2.5.0',
+      version: 'v2.5.1',
       date: '15 mai 2026',
       title: "🛠️ Améliorations internes",
       entries: [
@@ -5949,12 +5949,33 @@
         }
         .crm-var-btn:hover { background: var(--teal-700); color: white; border-color: var(--teal-700); }
         .crm-preview-box {
-          background: #f1f5f9;
+          background: #1e293b;
           padding: 16px;
           border-radius: var(--radius);
           border: 1px solid var(--border);
-          max-height: 600px;
+          max-height: 720px;
           overflow-y: auto;
+        }
+        .crm-phone-frame {
+          width: 360px;
+          max-width: 100%;
+          background: #0f172a;
+          border-radius: 28px;
+          padding: 10px;
+          box-shadow: 0 8px 32px rgba(0,0,0,0.3), inset 0 0 0 1px rgba(255,255,255,0.05);
+          position: relative;
+        }
+        .crm-phone-frame::before {
+          content: '';
+          position: absolute;
+          top: 6px;
+          left: 50%;
+          transform: translateX(-50%);
+          width: 80px;
+          height: 6px;
+          background: #1e293b;
+          border-radius: 0 0 8px 8px;
+          z-index: 1;
         }
         .crm-empty {
           text-align: center;
@@ -6210,15 +6231,17 @@
         <!-- COLONNE DROITE : aperçu -->
         <div>
           <div class="card">
-            <h3 style="margin:0 0 4px 0">👁️ Aperçu du mail</h3>
+            <h3 style="margin:0 0 4px 0">📱 Aperçu (vue smartphone)</h3>
             <div style="font-size:12px;color:var(--text-2);margin-bottom:14px">
-              Rendu avec une entreprise d'exemple. Variables remplacées automatiquement.
+              Rendu avec une entreprise d'exemple. La majorité des destinataires liront votre mail sur leur téléphone.
             </div>
             <div id="crm-preview-subject" style="padding:10px 12px;background:var(--sand-50);border-radius:var(--radius);font-size:13px;margin-bottom:12px">
               <strong style="color:var(--text-2)">Objet : </strong><span id="crm-preview-subject-text"></span>
             </div>
-            <div class="crm-preview-box">
-              <iframe id="crm-preview-iframe" style="width:100%;height:560px;border:none;background:white;border-radius:8px"></iframe>
+            <div class="crm-preview-box" style="display:flex;justify-content:center;align-items:flex-start;padding:24px 12px">
+              <div class="crm-phone-frame">
+                <iframe id="crm-preview-iframe" style="width:100%;height:620px;border:none;background:white;border-radius:20px;display:block"></iframe>
+              </div>
             </div>
           </div>
         </div>
@@ -6302,7 +6325,7 @@
       +   '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#f1f5f9;padding:24px 0;">'
       +     '<tr><td align="center">'
       +       '<table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="max-width:600px;background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.06);">'
-      +         '<tr><td style="padding:24px 32px;background:linear-gradient(135deg,#0d9488 0%,#0f766e 100%);text-align:center;">'
+      +         '<tr><td style="padding:24px 32px;background:linear-gradient(135deg,#2563eb 0%,#1d4ed8 100%);text-align:center;">'
       +           '<a href="' + siteUrl + '" style="text-decoration:none;color:#ffffff;font-size:22px;font-weight:700;letter-spacing:-0.3px;">Annuaire YOUPI<span style="font-size:14px;vertical-align:super;">®</span></a>'
       +           '<div style="color:rgba(255,255,255,0.85);font-size:13px;margin-top:4px;">L\'annuaire des entreprises ultra-marines</div>'
       +         '</td></tr>'
@@ -6311,7 +6334,7 @@
       +         '</td></tr>'
       +         '<tr><td style="padding:20px 32px;background:#f8fafc;border-top:1px solid #e2e8f0;text-align:center;color:#64748b;font-size:12px;line-height:1.5;">'
       +           'Vous recevez ce message car votre entreprise est référencée dans l\'Annuaire YOUPI®.<br>'
-      +           '<a href="' + siteUrl + '" style="color:#0f766e;text-decoration:none;">' + siteUrl + '</a>'
+      +           '<a href="' + siteUrl + '" style="color:#2563eb;text-decoration:none;">' + siteUrl + '</a>'
       +         '</td></tr>'
       +       '</table>'
       +     '</td></tr>'
