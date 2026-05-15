@@ -2966,7 +2966,7 @@
 
   const APP = {
     name: 'Annuaire YOUPI',
-    version: 'v2.5.1',
+    version: 'v2.5.2',
     versionDate: '15 mai 2026',
     BACKEND_URL: 'https://script.google.com/macros/s/AKfycbzQNSOAGCJp1QmZU0IE1FYiKmKCcGgTUpqKa3RJG9lwiAND_EC5dGdbh2XCu26ZTMoxtw/exec'
   };
@@ -2979,7 +2979,7 @@
   // ------------------------------------------------------------
   const CHANGELOG = [
     {
-      version: 'v2.5.1',
+      version: 'v2.5.2',
       date: '15 mai 2026',
       title: "🛠️ Améliorations internes",
       entries: [
@@ -5821,8 +5821,39 @@
     tab: 'templates',         // 'templates' | 'segments' | 'send'
     templates: [],            // liste chargée depuis backend
     editingId: null,          // id du modèle en cours d'édition (null = nouveau)
-    editorDraft: null         // { name, subject, body } en cours d'édition
+    editorDraft: null,        // { name, subject, body } en cours d'édition
+    segments: [],             // liste des segments chargée depuis backend
+    segEditingId: null,       // id du segment en cours d'édition (null = vue liste, 'new' = nouveau)
+    segDraft: null,           // { name, description, filters } en cours d'édition
+    segPreviewCount: null,    // nombre d'entreprises matchant les filtres en cours
+    segPreviewSample: [],     // échantillon de 50 entreprises pour la liste détaillée
+    segPreviewLoading: false, // pour éviter les appels concurrents
+    segPreviewTimer: null     // debounce timer pour le preview
   };
+
+  // Statuts d'entreprises disponibles
+  const CRM_STATUTS = [
+    { key: 'actif',   label: '✅ Actif' },
+    { key: 'paused',  label: '⏸️ En pause' },
+    { key: 'expired', label: '⏰ Expiré' },
+    { key: 'archive', label: '🗄️ Archivé' }
+  ];
+
+  // Régions
+  const CRM_REGIONS = [
+    { key: 'MQ', label: 'Martinique' },
+    { key: 'GP', label: 'Guadeloupe' },
+    { key: 'GF', label: 'Guyane' }
+  ];
+
+  // Statuts Facebook fréquents (basés sur les valeurs réelles backend)
+  const CRM_FB_STATUTS = [
+    { key: 'published',         label: '✅ Publié' },
+    { key: '',                  label: '⏳ Pas encore publié' },
+    { key: 'skipped_no_image',  label: '🚫 Pas d\'image' },
+    { key: 'error_fb',          label: '⚠️ Erreur Facebook' },
+    { key: 'error_ia',          label: '⚠️ Erreur IA' }
+  ];
 
   // Variables disponibles pour l'interpolation des mails
   const CRM_VARIABLES = [
@@ -5949,7 +5980,7 @@
         }
         .crm-var-btn:hover { background: var(--teal-700); color: white; border-color: var(--teal-700); }
         .crm-preview-box {
-          background: #1e293b;
+          background: var(--sand-50);
           padding: 16px;
           border-radius: var(--radius);
           border: 1px solid var(--border);
@@ -5959,23 +5990,6 @@
         .crm-phone-frame {
           width: 360px;
           max-width: 100%;
-          background: #0f172a;
-          border-radius: 28px;
-          padding: 10px;
-          box-shadow: 0 8px 32px rgba(0,0,0,0.3), inset 0 0 0 1px rgba(255,255,255,0.05);
-          position: relative;
-        }
-        .crm-phone-frame::before {
-          content: '';
-          position: absolute;
-          top: 6px;
-          left: 50%;
-          transform: translateX(-50%);
-          width: 80px;
-          height: 6px;
-          background: #1e293b;
-          border-radius: 0 0 8px 8px;
-          z-index: 1;
         }
         .crm-empty {
           text-align: center;
@@ -5985,6 +5999,54 @@
         @media (max-width: 900px) {
           .crm-tab { padding: 10px 12px; font-size: 13px; }
         }
+        .crm-check {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          padding: 6px 10px;
+          background: var(--card);
+          border: 1px solid var(--border);
+          border-radius: 6px;
+          cursor: pointer;
+          font-size: 13px;
+          user-select: none;
+          transition: all 0.15s;
+        }
+        .crm-check:hover { border-color: var(--teal-700); }
+        .crm-check input[type="checkbox"] { cursor: pointer; margin: 0; }
+        .crm-check input[type="checkbox"]:checked + span { color: var(--teal-700); font-weight: 600; }
+        .crm-filter-section {
+          margin-bottom: 20px;
+          padding-bottom: 16px;
+          border-bottom: 1px solid var(--border);
+        }
+        .crm-filter-section:last-child { border-bottom: none; }
+        .crm-filter-title {
+          font-weight: 600;
+          font-size: 13px;
+          margin-bottom: 10px;
+          color: var(--text-1);
+        }
+        .crm-filter-hint {
+          font-weight: 400;
+          color: var(--text-2);
+          font-size: 12px;
+        }
+        .crm-filter-toolbar {
+          margin-top: 8px;
+          display: flex;
+          gap: 6px;
+        }
+        .btn-mini {
+          padding: 3px 8px;
+          font-size: 11px;
+          background: transparent;
+          border: 1px solid var(--border);
+          border-radius: 4px;
+          cursor: pointer;
+          color: var(--text-2);
+        }
+        .btn-mini:hover { border-color: var(--teal-700); color: var(--teal-700); }
       `;
       document.head.appendChild(style);
     }
@@ -5997,6 +6059,10 @@
     _crm.tab = tab;
     _crm.editingId = null;
     _crm.editorDraft = null;
+    _crm.segEditingId = null;
+    _crm.segDraft = null;
+    _crm.segPreviewCount = null;
+    _crm.segPreviewSample = [];
     await renderAdminCrm();
   }
   window.switchCrmTab = switchCrmTab;
@@ -6008,14 +6074,7 @@
     if (_crm.tab === 'templates') {
       await renderCrmTemplates(container);
     } else if (_crm.tab === 'segments') {
-      container.innerHTML = `
-        <div class="card crm-empty">
-          <div style="font-size:48px;margin-bottom:12px">🎯</div>
-          <h3 style="margin:0 0 8px 0">Segments de ciblage</h3>
-          <p style="margin:0">Cette fonctionnalité sera disponible prochainement.</p>
-          <p style="margin:8px 0 0 0;font-size:13px">Elle permettra de sauvegarder des filtres réutilisables (ex. « Restos MQ inscrits +30j »).</p>
-        </div>
-      `;
+      await renderCrmSegments(container);
     } else if (_crm.tab === 'send') {
       container.innerHTML = `
         <div class="card crm-empty">
@@ -6238,9 +6297,9 @@
             <div id="crm-preview-subject" style="padding:10px 12px;background:var(--sand-50);border-radius:var(--radius);font-size:13px;margin-bottom:12px">
               <strong style="color:var(--text-2)">Objet : </strong><span id="crm-preview-subject-text"></span>
             </div>
-            <div class="crm-preview-box" style="display:flex;justify-content:center;align-items:flex-start;padding:24px 12px">
+            <div class="crm-preview-box" style="display:flex;justify-content:center;align-items:flex-start;padding:16px">
               <div class="crm-phone-frame">
-                <iframe id="crm-preview-iframe" style="width:100%;height:620px;border:none;background:white;border-radius:20px;display:block"></iframe>
+                <iframe id="crm-preview-iframe" style="width:100%;height:620px;border:1px solid var(--border);background:white;border-radius:var(--radius);display:block;box-shadow:var(--shadow)"></iframe>
               </div>
             </div>
           </div>
@@ -6401,6 +6460,518 @@
       return iso;
     }
   }
+
+  // ─── SOUS-SECTION : SEGMENTS DE CIBLAGE ──────────────────────
+
+  function emptyFilters() {
+    return {
+      sectors: [],
+      statuts: [],
+      regions: [],
+      facebook_statuts: [],
+      registered_after: '',
+      registered_before: '',
+      not_mailed_since_days: 0
+    };
+  }
+
+  async function renderCrmSegments(container) {
+    // En mode édition : afficher l'éditeur
+    if (_crm.segEditingId !== null) {
+      await renderCrmSegmentEditor(container);
+      return;
+    }
+
+    container.innerHTML = `
+      <div class="card crm-empty">
+        <div style="font-size:32px;margin-bottom:8px">⏳</div>
+        <div>Chargement des segments...</div>
+      </div>
+    `;
+
+    try {
+      const r = await api('adminListMailSegments', { token: state.user.token });
+      if (!r.ok) {
+        container.innerHTML = `<div class="card"><div style="color:#dc2626">Erreur : ${esc(r.error || 'inconnue')}</div></div>`;
+        return;
+      }
+      _crm.segments = r.segments || [];
+    } catch (err) {
+      container.innerHTML = `<div class="card"><div style="color:#dc2626">Erreur de connexion : ${esc(err.message)}</div></div>`;
+      return;
+    }
+
+    let html = `
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:12px">
+        <div style="color:var(--text-2);font-size:14px">
+          ${_crm.segments.length} segment${_crm.segments.length > 1 ? 's' : ''} enregistré${_crm.segments.length > 1 ? 's' : ''}
+        </div>
+        <button class="btn btn-primary" onclick="startNewMailSegment()">+ Nouveau segment</button>
+      </div>
+    `;
+
+    if (_crm.segments.length === 0) {
+      html += `
+        <div class="card crm-empty">
+          <div style="font-size:48px;margin-bottom:12px">🎯</div>
+          <h3 style="margin:0 0 8px 0">Aucun segment pour l'instant</h3>
+          <p style="margin:0 0 16px 0">Créez votre premier segment de ciblage pour réutiliser vos filtres facilement.</p>
+          <button class="btn btn-primary" onclick="startNewMailSegment()">+ Créer un segment</button>
+        </div>
+      `;
+    } else {
+      html += '<div>';
+      _crm.segments.forEach(function(s) {
+        const summary = summarizeFilters(s.filters || {});
+        const usedText = s.times_used > 0
+          ? `<span style="color:var(--teal-700)">Utilisé ${s.times_used} fois</span>`
+          : '<span style="color:var(--text-2)">Jamais utilisé</span>';
+        const lastUsedText = s.last_used_at ? ' · ' + formatDateShort(s.last_used_at) : '';
+        html += `
+          <div class="crm-template-card">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap">
+              <div style="flex:1;min-width:0">
+                <div style="font-weight:600;font-size:15px;margin-bottom:4px">${esc(s.name)}</div>
+                ${s.description ? `<div style="color:var(--text-2);font-size:13px;margin-bottom:6px">${esc(s.description)}</div>` : ''}
+                <div style="font-size:12px;color:var(--text-1);margin-bottom:6px;line-height:1.5">${summary}</div>
+                <div style="font-size:12px">${usedText}${lastUsedText}</div>
+              </div>
+              <div style="display:flex;gap:6px;flex-wrap:wrap">
+                <button class="btn btn-secondary btn-sm" onclick="editMailSegment('${esc(s.id)}')">✏️ Modifier</button>
+                <button class="btn btn-ghost btn-sm" onclick="duplicateMailSegment('${esc(s.id)}')">📋 Dupliquer</button>
+                <button class="btn btn-ghost btn-sm" onclick="deleteMailSegment('${esc(s.id)}', '${esc(s.name)}')" style="color:#dc2626">🗑️</button>
+              </div>
+            </div>
+          </div>
+        `;
+      });
+      html += '</div>';
+    }
+
+    container.innerHTML = html;
+  }
+
+  // Résumé textuel d'un objet filters (pour la vue liste)
+  function summarizeFilters(f) {
+    const parts = [];
+    if (f.sectors && f.sectors.length) {
+      parts.push('<strong>Secteurs :</strong> ' + (f.sectors.length > 3 ? f.sectors.length + ' sélectionnés' : f.sectors.map(esc).join(', ')));
+    }
+    if (f.statuts && f.statuts.length) {
+      parts.push('<strong>Statuts :</strong> ' + f.statuts.map(esc).join(', '));
+    }
+    if (f.regions && f.regions.length) {
+      parts.push('<strong>Régions :</strong> ' + f.regions.map(esc).join(', '));
+    }
+    if (f.facebook_statuts && f.facebook_statuts.length) {
+      parts.push('<strong>Facebook :</strong> ' + f.facebook_statuts.length + ' sélectionnés');
+    }
+    if (f.registered_after) parts.push('<strong>Inscrites après :</strong> ' + esc(f.registered_after));
+    if (f.registered_before) parts.push('<strong>Inscrites avant :</strong> ' + esc(f.registered_before));
+    if (f.not_mailed_since_days && f.not_mailed_since_days > 0) {
+      parts.push('<strong>Pas mailées depuis :</strong> ' + f.not_mailed_since_days + ' jours');
+    }
+    return parts.length ? parts.join(' · ') : '<span style="color:var(--text-2)">Aucun filtre (toutes les entreprises avec email)</span>';
+  }
+
+  function startNewMailSegment() {
+    _crm.segEditingId = 'new';
+    _crm.segDraft = {
+      name: '',
+      description: '',
+      filters: emptyFilters()
+    };
+    _crm.segPreviewCount = null;
+    _crm.segPreviewSample = [];
+    renderCrmContent();
+  }
+  window.startNewMailSegment = startNewMailSegment;
+
+  function editMailSegment(id) {
+    const s = _crm.segments.find(function(x) { return x.id === id; });
+    if (!s) return;
+    _crm.segEditingId = id;
+    _crm.segDraft = {
+      name: s.name,
+      description: s.description || '',
+      filters: Object.assign(emptyFilters(), s.filters || {})
+    };
+    _crm.segPreviewCount = null;
+    _crm.segPreviewSample = [];
+    renderCrmContent();
+  }
+  window.editMailSegment = editMailSegment;
+
+  function duplicateMailSegment(id) {
+    const s = _crm.segments.find(function(x) { return x.id === id; });
+    if (!s) return;
+    _crm.segEditingId = 'new';
+    _crm.segDraft = {
+      name: s.name + ' (copie)',
+      description: s.description || '',
+      filters: Object.assign(emptyFilters(), s.filters || {})
+    };
+    _crm.segPreviewCount = null;
+    _crm.segPreviewSample = [];
+    renderCrmContent();
+  }
+  window.duplicateMailSegment = duplicateMailSegment;
+
+  async function deleteMailSegment(id, name) {
+    if (!confirm('Supprimer définitivement le segment « ' + name + ' » ?')) return;
+    try {
+      const r = await api('adminDeleteMailSegment', { token: state.user.token, id: id });
+      if (!r.ok) { toast('error', 'Erreur : ' + (r.error || 'inconnue')); return; }
+      toast('success', 'Segment supprimé');
+      _crm.segments = _crm.segments.filter(function(x) { return x.id !== id; });
+      renderCrmContent();
+    } catch (err) {
+      toast('error', 'Erreur réseau : ' + err.message);
+    }
+  }
+  window.deleteMailSegment = deleteMailSegment;
+
+  function cancelMailSegmentEdit() {
+    if (_crm.segDraft && (_crm.segDraft.name || _crm.segDraft.description)) {
+      if (!confirm('Annuler les modifications en cours ?')) return;
+    }
+    _crm.segEditingId = null;
+    _crm.segDraft = null;
+    _crm.segPreviewCount = null;
+    _crm.segPreviewSample = [];
+    renderCrmContent();
+  }
+  window.cancelMailSegmentEdit = cancelMailSegmentEdit;
+
+  // ─── ÉDITEUR DE SEGMENT ─────────────────────────────────────
+
+  async function renderCrmSegmentEditor(container) {
+    const isNew = _crm.segEditingId === 'new';
+    const d = _crm.segDraft || { name: '', description: '', filters: emptyFilters() };
+    const sectors = (state.config && state.config.sectors) || [];
+
+    // Cases à cocher secteurs
+    let sectorsHtml = '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:6px">';
+    sectors.forEach(function(s) {
+      const checked = (d.filters.sectors || []).indexOf(s) !== -1;
+      sectorsHtml += `
+        <label class="crm-check">
+          <input type="checkbox" ${checked ? 'checked' : ''} onchange="toggleSegFilter('sectors', this.value, this.checked)" value="${esc(s)}">
+          <span>${esc(s)}</span>
+        </label>
+      `;
+    });
+    sectorsHtml += '</div>';
+
+    // Cases statuts
+    let statutsHtml = '<div style="display:flex;flex-wrap:wrap;gap:8px">';
+    CRM_STATUTS.forEach(function(s) {
+      const checked = (d.filters.statuts || []).indexOf(s.key) !== -1;
+      statutsHtml += `
+        <label class="crm-check">
+          <input type="checkbox" ${checked ? 'checked' : ''} onchange="toggleSegFilter('statuts', this.value, this.checked)" value="${esc(s.key)}">
+          <span>${esc(s.label)}</span>
+        </label>
+      `;
+    });
+    statutsHtml += '</div>';
+
+    // Cases régions
+    let regionsHtml = '<div style="display:flex;flex-wrap:wrap;gap:8px">';
+    CRM_REGIONS.forEach(function(r) {
+      const checked = (d.filters.regions || []).indexOf(r.key) !== -1;
+      regionsHtml += `
+        <label class="crm-check">
+          <input type="checkbox" ${checked ? 'checked' : ''} onchange="toggleSegFilter('regions', this.value, this.checked)" value="${esc(r.key)}">
+          <span>${esc(r.label)}</span>
+        </label>
+      `;
+    });
+    regionsHtml += '</div>';
+
+    // Cases facebook (sous spoiler pour pas surcharger)
+    let fbHtml = '<div style="display:flex;flex-wrap:wrap;gap:8px">';
+    CRM_FB_STATUTS.forEach(function(f) {
+      const checked = (d.filters.facebook_statuts || []).indexOf(f.key) !== -1;
+      // Particularité : pour key='' (pas publié) on utilise un id alternatif
+      fbHtml += `
+        <label class="crm-check">
+          <input type="checkbox" ${checked ? 'checked' : ''} onchange="toggleSegFilter('facebook_statuts', this.value, this.checked)" value="${esc(f.key)}">
+          <span>${esc(f.label)}</span>
+        </label>
+      `;
+    });
+    fbHtml += '</div>';
+
+    container.innerHTML = `
+      <div style="display:grid;grid-template-columns:1fr 360px;gap:16px" id="crm-seg-grid">
+        <!-- COLONNE GAUCHE : éditeur de filtres -->
+        <div>
+          <div class="card">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+              <h3 style="margin:0">${isNew ? '➕ Nouveau segment' : '✏️ Modifier le segment'}</h3>
+              <button class="btn btn-ghost btn-sm" onclick="cancelMailSegmentEdit()">← Retour</button>
+            </div>
+
+            <label style="display:block;font-size:13px;font-weight:600;margin-bottom:6px">Nom du segment</label>
+            <input type="text" value="${esc(d.name)}" placeholder="Ex. Restos MQ inscrits +30j"
+              oninput="_crm.segDraft.name = this.value"
+              style="width:100%;padding:10px;border:1px solid var(--border);border-radius:var(--radius);font-size:14px;margin-bottom:14px">
+
+            <label style="display:block;font-size:13px;font-weight:600;margin-bottom:6px">Description <span style="color:var(--text-2);font-weight:400">(optionnel)</span></label>
+            <input type="text" value="${esc(d.description)}" placeholder="Pour quoi sert ce segment ?"
+              oninput="_crm.segDraft.description = this.value"
+              style="width:100%;padding:10px;border:1px solid var(--border);border-radius:var(--radius);font-size:14px;margin-bottom:20px">
+
+            <div class="crm-filter-section">
+              <div class="crm-filter-title">📂 Secteurs <span class="crm-filter-hint">(vide = tous)</span></div>
+              ${sectorsHtml}
+              <div class="crm-filter-toolbar">
+                <button type="button" class="btn-mini" onclick="selectAllSegFilter('sectors')">Tout cocher</button>
+                <button type="button" class="btn-mini" onclick="clearSegFilter('sectors')">Tout décocher</button>
+              </div>
+            </div>
+
+            <div class="crm-filter-section">
+              <div class="crm-filter-title">🔖 Statuts <span class="crm-filter-hint">(vide = tous)</span></div>
+              ${statutsHtml}
+            </div>
+
+            <div class="crm-filter-section">
+              <div class="crm-filter-title">🌴 Régions <span class="crm-filter-hint">(vide = toutes)</span></div>
+              ${regionsHtml}
+            </div>
+
+            <div class="crm-filter-section">
+              <div class="crm-filter-title">📘 Statut Facebook <span class="crm-filter-hint">(optionnel)</span></div>
+              ${fbHtml}
+            </div>
+
+            <div class="crm-filter-section">
+              <div class="crm-filter-title">📅 Date d'inscription <span class="crm-filter-hint">(optionnel)</span></div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+                <div>
+                  <label style="display:block;font-size:12px;color:var(--text-2);margin-bottom:4px">Après le</label>
+                  <input type="date" value="${esc(d.filters.registered_after || '')}"
+                    oninput="setSegFilter('registered_after', this.value)"
+                    style="width:100%;padding:8px;border:1px solid var(--border);border-radius:var(--radius);font-size:13px">
+                </div>
+                <div>
+                  <label style="display:block;font-size:12px;color:var(--text-2);margin-bottom:4px">Avant le</label>
+                  <input type="date" value="${esc(d.filters.registered_before || '')}"
+                    oninput="setSegFilter('registered_before', this.value)"
+                    style="width:100%;padding:8px;border:1px solid var(--border);border-radius:var(--radius);font-size:13px">
+                </div>
+              </div>
+            </div>
+
+            <div class="crm-filter-section">
+              <div class="crm-filter-title">📬 Anti-matraquage <span class="crm-filter-hint">(optionnel)</span></div>
+              <label style="display:block;font-size:12px;color:var(--text-2);margin-bottom:4px">Exclure les entreprises ayant reçu un mail dans les derniers</label>
+              <div style="display:flex;align-items:center;gap:8px">
+                <input type="number" min="0" max="365" value="${d.filters.not_mailed_since_days || 0}"
+                  oninput="setSegFilter('not_mailed_since_days', parseInt(this.value, 10) || 0)"
+                  style="width:100px;padding:8px;border:1px solid var(--border);border-radius:var(--radius);font-size:13px">
+                <span style="color:var(--text-2);font-size:13px">jours (0 = pas de filtre)</span>
+              </div>
+            </div>
+
+            <div style="display:flex;gap:8px;margin-top:20px;flex-wrap:wrap">
+              <button class="btn btn-primary" onclick="saveMailSegment()">${isNew ? 'Créer le segment' : 'Enregistrer les modifications'}</button>
+              <button class="btn btn-ghost" onclick="cancelMailSegmentEdit()">Annuler</button>
+              <button class="btn btn-secondary" onclick="resetSegFilters()" style="margin-left:auto">↺ Réinitialiser les filtres</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- COLONNE DROITE : aperçu live -->
+        <div>
+          <div class="card" style="position:sticky;top:16px">
+            <h3 style="margin:0 0 4px 0">🎯 Aperçu du ciblage</h3>
+            <div style="font-size:12px;color:var(--text-2);margin-bottom:16px">
+              Mise à jour automatique en temps réel.
+            </div>
+            <div id="crm-seg-preview-count" style="text-align:center;padding:24px;background:var(--sand-50);border-radius:var(--radius);margin-bottom:12px">
+              <div style="font-size:36px;font-weight:700;color:var(--teal-700);line-height:1">—</div>
+              <div style="color:var(--text-2);font-size:13px;margin-top:4px">entreprise(s) matchent vos critères</div>
+            </div>
+            <button class="btn btn-secondary btn-sm" onclick="toggleSegPreviewList()" style="width:100%" id="crm-seg-toggle-list">📋 Voir la liste détaillée</button>
+            <div id="crm-seg-preview-list" style="display:none;margin-top:12px;max-height:400px;overflow-y:auto"></div>
+          </div>
+        </div>
+      </div>
+    `;
+
+    // Sur mobile : empile
+    if (window.innerWidth < 900) {
+      const grid = document.getElementById('crm-seg-grid');
+      if (grid) grid.style.gridTemplateColumns = '1fr';
+    }
+
+    // Lance le 1er preview
+    refreshSegPreview();
+  }
+
+  // ─── ÉDITEUR DE SEGMENT : LOGIQUE FILTRES ──────────────────
+
+  function toggleSegFilter(key, value, checked) {
+    if (!_crm.segDraft) return;
+    if (!Array.isArray(_crm.segDraft.filters[key])) _crm.segDraft.filters[key] = [];
+    const arr = _crm.segDraft.filters[key];
+    const idx = arr.indexOf(value);
+    if (checked && idx === -1) arr.push(value);
+    else if (!checked && idx !== -1) arr.splice(idx, 1);
+    schedulePreviewRefresh();
+  }
+  window.toggleSegFilter = toggleSegFilter;
+
+  function setSegFilter(key, value) {
+    if (!_crm.segDraft) return;
+    _crm.segDraft.filters[key] = value;
+    schedulePreviewRefresh();
+  }
+  window.setSegFilter = setSegFilter;
+
+  function selectAllSegFilter(key) {
+    if (!_crm.segDraft) return;
+    if (key === 'sectors') {
+      _crm.segDraft.filters.sectors = ((state.config && state.config.sectors) || []).slice();
+    }
+    // Re-render pour mettre à jour les cases à cocher
+    renderCrmContent();
+  }
+  window.selectAllSegFilter = selectAllSegFilter;
+
+  function clearSegFilter(key) {
+    if (!_crm.segDraft) return;
+    _crm.segDraft.filters[key] = [];
+    renderCrmContent();
+  }
+  window.clearSegFilter = clearSegFilter;
+
+  function resetSegFilters() {
+    if (!_crm.segDraft) return;
+    if (!confirm('Réinitialiser tous les filtres ?')) return;
+    _crm.segDraft.filters = emptyFilters();
+    renderCrmContent();
+  }
+  window.resetSegFilters = resetSegFilters;
+
+  // Debounce le rafraîchissement du preview pour ne pas spammer le backend
+  function schedulePreviewRefresh() {
+    if (_crm.segPreviewTimer) clearTimeout(_crm.segPreviewTimer);
+    _crm.segPreviewTimer = setTimeout(refreshSegPreview, 350);
+  }
+
+  async function refreshSegPreview() {
+    if (!_crm.segDraft) return;
+    if (_crm.segPreviewLoading) return;
+    _crm.segPreviewLoading = true;
+    const countEl = document.getElementById('crm-seg-preview-count');
+    if (countEl) {
+      countEl.innerHTML = '<div style="font-size:36px;font-weight:700;color:var(--text-2);line-height:1">⏳</div><div style="color:var(--text-2);font-size:13px;margin-top:4px">calcul en cours...</div>';
+    }
+    try {
+      const r = await api('adminPreviewCrmRecipients', {
+        token: state.user.token,
+        filters: _crm.segDraft.filters
+      });
+      _crm.segPreviewLoading = false;
+      if (!r.ok) {
+        if (countEl) countEl.innerHTML = `<div style="color:#dc2626">Erreur : ${esc(r.error || 'inconnue')}</div>`;
+        return;
+      }
+      _crm.segPreviewCount = r.count;
+      _crm.segPreviewSample = (r.recipients || []).slice(0, 50);
+      updateSegPreviewUI();
+    } catch (err) {
+      _crm.segPreviewLoading = false;
+      if (countEl) countEl.innerHTML = `<div style="color:#dc2626">Erreur réseau</div>`;
+    }
+  }
+
+  function updateSegPreviewUI() {
+    const countEl = document.getElementById('crm-seg-preview-count');
+    if (!countEl) return;
+    const count = _crm.segPreviewCount;
+    const color = count > 0 ? 'var(--teal-700)' : '#dc2626';
+    countEl.innerHTML = `
+      <div style="font-size:36px;font-weight:700;color:${color};line-height:1">${count}</div>
+      <div style="color:var(--text-2);font-size:13px;margin-top:4px">
+        ${count === 0 ? 'aucune entreprise ne matche vos critères' : (count === 1 ? 'entreprise matche vos critères' : 'entreprises matchent vos critères')}
+      </div>
+    `;
+    // Refresh la liste si déjà ouverte
+    const listEl = document.getElementById('crm-seg-preview-list');
+    if (listEl && listEl.style.display !== 'none') {
+      renderSegPreviewList();
+    }
+  }
+
+  function toggleSegPreviewList() {
+    const listEl = document.getElementById('crm-seg-preview-list');
+    const toggleBtn = document.getElementById('crm-seg-toggle-list');
+    if (!listEl) return;
+    if (listEl.style.display === 'none') {
+      listEl.style.display = 'block';
+      if (toggleBtn) toggleBtn.textContent = '🔼 Masquer la liste';
+      renderSegPreviewList();
+    } else {
+      listEl.style.display = 'none';
+      if (toggleBtn) toggleBtn.textContent = '📋 Voir la liste détaillée';
+    }
+  }
+  window.toggleSegPreviewList = toggleSegPreviewList;
+
+  function renderSegPreviewList() {
+    const listEl = document.getElementById('crm-seg-preview-list');
+    if (!listEl) return;
+    const sample = _crm.segPreviewSample || [];
+    const total = _crm.segPreviewCount || 0;
+    if (sample.length === 0) {
+      listEl.innerHTML = '<div style="color:var(--text-2);font-size:13px;text-align:center;padding:16px">Aucune entreprise</div>';
+      return;
+    }
+    let html = '<div style="font-size:12px;color:var(--text-2);margin-bottom:8px">' +
+      (total > 50 ? `Aperçu des 50 premières (sur ${total})` : `${sample.length} entreprise${sample.length > 1 ? 's' : ''}`) + ' :</div>';
+    html += '<div style="border:1px solid var(--border);border-radius:8px;overflow:hidden">';
+    sample.forEach(function(c, i) {
+      html += `
+        <div style="padding:8px 12px;font-size:12px;border-bottom:${i < sample.length - 1 ? '1px solid var(--border)' : 'none'};background:${i % 2 ? 'var(--sand-50)' : 'transparent'}">
+          <div style="font-weight:600;color:var(--text-1)">${esc(c.nom_entreprise || '(sans nom)')}</div>
+          <div style="color:var(--text-2);font-size:11px">${esc(c.secteur || '')} · ${esc(c.ville || '')} · ${esc(c.email || '(pas d\'email)')}</div>
+        </div>
+      `;
+    });
+    html += '</div>';
+    listEl.innerHTML = html;
+  }
+
+  async function saveMailSegment() {
+    const d = _crm.segDraft || {};
+    if (!d.name || !d.name.trim()) { toast('error', 'Le nom du segment est requis'); return; }
+    const payload = {
+      token: state.user.token,
+      name: d.name.trim(),
+      description: (d.description || '').trim(),
+      filters: d.filters
+    };
+    if (_crm.segEditingId !== 'new') payload.id = _crm.segEditingId;
+    try {
+      const r = await api('adminSaveMailSegment', payload);
+      if (!r.ok) { toast('error', 'Erreur : ' + (r.error || 'inconnue')); return; }
+      toast('success', r.created ? 'Segment créé ✅' : 'Modifications enregistrées ✅');
+      _crm.segEditingId = null;
+      _crm.segDraft = null;
+      _crm.segPreviewCount = null;
+      _crm.segPreviewSample = [];
+      await renderCrmContent();
+    } catch (err) {
+      toast('error', 'Erreur réseau : ' + err.message);
+    }
+  }
+  window.saveMailSegment = saveMailSegment;
+
 
 
   // ============================================================
