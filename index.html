@@ -711,6 +711,113 @@
       text-align: center;
       line-height: 1.5;
     }
+    /* ─── Mini-CRM Pro (v2.10.0) ─── */
+    .crm-pro-filters {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+    .crm-pro-filter-btn {
+      padding: 7px 12px;
+      border-radius: 16px;
+      background: var(--sand-50);
+      border: 1px solid var(--border);
+      cursor: pointer;
+      font-size: 13px;
+      color: var(--text-1);
+      transition: all 0.15s;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .crm-pro-filter-btn:hover { background: var(--card); border-color: var(--teal-700); }
+    .crm-pro-filter-btn.active {
+      background: var(--teal-700);
+      color: white;
+      border-color: var(--teal-700);
+    }
+    .crm-pro-filter-count {
+      background: rgba(0,0,0,0.08);
+      padding: 1px 7px;
+      border-radius: 10px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .crm-pro-filter-btn.active .crm-pro-filter-count {
+      background: rgba(255,255,255,0.25);
+    }
+    .crm-pro-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .crm-pro-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px 18px;
+      transition: box-shadow 0.15s, border-color 0.15s;
+    }
+    .crm-pro-card:hover {
+      box-shadow: 0 4px 14px rgba(0,0,0,0.06);
+      border-color: var(--teal-700);
+    }
+    .crm-pro-card-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 10px;
+      margin-bottom: 8px;
+      flex-wrap: wrap;
+    }
+    .crm-pro-card-name {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--teal-900);
+      margin-bottom: 2px;
+    }
+    .crm-pro-card-meta {
+      font-size: 13px;
+      color: var(--text-2);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .crm-pro-card-badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 14px;
+      font-size: 12px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    .crm-pro-card-notes {
+      background: var(--sand-50);
+      padding: 10px 12px;
+      border-radius: 8px;
+      font-size: 13px;
+      color: var(--text-1);
+      margin: 8px 0;
+      line-height: 1.5;
+    }
+    .crm-pro-card-last {
+      font-size: 12px;
+      color: var(--text-2);
+      margin-bottom: 8px;
+      font-style: italic;
+    }
+    .crm-pro-card-actions {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid var(--sand-50);
+    }
+    @media (max-width: 700px) {
+      .crm-pro-card-head { flex-direction: column; }
+    }
     .sidebar {
       background: var(--card);
       border: 1px solid var(--border);
@@ -3097,7 +3204,7 @@
 
   const APP = {
     name: 'Annuaire YOUPI',
-    version: 'v2.9.5',
+    version: 'v2.10.0',
     versionDate: '15 mai 2026',
     BACKEND_URL: 'https://script.google.com/macros/s/AKfycbzQNSOAGCJp1QmZU0IE1FYiKmKCcGgTUpqKa3RJG9lwiAND_EC5dGdbh2XCu26ZTMoxtw/exec'
   };
@@ -3109,6 +3216,27 @@
   //  → Pour ajouter une nouvelle version, demander à Claude.
   // ------------------------------------------------------------
   const CHANGELOG = [
+    {
+      version: 'v2.10.0',
+      date: '15 mai 2026',
+      title: "📬 Nouveau mini-CRM pour gérer vos contacts",
+      entries: [
+        { type: 'feature', text: "Les entreprises Pro et Pro+ disposent désormais d'un mini-CRM intégré dans leur espace pro, depuis le menu « Mes contacts »." },
+        { type: 'feature', text: "Gérez vos prospects, clients et contacts fidèles : ajout, modification, classement par statut (nouveau, à recontacter, client, fidèle, perdu)." },
+        { type: 'feature', text: "Envoyez un email directement depuis votre espace YOUPI à n'importe quel contact : les réponses arrivent sur votre adresse mail habituelle." },
+        { type: 'feature', text: "Notes privées par contact pour garder en mémoire les informations importantes (anniversaire, préférences, derniers échanges...)." }
+      ]
+    },
+    {
+      version: 'v2.9.5',
+      date: '15 mai 2026',
+      title: "🛠️ Améliorations et corrections",
+      entries: [
+        { type: 'feature', text: "Sur la page « Mon abonnement », les entreprises en formule Pro voient désormais en permanence un encart dédié pour passer à Pro+ avec le détail des avantages supplémentaires." },
+        { type: 'fix', text: "Correction d'un bug d'affichage qui empêchait la consultation de la page « Mon abonnement » dans certaines situations." },
+        { type: 'fix', text: "Correction d'un problème qui empêchait la date du prochain renouvellement de s'afficher après souscription d'une formule." }
+      ]
+    },
     {
       version: 'v2.9.0',
       date: '15 mai 2026',
@@ -3752,6 +3880,7 @@
       case 'pro-add-page':        renderProAddPage(params); break;
       case 'pro-settings':        renderProSettings(); break;
       case 'pro-subscription':    renderProSubscription(); break;
+      case 'pro-contacts':        renderProContacts(); break;
       case 'admin-dashboard':     renderAdminDashboard(); break;
       case 'admin-companies':     renderAdminCompanies(); break;
       case 'admin-add-company':   renderAdminAddCompany(); break;
@@ -5431,6 +5560,7 @@ SIRET : 395 370 182 00036<br>
       { view: 'pro-dashboard',    icon: '🏠', label: 'Tableau de bord' },
       { view: 'pro-edit',         icon: '✏️', label: 'Modifier ma fiche' },
       { view: 'pro-pages',        icon: '📄', label: 'Mes pages services' },
+      { view: 'pro-contacts',     icon: '📬', label: 'Mes contacts' },
       { view: 'pro-subscription', icon: '💎', label: 'Mon abonnement' },
       { view: 'pro-settings',     icon: '⚙️', label: 'Paramètres' }
     ];
@@ -6310,6 +6440,514 @@ SIRET : 395 370 182 00036<br>
     toast('success', 'Contenu créé ✅');
     navigate('pro-pages');
   }
+
+  // ============================================================
+  //  PAGE MES CONTACTS — MINI-CRM PRO (v2.10.0)
+  // ============================================================
+  //
+  // 3 vues possibles :
+  //  1. Verrouillage : si l'entreprise est freemium → page "Devenez Pro"
+  //  2. Liste : tableau des contacts + filtres + bouton + Ajouter
+  //  3. Édition : modal pour créer/modifier un contact + onglet "Envoyer un mail"
+  //
+  var _crmPro = {
+    contacts: [],
+    counts: {},
+    filter: 'all',
+    editing: null,   // null | 'new' | <id>
+    editDraft: null, // {nom, email, telephone, statut, notes}
+    mailing: null,   // null | <contactId> en cours d'envoi mail
+    mailDraft: null  // {subject, body}
+  };
+
+  var CRM_PRO_STATUSES = [
+    { key: 'nouveau',       label: '🆕 Nouveau',         color: '#3b82f6', bg: '#dbeafe' },
+    { key: 'a_recontacter', label: '👀 À recontacter',   color: '#f59e0b', bg: '#fef3c7' },
+    { key: 'client',        label: '✅ Client',           color: '#16a34a', bg: '#dcfce7' },
+    { key: 'fidele',        label: '⭐ Fidèle',           color: '#7c3aed', bg: '#ede9fe' },
+    { key: 'perdu',         label: '🚫 Perdu',            color: '#64748b', bg: '#f1f5f9' }
+  ];
+
+  function _crmProStatusMeta(key) {
+    return CRM_PRO_STATUSES.find(function(s) { return s.key === key; }) || CRM_PRO_STATUSES[0];
+  }
+
+  async function renderProContacts() {
+    if (!state.user || state.user.type !== 'company') return navigate('home');
+
+    // Chargement
+    document.getElementById('main').innerHTML = `
+      <div class="dashboard-grid">
+        ${proSidebar('pro-contacts')}
+        <section>
+          <div class="page-header"><h1>📬 Mes contacts</h1></div>
+          <div class="card" style="text-align:center;padding:40px">
+            <div style="font-size:32px;margin-bottom:8px">⏳</div>
+            <div>Chargement de vos contacts...</div>
+          </div>
+        </section>
+      </div>
+    `;
+
+    var r;
+    try {
+      r = await api('listMyContacts', {
+        token: state.user.token,
+        company_id: state.user.id,
+        filter: _crmPro.filter === 'all' ? null : _crmPro.filter
+      });
+    } catch (err) {
+      toast('error', 'Erreur réseau : ' + err.message);
+      return;
+    }
+
+    // Cas verrouillage Pro
+    if (!r.ok && r.upgrade_required) {
+      renderProContactsUpsell_();
+      return;
+    }
+
+    if (!r.ok) {
+      toast('error', r.error || 'Erreur de chargement');
+      return;
+    }
+
+    _crmPro.contacts = r.contacts || [];
+    _crmPro.counts = r.counts || { all: 0 };
+
+    var bodyHtml = '';
+    if (_crmPro.editing !== null) {
+      bodyHtml = renderContactEditor_();
+    } else if (_crmPro.mailing !== null) {
+      bodyHtml = renderContactMailer_();
+    } else {
+      bodyHtml = renderContactsList_();
+    }
+
+    document.getElementById('main').innerHTML = `
+      <div class="dashboard-grid">
+        ${proSidebar('pro-contacts')}
+        <section>
+          <div class="page-header">
+            <h1>📬 Mes contacts</h1>
+            <div style="color:var(--text-2);font-size:14px;margin-top:4px">Gérez vos prospects et clients en un seul endroit.</div>
+          </div>
+          ${bodyHtml}
+        </section>
+      </div>
+    `;
+  }
+  window.renderProContacts = renderProContacts;
+
+  // ─── Vue 1 : Page de verrouillage Pro ───────────────────────
+
+  function renderProContactsUpsell_() {
+    var userEmail = state.user.data && state.user.data.email ? state.user.data.email : '';
+    var emailParam = userEmail ? '?prefilled_email=' + encodeURIComponent(userEmail) : '';
+    var proUrl = STRIPE_LINKS.pro + emailParam;
+    var proPlusUrl = STRIPE_LINKS.pro_plus + emailParam;
+
+    document.getElementById('main').innerHTML = `
+      <div class="dashboard-grid">
+        ${proSidebar('pro-contacts')}
+        <section>
+          <div class="page-header">
+            <h1>📬 Mes contacts</h1>
+          </div>
+          <div class="card" style="text-align:center;padding:40px 24px;background:linear-gradient(135deg,#eff6ff 0%,#dbeafe 100%);border:2px dashed #2563eb">
+            <div style="font-size:56px;margin-bottom:12px">🔒</div>
+            <h2 style="color:#1e3a8a;margin:0 0 8px 0">Cette fonctionnalité est réservée aux abonnés Pro</h2>
+            <p style="color:#1e40af;max-width:520px;margin:0 auto 24px auto;line-height:1.6">
+              Le mini-CRM intégré vous permet de <strong>gérer tous vos contacts</strong> (prospects, clients, fidèles)
+              directement depuis votre espace YOUPI, sans installer aucun logiciel.
+              Plus besoin d'Excel ou de carnet papier&nbsp;!
+            </p>
+            <div style="text-align:left;background:white;padding:20px 24px;border-radius:10px;max-width:480px;margin:0 auto 24px auto;box-shadow:0 2px 8px rgba(0,0,0,0.06)">
+              <strong style="color:#1e3a8a;display:block;margin-bottom:10px">✨ Ce que vous pourrez faire :</strong>
+              <ul style="margin:0;padding-left:22px;color:var(--text-1);font-size:14px;line-height:1.8">
+                <li>📋 Ajouter, modifier, organiser vos contacts</li>
+                <li>🏷️ Trier par statut (nouveau, à recontacter, client, fidèle)</li>
+                <li>✉️ Envoyer un email directement depuis YOUPI</li>
+                <li>📝 Stocker vos notes pour chaque contact</li>
+                <li>🔒 Vos données restent privées et sécurisées</li>
+              </ul>
+            </div>
+            <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+              <a href="${proUrl}" target="_blank" rel="noopener" class="btn btn-primary" style="padding:14px 24px;font-size:15px;text-decoration:none">
+                💎 Passer à Pro — 39€/mois
+              </a>
+              <a href="${proPlusUrl}" target="_blank" rel="noopener" class="btn btn-secondary" style="padding:14px 24px;font-size:15px;text-decoration:none;background:#7c3aed;color:white;border-color:#7c3aed">
+                ⭐ Pro+ — 149€/mois
+              </a>
+            </div>
+            <div style="margin-top:20px">
+              <a onclick="navigate('pro-subscription')" style="cursor:pointer;color:var(--teal-700);font-size:13px;text-decoration:underline">
+                Voir le détail des formules →
+              </a>
+            </div>
+          </div>
+        </section>
+      </div>
+    `;
+  }
+
+  // ─── Vue 2 : Liste des contacts ─────────────────────────────
+
+  function renderContactsList_() {
+    var counts = _crmPro.counts || { all: 0 };
+
+    // Barre des filtres
+    var filtersHtml = '<div class="crm-pro-filters">';
+    filtersHtml += renderCrmProFilterBtn_('all', '📋 Tous', counts.all);
+    CRM_PRO_STATUSES.forEach(function(s) {
+      filtersHtml += renderCrmProFilterBtn_(s.key, s.label, counts[s.key] || 0);
+    });
+    filtersHtml += '</div>';
+
+    var listHtml;
+    if (_crmPro.contacts.length === 0) {
+      // Bandeau démo si l'entreprise n'a aucun contact
+      var demoCard = '';
+      if (counts.all === 0) {
+        demoCard = ''
+          + '<div style="background:#fffbeb;border:1px dashed #f59e0b;border-radius:10px;padding:14px 18px;margin-bottom:14px;font-size:13px;color:#92400e">'
+          +   '💡 <strong>Vous découvrez le mini-CRM ?</strong> Pour visualiser le rendu avec quelques contacts, '
+          +   '<a onclick="seedDemoContactsFromUI()" style="cursor:pointer;text-decoration:underline;color:#92400e;font-weight:600">injectez 10 contacts d\'exemple</a> (vous pourrez les supprimer ensuite).'
+          + '</div>';
+      }
+      listHtml = demoCard + `
+        <div class="card" style="text-align:center;padding:40px 24px">
+          <div style="font-size:48px;margin-bottom:10px">📭</div>
+          <h3 style="margin:0 0 6px 0">Aucun contact pour le moment</h3>
+          <p style="color:var(--text-2);margin:0">
+            ${_crmPro.filter === 'all' ? 'Commencez par ajouter votre premier contact ci-dessus.' : 'Aucun contact dans cette catégorie.'}
+          </p>
+        </div>
+      `;
+    } else {
+      listHtml = '<div class="crm-pro-list">';
+      _crmPro.contacts.forEach(function(c) {
+        listHtml += renderContactCard_(c);
+      });
+      listHtml += '</div>';
+    }
+
+    return `
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px">
+        <div style="color:var(--text-2);font-size:14px">
+          ${counts.all || 0} contact${counts.all > 1 ? 's' : ''} au total
+        </div>
+        <button class="btn btn-primary" onclick="startNewContact()">+ Nouveau contact</button>
+      </div>
+      ${filtersHtml}
+      ${listHtml}
+    `;
+  }
+
+  function renderCrmProFilterBtn_(key, label, count) {
+    var active = _crmPro.filter === key;
+    return '<button class="crm-pro-filter-btn' + (active ? ' active' : '') + '" onclick="setCrmProFilter(\'' + key + '\')">'
+      + label
+      + ' <span class="crm-pro-filter-count">' + count + '</span>'
+      + '</button>';
+  }
+
+  function renderContactCard_(c) {
+    var meta = _crmProStatusMeta(c.statut);
+    var lastContact = c.last_contacted_at
+      ? '📅 Dernier contact : ' + formatDateLong_(c.last_contacted_at)
+      : '';
+    var emailPart = c.email ? '<span>✉️ ' + esc(c.email) + '</span>' : '';
+    var phonePart = c.telephone ? '<span>📞 ' + esc(c.telephone) + '</span>' : '';
+    var notesPart = c.notes
+      ? '<div class="crm-pro-card-notes">' + esc(c.notes).replace(/\n/g, '<br>') + '</div>'
+      : '';
+
+    return ''
+      + '<div class="crm-pro-card">'
+      +   '<div class="crm-pro-card-head">'
+      +     '<div>'
+      +       '<div class="crm-pro-card-name">' + esc(c.nom) + '</div>'
+      +       '<div class="crm-pro-card-meta">' + emailPart + (emailPart && phonePart ? ' · ' : '') + phonePart + '</div>'
+      +     '</div>'
+      +     '<span class="crm-pro-card-badge" style="background:' + meta.bg + ';color:' + meta.color + '">' + meta.label + '</span>'
+      +   '</div>'
+      +   notesPart
+      +   (lastContact ? '<div class="crm-pro-card-last">' + lastContact + '</div>' : '')
+      +   '<div class="crm-pro-card-actions">'
+      +     '<button class="btn btn-secondary btn-sm" onclick="startEditContact(\'' + c.id + '\')">✏️ Modifier</button>'
+      +     (c.email
+          ? '<button class="btn btn-secondary btn-sm" onclick="startMailContact(\'' + c.id + '\')">✉️ Envoyer un mail</button>'
+          : '')
+      +     '<button class="btn btn-ghost btn-sm" onclick="deleteContactFromUI(\'' + c.id + '\', \'' + esc(c.nom).replace(/'/g, "\\'") + '\')" style="color:#dc2626">🗑️</button>'
+      +   '</div>'
+      + '</div>';
+  }
+
+  function setCrmProFilter(key) {
+    _crmPro.filter = key;
+    renderProContacts();
+  }
+  window.setCrmProFilter = setCrmProFilter;
+
+  // ─── Vue 3 : Éditeur de contact (créer / modifier) ──────────
+
+  function startNewContact() {
+    _crmPro.editing = 'new';
+    _crmPro.editDraft = {
+      nom: '',
+      email: '',
+      telephone: '',
+      statut: 'nouveau',
+      notes: ''
+    };
+    renderProContacts();
+  }
+  window.startNewContact = startNewContact;
+
+  function startEditContact(id) {
+    var c = _crmPro.contacts.find(function(x) { return x.id === id; });
+    if (!c) return;
+    _crmPro.editing = id;
+    _crmPro.editDraft = {
+      nom: c.nom || '',
+      email: c.email || '',
+      telephone: c.telephone || '',
+      statut: c.statut || 'nouveau',
+      notes: c.notes || ''
+    };
+    renderProContacts();
+  }
+  window.startEditContact = startEditContact;
+
+  function cancelContactEdit() {
+    _crmPro.editing = null;
+    _crmPro.editDraft = null;
+    renderProContacts();
+  }
+  window.cancelContactEdit = cancelContactEdit;
+
+  function renderContactEditor_() {
+    var isNew = _crmPro.editing === 'new';
+    var d = _crmPro.editDraft || {};
+
+    var statusOptions = '';
+    CRM_PRO_STATUSES.forEach(function(s) {
+      statusOptions += '<option value="' + s.key + '"' + (s.key === d.statut ? ' selected' : '') + '>' + s.label + '</option>';
+    });
+
+    return `
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
+          <h3 style="margin:0">${isNew ? '➕ Nouveau contact' : '✏️ Modifier le contact'}</h3>
+          <button class="btn btn-ghost btn-sm" onclick="cancelContactEdit()">← Retour</button>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+          <div>
+            <label style="display:block;font-size:13px;font-weight:600;margin-bottom:6px">Nom <span style="color:#dc2626">*</span></label>
+            <input type="text" value="${esc(d.nom)}" placeholder="Ex. Marie Dubois"
+              oninput="_crmPro.editDraft.nom = this.value"
+              style="width:100%;padding:10px;border:1px solid var(--border);border-radius:var(--radius);font-size:14px">
+          </div>
+          <div>
+            <label style="display:block;font-size:13px;font-weight:600;margin-bottom:6px">Statut</label>
+            <select onchange="_crmPro.editDraft.statut = this.value"
+              style="width:100%;padding:10px;border:1px solid var(--border);border-radius:var(--radius);font-size:14px;background:white">
+              ${statusOptions}
+            </select>
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+          <div>
+            <label style="display:block;font-size:13px;font-weight:600;margin-bottom:6px">Email</label>
+            <input type="email" value="${esc(d.email)}" placeholder="contact@exemple.com"
+              oninput="_crmPro.editDraft.email = this.value"
+              style="width:100%;padding:10px;border:1px solid var(--border);border-radius:var(--radius);font-size:14px">
+          </div>
+          <div>
+            <label style="display:block;font-size:13px;font-weight:600;margin-bottom:6px">Téléphone</label>
+            <input type="tel" value="${esc(d.telephone)}" placeholder="+596 696 12 34 56"
+              oninput="_crmPro.editDraft.telephone = this.value"
+              style="width:100%;padding:10px;border:1px solid var(--border);border-radius:var(--radius);font-size:14px">
+          </div>
+        </div>
+
+        <div style="margin-bottom:18px">
+          <label style="display:block;font-size:13px;font-weight:600;margin-bottom:6px">Notes <span style="color:var(--text-2);font-weight:400">(privées)</span></label>
+          <textarea rows="4" placeholder="Ex. Cliente régulière, préfère le contact par mail. Anniversaire en mars."
+            oninput="_crmPro.editDraft.notes = this.value"
+            style="width:100%;padding:10px;border:1px solid var(--border);border-radius:var(--radius);font-size:14px;font-family:inherit;resize:vertical">${esc(d.notes)}</textarea>
+        </div>
+
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-primary" onclick="saveContact()">${isNew ? 'Créer le contact' : 'Enregistrer les modifications'}</button>
+          <button class="btn btn-ghost" onclick="cancelContactEdit()">Annuler</button>
+        </div>
+      </div>
+    `;
+  }
+
+  async function saveContact() {
+    var d = _crmPro.editDraft;
+    if (!d || !d.nom || !d.nom.trim()) {
+      toast('error', 'Le nom est obligatoire');
+      return;
+    }
+    var isNew = _crmPro.editing === 'new';
+    var payload = {
+      token: state.user.token,
+      company_id: state.user.id,
+      contact: {
+        nom: d.nom.trim(),
+        email: (d.email || '').trim(),
+        telephone: (d.telephone || '').trim(),
+        statut: d.statut || 'nouveau',
+        notes: (d.notes || '').trim()
+      }
+    };
+    if (!isNew) payload.id = _crmPro.editing;
+
+    try {
+      var r = await api(isNew ? 'createContact' : 'updateContact', payload);
+      if (!r.ok) {
+        toast('error', r.error || 'Erreur lors de l\'enregistrement');
+        return;
+      }
+      toast('success', isNew ? 'Contact créé ✅' : 'Contact mis à jour ✅');
+      _crmPro.editing = null;
+      _crmPro.editDraft = null;
+      await renderProContacts();
+    } catch (err) {
+      toast('error', 'Erreur réseau : ' + err.message);
+    }
+  }
+  window.saveContact = saveContact;
+
+  async function deleteContactFromUI(id, nom) {
+    if (!confirm('Supprimer définitivement le contact « ' + nom + ' » ?\n\nCette action est irréversible.')) return;
+    try {
+      var r = await api('deleteContact', {
+        token: state.user.token,
+        company_id: state.user.id,
+        id: id
+      });
+      if (!r.ok) { toast('error', r.error || 'Erreur'); return; }
+      toast('success', 'Contact supprimé');
+      await renderProContacts();
+    } catch (err) {
+      toast('error', 'Erreur réseau : ' + err.message);
+    }
+  }
+  window.deleteContactFromUI = deleteContactFromUI;
+
+  async function seedDemoContactsFromUI() {
+    if (!confirm('Injecter 10 contacts d\'exemple pour découvrir le mini-CRM ?\n\nVous pourrez les supprimer individuellement ensuite.')) return;
+    try {
+      var r = await api('seedDemoContacts', {
+        token: state.user.token,
+        company_id: state.user.id
+      });
+      if (!r.ok) { toast('error', r.error || 'Erreur'); return; }
+      toast('success', r.created + ' contacts d\'exemple ajoutés ✅');
+      await renderProContacts();
+    } catch (err) {
+      toast('error', 'Erreur réseau : ' + err.message);
+    }
+  }
+  window.seedDemoContactsFromUI = seedDemoContactsFromUI;
+
+  // ─── Vue 4 : Composer un mail vers un contact ───────────────
+
+  function startMailContact(id) {
+    var c = _crmPro.contacts.find(function(x) { return x.id === id; });
+    if (!c) return;
+    if (!c.email) {
+      toast('error', 'Pas d\'email pour ce contact');
+      return;
+    }
+    _crmPro.mailing = id;
+    _crmPro.mailDraft = {
+      subject: '',
+      body: 'Bonjour ' + (c.nom.split(' ')[0]) + ',\n\n\n\nCordialement,\n' + (state.user.data.nom_entreprise || '')
+    };
+    renderProContacts();
+  }
+  window.startMailContact = startMailContact;
+
+  function cancelMailContact() {
+    _crmPro.mailing = null;
+    _crmPro.mailDraft = null;
+    renderProContacts();
+  }
+  window.cancelMailContact = cancelMailContact;
+
+  function renderContactMailer_() {
+    var c = _crmPro.contacts.find(function(x) { return x.id === _crmPro.mailing; });
+    if (!c) {
+      cancelMailContact();
+      return '';
+    }
+    var d = _crmPro.mailDraft || { subject: '', body: '' };
+    var company = state.user.data;
+
+    return `
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
+          <h3 style="margin:0">✉️ Envoyer un mail à ${esc(c.nom)}</h3>
+          <button class="btn btn-ghost btn-sm" onclick="cancelMailContact()">← Retour</button>
+        </div>
+
+        <div style="background:var(--sand-50);padding:12px 14px;border-radius:8px;margin-bottom:16px;font-size:13px;color:var(--text-1)">
+          <div><strong>De :</strong> ${esc(company.nom_entreprise)} <span style="color:var(--text-2)">(via Annuaire YOUPI®)</span></div>
+          <div><strong>À :</strong> ${esc(c.nom)} &lt;${esc(c.email)}&gt;</div>
+          <div style="margin-top:6px;font-size:12px;color:var(--text-2)">💡 Les réponses arriveront directement sur votre email <strong>${esc(company.email)}</strong></div>
+        </div>
+
+        <label style="display:block;font-size:13px;font-weight:600;margin-bottom:6px">Sujet <span style="color:#dc2626">*</span></label>
+        <input type="text" value="${esc(d.subject)}" placeholder="Ex. Suivi de votre demande"
+          oninput="_crmPro.mailDraft.subject = this.value"
+          style="width:100%;padding:10px;border:1px solid var(--border);border-radius:var(--radius);font-size:14px;margin-bottom:14px">
+
+        <label style="display:block;font-size:13px;font-weight:600;margin-bottom:6px">Message <span style="color:#dc2626">*</span></label>
+        <textarea rows="12" placeholder="Votre message..."
+          oninput="_crmPro.mailDraft.body = this.value"
+          style="width:100%;padding:10px;border:1px solid var(--border);border-radius:var(--radius);font-size:14px;font-family:inherit;resize:vertical;line-height:1.6">${esc(d.body)}</textarea>
+
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:18px">
+          <button class="btn btn-primary" onclick="sendContactMailFromUI()">📤 Envoyer le mail</button>
+          <button class="btn btn-ghost" onclick="cancelMailContact()">Annuler</button>
+        </div>
+      </div>
+    `;
+  }
+
+  async function sendContactMailFromUI() {
+    var d = _crmPro.mailDraft;
+    if (!d || !d.subject || !d.subject.trim()) { toast('error', 'Le sujet est requis'); return; }
+    if (!d.body || !d.body.trim()) { toast('error', 'Le message est requis'); return; }
+    if (!confirm('Envoyer ce mail maintenant ?')) return;
+
+    try {
+      var r = await api('sendContactEmail', {
+        token: state.user.token,
+        company_id: state.user.id,
+        id: _crmPro.mailing,
+        subject: d.subject.trim(),
+        body: d.body.trim()
+      });
+      if (!r.ok) { toast('error', r.error || 'Échec d\'envoi'); return; }
+      toast('success', 'Mail envoyé ✅');
+      _crmPro.mailing = null;
+      _crmPro.mailDraft = null;
+      await renderProContacts();
+    } catch (err) {
+      toast('error', 'Erreur réseau : ' + err.message);
+    }
+  }
+  window.sendContactMailFromUI = sendContactMailFromUI;
+
 
   // ============================================================
   //  PAGE "MON ABONNEMENT" (espace pro) — v2.9.0
