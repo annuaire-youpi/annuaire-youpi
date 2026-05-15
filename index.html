@@ -1024,6 +1024,349 @@
       .mini-site-hero-overlay { padding: 50px 18px 22px 18px; }
       .mini-site-hero-noimg { padding: 36px 18px; }
     }
+
+    /* ─── Personnalisation Pro : theme color override (v2.12.0) ─── */
+    /* Quand l'entreprise a défini sa couleur, on l'applique aux endroits
+       les plus visibles via une CSS variable locale (--theme-primary). */
+    .mini-site[data-themed] .mini-site-hero-noimg {
+      background: linear-gradient(135deg, var(--theme-primary, #1e3a8a) 0%,
+                                   var(--theme-primary-dark, #2563eb) 100%);
+    }
+    .mini-site[data-themed] .mini-site-section h2 {
+      color: var(--theme-primary, var(--teal-900));
+    }
+    .mini-site[data-themed] .mini-site-page-type {
+      color: var(--theme-primary, var(--teal-700));
+    }
+    .mini-site[data-themed] .mini-site-page-prix {
+      background: var(--theme-primary, var(--teal-700));
+    }
+    .mini-site[data-themed] .mini-site-contact-item:hover {
+      background: var(--theme-primary, var(--teal-700));
+    }
+    .mini-site[data-themed] .mini-site-ia {
+      background: linear-gradient(135deg,
+        color-mix(in srgb, var(--theme-primary, #2563eb) 8%, white) 0%,
+        color-mix(in srgb, var(--theme-primary, #2563eb) 18%, white) 100%);
+      border-color: color-mix(in srgb, var(--theme-primary, #2563eb) 30%, white);
+    }
+    .mini-site[data-themed] .mini-site-ia-btn {
+      background: var(--theme-primary, var(--teal-700));
+      border-color: var(--theme-primary, var(--teal-700));
+    }
+    .mini-site[data-themed] .mini-site-ia-btn:hover {
+      background: var(--theme-primary-dark, var(--teal-900));
+      border-color: var(--theme-primary-dark, var(--teal-900));
+    }
+
+    /* ─── Badge service vedette ─── */
+    .mini-site-featured-card {
+      grid-column: 1 / -1;
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+      gap: 0;
+      border: 2px solid #fbbf24;
+      background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+      border-radius: 14px;
+      overflow: hidden;
+      position: relative;
+    }
+    .mini-site-featured-card .mini-site-page-img {
+      height: 100%;
+      min-height: 240px;
+    }
+    .mini-site-featured-card .mini-site-page-body {
+      padding: 22px 24px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+    .mini-site-featured-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+      color: white;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      padding: 4px 10px;
+      border-radius: 12px;
+      margin-bottom: 10px;
+      width: fit-content;
+      box-shadow: 0 2px 6px rgba(245, 158, 11, 0.3);
+    }
+    .mini-site-featured-card .mini-site-page-title {
+      font-size: 20px;
+      font-weight: 700;
+      color: #78350f;
+    }
+    .mini-site-featured-card .mini-site-page-desc {
+      font-size: 14px;
+      color: #92400e;
+    }
+    .mini-site-featured-card .mini-site-page-prix {
+      background: #d97706;
+    }
+    @media (max-width: 700px) {
+      .mini-site-featured-card { grid-template-columns: 1fr; }
+      .mini-site-featured-card .mini-site-page-img { min-height: 180px; }
+      .mini-site-featured-card .mini-site-page-body { padding: 18px 20px; }
+      .mini-site-featured-card .mini-site-page-title { font-size: 18px; }
+    }
+
+    /* ─── Page Pro de personnalisation du mini-site (v2.12.0) ─── */
+    .mini-site-customizer {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    .mini-site-customizer .card h2 {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 17px;
+      margin: 0 0 4px 0;
+      color: var(--teal-900);
+    }
+    .mini-site-customizer .card .card-sub {
+      color: var(--text-2);
+      font-size: 13px;
+      margin: 0 0 16px 0;
+      line-height: 1.5;
+    }
+    /* Color picker */
+    .theme-color-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+    .theme-color-swatch {
+      aspect-ratio: 1;
+      border-radius: 10px;
+      cursor: pointer;
+      border: 3px solid transparent;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+      transition: transform 0.15s, border-color 0.15s;
+      position: relative;
+    }
+    .theme-color-swatch:hover { transform: scale(1.05); }
+    .theme-color-swatch.selected {
+      border-color: var(--teal-900);
+      transform: scale(1.05);
+    }
+    .theme-color-swatch.selected::after {
+      content: '✓';
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 22px;
+      font-weight: 900;
+      text-shadow: 0 1px 3px rgba(0,0,0,0.4);
+    }
+    .theme-color-custom {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      background: var(--sand-50);
+      border-radius: 10px;
+      border: 1px solid var(--border);
+    }
+    .theme-color-custom input[type="color"] {
+      width: 48px;
+      height: 48px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      padding: 0;
+      background: transparent;
+    }
+    .theme-color-custom-info {
+      flex: 1;
+      min-width: 0;
+    }
+    .theme-color-custom-info .label {
+      font-weight: 600;
+      font-size: 13px;
+      color: var(--text-1);
+      margin-bottom: 2px;
+    }
+    .theme-color-custom-info .value {
+      font-family: monospace;
+      font-size: 13px;
+      color: var(--text-2);
+    }
+    .theme-color-reset {
+      background: none;
+      border: none;
+      color: var(--text-2);
+      font-size: 13px;
+      text-decoration: underline;
+      cursor: pointer;
+      padding: 4px 8px;
+    }
+    .theme-color-reset:hover { color: var(--text-1); }
+
+    /* Sections reorder list */
+    .sections-reorder-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .sections-reorder-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 16px;
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      cursor: grab;
+      user-select: none;
+      transition: box-shadow 0.15s, transform 0.15s, opacity 0.15s, border-color 0.15s;
+    }
+    .sections-reorder-item:hover {
+      border-color: var(--teal-700);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+    .sections-reorder-item.dragging {
+      opacity: 0.4;
+      cursor: grabbing;
+    }
+    .sections-reorder-item.drag-over {
+      border-color: var(--teal-700);
+      border-style: dashed;
+      background: var(--sand-50);
+    }
+    .sections-reorder-handle {
+      color: var(--text-2);
+      font-size: 18px;
+      line-height: 1;
+      cursor: grab;
+    }
+    .sections-reorder-label {
+      flex: 1;
+      font-size: 14px;
+      color: var(--text-1);
+      font-weight: 500;
+    }
+    .sections-reorder-arrows {
+      display: flex;
+      gap: 4px;
+    }
+    .sections-reorder-arrow {
+      background: var(--sand-50);
+      border: 1px solid var(--border);
+      width: 32px;
+      height: 32px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      color: var(--text-1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s, color 0.15s;
+    }
+    .sections-reorder-arrow:hover:not(:disabled) {
+      background: var(--teal-700);
+      color: white;
+    }
+    .sections-reorder-arrow:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+    }
+
+    /* Featured page picker */
+    .featured-page-options {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .featured-page-option {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 14px;
+      background: white;
+      border: 2px solid var(--border);
+      border-radius: 10px;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .featured-page-option:hover { border-color: var(--teal-700); }
+    .featured-page-option.selected {
+      border-color: #f59e0b;
+      background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+    }
+    .featured-page-option-icon {
+      font-size: 22px;
+      width: 32px;
+      text-align: center;
+    }
+    .featured-page-option-info {
+      flex: 1;
+      min-width: 0;
+    }
+    .featured-page-option-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-1);
+      margin-bottom: 2px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .featured-page-option-type {
+      font-size: 11px;
+      color: var(--text-2);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      font-weight: 600;
+    }
+    .featured-page-option-check {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      border: 2px solid var(--border);
+      flex-shrink: 0;
+    }
+    .featured-page-option.selected .featured-page-option-check {
+      background: #f59e0b;
+      border-color: #f59e0b;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 12px;
+    }
+    .featured-page-option.selected .featured-page-option-check::after { content: '✓'; }
+
+    .customizer-actions {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+      padding: 16px 20px;
+      background: var(--sand-50);
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      position: sticky;
+      bottom: 16px;
+      box-shadow: 0 -2px 12px rgba(0,0,0,0.04);
+    }
+    .customizer-actions .actions-info {
+      flex: 1;
+      min-width: 200px;
+      font-size: 13px;
+      color: var(--text-2);
+    }
     .sidebar {
       background: var(--card);
       border: 1px solid var(--border);
@@ -3410,7 +3753,7 @@
 
   const APP = {
     name: 'Annuaire YOUPI',
-    version: 'v2.11.1',
+    version: 'v2.12.0',
     versionDate: '15 mai 2026',
     BACKEND_URL: 'https://script.google.com/macros/s/AKfycbzQNSOAGCJp1QmZU0IE1FYiKmKCcGgTUpqKa3RJG9lwiAND_EC5dGdbh2XCu26ZTMoxtw/exec'
   };
@@ -3422,6 +3765,18 @@
   //  → Pour ajouter une nouvelle version, demander à Claude.
   // ------------------------------------------------------------
   const CHANGELOG = [
+    {
+      version: 'v2.12.0',
+      date: '15 mai 2026',
+      title: "🎨 Personnalisez votre mini-site Pro à votre image",
+      entries: [
+        { type: 'feature', text: "Les entreprises Pro et Pro+ peuvent désormais personnaliser leur mini-site public depuis un nouveau menu « Ma vitrine » dans l'espace pro." },
+        { type: 'feature', text: "Choisissez votre couleur principale parmi une palette de couleurs équilibrées ou définissez la vôtre — elle est appliquée au hero, aux titres et aux boutons de votre vitrine." },
+        { type: 'feature', text: "Ajoutez une photo de couverture dédiée à votre mini-site, distincte de votre photo d'annuaire, pour un visuel hero grand format qui marque les esprits." },
+        { type: 'feature', text: "Réorganisez l'ordre des sections (À propos, Services, Publications, Horaires, Contact, Réseaux) par glisser-déposer ou via les boutons ↑↓ sur mobile." },
+        { type: 'feature', text: "Mettez en avant un service vedette : il apparaît en grand en tête de vos publications, avec un badge « ⭐ Notre offre vedette »." }
+      ]
+    },
     {
       version: 'v2.11.1',
       date: '15 mai 2026',
@@ -4095,6 +4450,7 @@
       case 'pro-edit':            renderProEdit(); break;
       case 'pro-pages':           renderProPages(); break;
       case 'pro-add-page':        renderProAddPage(params); break;
+      case 'pro-mini-site':       renderProMiniSite(); break;
       case 'pro-settings':        renderProSettings(); break;
       case 'pro-subscription':    renderProSubscription(); break;
       case 'pro-contacts':        renderProContacts(); break;
@@ -5778,6 +6134,7 @@ SIRET : 395 370 182 00036<br>
       { view: 'pro-dashboard',    icon: '🏠', label: 'Tableau de bord' },
       { view: 'pro-edit',         icon: '✏️', label: 'Modifier ma fiche' },
       { view: 'pro-pages',        icon: '📄', label: 'Mes pages services' },
+      { view: 'pro-mini-site',    icon: '🎨', label: 'Ma vitrine' },
       { view: 'pro-contacts',     icon: '📬', label: 'Mes contacts' },
       { view: 'pro-subscription', icon: '💎', label: 'Mon abonnement' },
       { view: 'pro-settings',     icon: '⚙️', label: 'Paramètres' }
@@ -6862,7 +7219,10 @@ SIRET : 395 370 182 00036<br>
   function renderMiniSiteContent_(company, pages) {
     var c = company;
     var regionFlag = ({ MQ: '🇲🇶', GP: '🇬🇵', GF: '🇬🇫' })[c.region] || '🏝️';
-    var hasImage = !!c.image_url;
+    // v2.12.0 : la cover image dédiée du mini-site Pro est prioritaire
+    // sur l'image d'annuaire. Fallback gracieux pour les fiches freemium.
+    var heroImage = c.cover_image_url || c.image_url || '';
+    var hasImage = !!heroImage;
     var ville = c.ville || '';
     var regionLabel = ({ MQ: 'Martinique', GP: 'Guadeloupe', GF: 'Guyane' })[c.region] || '';
     var emplacement = ville + (ville && regionLabel ? ' · ' : '') + regionLabel;
@@ -6871,7 +7231,7 @@ SIRET : 395 370 182 00036<br>
     var heroHtml;
     if (hasImage) {
       heroHtml = `
-        <div class="mini-site-hero" style="background-image:url('${esc(c.image_url)}')">
+        <div class="mini-site-hero" style="background-image:url('${esc(heroImage)}')">
           <div class="mini-site-hero-overlay">
             <div class="mini-site-hero-content">
               <div class="mini-site-hero-region">${regionFlag} ${esc(emplacement)}</div>
@@ -6923,20 +7283,68 @@ SIRET : 395 370 182 00036<br>
     // Pages publiées (services détaillés / articles / annonces)
     var pagesHtml = '';
     if (pages && pages.length > 0) {
+      // v2.12.0 : si une page est marquée vedette, on la sort du flux et
+      // on la rend en grand format en haut.
+      var featuredId = c.featured_page_id || '';
+      var featuredPage = null;
+      var otherPages = pages;
+      if (featuredId) {
+        otherPages = [];
+        pages.forEach(function(p) {
+          if (p.id === featuredId && !featuredPage) {
+            featuredPage = p;
+          } else {
+            otherPages.push(p);
+          }
+        });
+      }
+
+      var typeLabels = {
+        'service': '🛠️ Service',
+        'article': '📰 Article',
+        'publication': '📱 Publication',
+        'annonce': '🏠 Annonce'
+      };
+
       var pagesCardsHtml = '';
-      pages.forEach(function(p) {
+
+      // Card vedette (si présente)
+      if (featuredPage) {
+        var fp = featuredPage;
+        var fpImg = fp.image_url
+          ? `<div class="mini-site-page-img" style="background-image:url('${esc(fp.image_url)}')"></div>`
+          : `<div class="mini-site-page-img" style="background:linear-gradient(135deg,#fde68a 0%,#fbbf24 100%);display:flex;align-items:center;justify-content:center;font-size:64px">⭐</div>`;
+        var fpPrix = fp.prix
+          ? `<div class="mini-site-page-prix">${esc(fp.prix)}</div>`
+          : '';
+        var fpTypeLabel = typeLabels[fp.type] || '📄 Page';
+        var fpLink = fp.lien_externe
+          ? `<a href="${esc(fp.lien_externe)}" target="_blank" rel="noopener" class="btn btn-secondary btn-sm" style="margin-top:14px;width:fit-content">En savoir plus →</a>`
+          : '';
+        pagesCardsHtml += `
+          <div class="mini-site-featured-card">
+            ${fpImg}
+            <div class="mini-site-page-body">
+              <div class="mini-site-featured-badge">⭐ Notre offre vedette</div>
+              <div class="mini-site-page-type">${fpTypeLabel}</div>
+              <h3 class="mini-site-page-title">${esc(fp.titre)}</h3>
+              ${fpPrix}
+              <div class="mini-site-page-desc">${esc(fp.description || '').replace(/\n/g, '<br>')}</div>
+              ${fpLink}
+            </div>
+          </div>
+        `;
+      }
+
+      // Autres pages dans la grille standard
+      otherPages.forEach(function(p) {
         var pageImg = p.image_url
           ? `<div class="mini-site-page-img" style="background-image:url('${esc(p.image_url)}')"></div>`
           : '';
         var prixHtml = p.prix
           ? `<div class="mini-site-page-prix">${esc(p.prix)}</div>`
           : '';
-        var typeLabel = ({
-          'service': '🛠️ Service',
-          'article': '📰 Article',
-          'publication': '📱 Publication',
-          'annonce': '🏠 Annonce'
-        })[p.type] || '📄 Page';
+        var typeLabel = typeLabels[p.type] || '📄 Page';
         var linkBtn = p.lien_externe
           ? `<a href="${esc(p.lien_externe)}" target="_blank" rel="noopener" class="btn btn-secondary btn-sm" style="margin-top:10px">En savoir plus →</a>`
           : '';
@@ -7019,22 +7427,664 @@ SIRET : 395 370 182 00036<br>
       </div>
     `;
 
+    // v2.12.0 : ordre des sections personnalisable (Pro).
+    // Si l'entreprise a défini un ordre, on l'utilise ; sinon, ordre par défaut.
+    // On garantit qu'aucune section n'est perdue (les éventuelles manquantes
+    // sont ajoutées en queue dans l'ordre par défaut).
+    var sectionsMap = {
+      'description': descHtml,
+      'services': servicesHtml,
+      'pages': pagesHtml,
+      'horaires': horairesHtml,
+      'contact': contactHtml,
+      'social': socialHtml
+    };
+    var defaultOrder = ['description', 'services', 'pages', 'horaires', 'contact', 'social'];
+    var order = defaultOrder.slice();
+    if (c.sections_order) {
+      try {
+        var parsed = (typeof c.sections_order === 'string')
+          ? JSON.parse(c.sections_order)
+          : c.sections_order;
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          // On commence par les sections demandées (filtrées et dédupliquées)
+          var seen = {};
+          order = [];
+          parsed.forEach(function(k) {
+            if (sectionsMap.hasOwnProperty(k) && !seen[k]) {
+              seen[k] = true;
+              order.push(k);
+            }
+          });
+          // Puis on ajoute en fin celles qui manquent (ordre par défaut)
+          defaultOrder.forEach(function(k) {
+            if (!seen[k]) order.push(k);
+          });
+        }
+      } catch (e) {
+        // sections_order invalide → ordre par défaut
+        order = defaultOrder;
+      }
+    }
+    var bodyHtml = order.map(function(k) { return sectionsMap[k] || ''; }).join('');
+
+    // v2.12.0 : application de la couleur principale (theme_color).
+    // On expose --theme-primary (et une variante assombrie pour le gradient
+    // et les hovers) en CSS variable locale sur le wrapper. Le CSS du
+    // sélecteur .mini-site[data-themed] prend le relais pour styler.
+    var themeAttr = '';
+    if (c.theme_color && /^#[0-9a-fA-F]{6}$/.test(c.theme_color)) {
+      var primary = c.theme_color.toLowerCase();
+      var primaryDark = _darkenHex_(primary, 0.18);
+      themeAttr = ' data-themed style="--theme-primary:' + primary
+                + ';--theme-primary-dark:' + primaryDark + '"';
+    }
+
     return `
-      <article class="mini-site">
+      <article class="mini-site"${themeAttr}>
         ${heroHtml}
         <div class="mini-site-body">
           ${iaBtn}
-          ${descHtml}
-          ${servicesHtml}
-          ${pagesHtml}
-          ${horairesHtml}
-          ${contactHtml}
-          ${socialHtml}
+          ${bodyHtml}
         </div>
         ${footerHtml}
       </article>
     `;
   }
+
+  /**
+   * Assombrit un hex color (#rrggbb) d'un pourcentage donné (0..1).
+   * Utilisé pour générer --theme-primary-dark depuis --theme-primary.
+   */
+  function _darkenHex_(hex, pct) {
+    var n = parseInt(hex.slice(1), 16);
+    var r = Math.max(0, Math.floor(((n >> 16) & 0xff) * (1 - pct)));
+    var g = Math.max(0, Math.floor(((n >> 8) & 0xff) * (1 - pct)));
+    var b = Math.max(0, Math.floor((n & 0xff) * (1 - pct)));
+    return '#' + ((r << 16) | (g << 8) | b).toString(16).padStart(6, '0');
+  }
+
+
+  // ============================================================
+  //  PAGE PRO — PERSONNALISATION DU MINI-SITE (v2.12.0)
+  // ============================================================
+  //
+  // Disponible uniquement pour les entreprises Pro et Pro+.
+  // 4 axes de personnalisation :
+  //   1. Couleur principale (palette préselectionnée + picker libre)
+  //   2. Photo de couverture dédiée (réutilise renderImagePickerHTML)
+  //   3. Ordre des sections (drag-and-drop natif + flèches mobile)
+  //   4. Service vedette (1 page mise en avant en grand)
+  //
+  // 2 vues possibles :
+  //   - Verrouillage : si freemium → page upsell "Passez Pro"
+  //   - Formulaire : 4 cards de personnalisation + barre d'actions sticky
+  // ─────────────────────────────────────────────────────────────
+
+  // Palette de 12 couleurs équilibrées (suffisamment foncées pour
+  // garantir un bon contraste sur fond blanc et sur le texte blanc
+  // des boutons).
+  var MINI_SITE_THEME_PRESETS = [
+    { hex: '#0f766e', label: 'Teal océan' },        // teal-700 (défaut)
+    { hex: '#1e40af', label: 'Bleu profond' },
+    { hex: '#2563eb', label: 'Bleu vif' },
+    { hex: '#7c3aed', label: 'Violet royal' },
+    { hex: '#be185d', label: 'Rose framboise' },
+    { hex: '#dc2626', label: 'Rouge passion' },
+    { hex: '#ea580c', label: 'Orange tropical' },
+    { hex: '#ca8a04', label: 'Or soleil' },
+    { hex: '#15803d', label: 'Vert canopée' },
+    { hex: '#047857', label: 'Émeraude' },
+    { hex: '#475569', label: 'Ardoise sobre' },
+    { hex: '#18181b', label: 'Noir élégant' }
+  ];
+
+  // Labels des sections (clé identique au backend MINI_SITE_SECTION_KEYS).
+  var MINI_SITE_SECTION_LABELS = {
+    'description': { icon: '📝', label: 'À propos' },
+    'services':    { icon: '🛠️', label: 'Services proposés' },
+    'pages':       { icon: '📋', label: 'Mes publications' },
+    'horaires':    { icon: '⏰', label: "Horaires d'ouverture" },
+    'contact':     { icon: '📬', label: 'Contact' },
+    'social':      { icon: '📱', label: 'Réseaux sociaux' }
+  };
+  var MINI_SITE_DEFAULT_SECTIONS = ['description', 'services', 'pages', 'horaires', 'contact', 'social'];
+
+  // État local de la page (réinitialisé à chaque entrée)
+  var _miniSiteEdit = {
+    themeColor: '',
+    coverUrl: '',
+    sectionsOrder: null,
+    featuredPageId: '',
+    pages: []
+  };
+
+  async function renderProMiniSite() {
+    if (!state.user || state.user.type !== 'company') return navigate('home');
+    var c = state.user.data;
+
+    // Verrouillage Pro
+    var plan = c.plan || '';
+    var endMs = c.subscription_end_date ? new Date(c.subscription_end_date).getTime() : 0;
+    var isActive = (plan === 'pro' || plan === 'pro_plus') && (!endMs || endMs > Date.now());
+    if (!isActive) {
+      renderProMiniSiteUpsell_();
+      return;
+    }
+
+    // Affichage loader le temps de charger les pages
+    document.getElementById('main').innerHTML = `
+      <div class="dashboard-grid">
+        ${proSidebar('pro-mini-site')}
+        <section>
+          <div class="page-header"><h1>🎨 Ma vitrine</h1></div>
+          <div class="card" style="text-align:center;padding:40px">
+            <div style="font-size:32px;margin-bottom:8px">⏳</div>
+            <div>Chargement…</div>
+          </div>
+        </section>
+      </div>
+    `;
+
+    // On charge les pages services de l'entreprise pour permettre le
+    // choix du service vedette.
+    var r;
+    try {
+      r = await api('listMyPages', { company_id: state.user.id, token: state.user.token });
+    } catch (err) {
+      toast('error', 'Erreur réseau : ' + err.message);
+      return;
+    }
+    var pages = (r && r.ok && r.pages) ? r.pages : [];
+
+    // Initialise l'état local depuis la fiche
+    _miniSiteEdit.themeColor = (c.theme_color || '').toLowerCase();
+    _miniSiteEdit.coverUrl = c.cover_image_url || '';
+    _miniSiteEdit.featuredPageId = c.featured_page_id || '';
+    _miniSiteEdit.pages = pages;
+    // Sections : si pas défini, on prend l'ordre par défaut
+    var savedOrder = null;
+    if (c.sections_order) {
+      try {
+        var parsed = JSON.parse(c.sections_order);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          // Compléter avec les manquantes en queue
+          var seen = {};
+          savedOrder = [];
+          parsed.forEach(function(k) {
+            if (MINI_SITE_SECTION_LABELS[k] && !seen[k]) {
+              seen[k] = true;
+              savedOrder.push(k);
+            }
+          });
+          MINI_SITE_DEFAULT_SECTIONS.forEach(function(k) {
+            if (!seen[k]) savedOrder.push(k);
+          });
+        }
+      } catch (e) {}
+    }
+    _miniSiteEdit.sectionsOrder = savedOrder || MINI_SITE_DEFAULT_SECTIONS.slice();
+
+    renderProMiniSiteForm_();
+  }
+  window.renderProMiniSite = renderProMiniSite;
+
+  // ─── Page upsell freemium ───────────────────────────────────
+
+  function renderProMiniSiteUpsell_() {
+    var userEmail = state.user.data && state.user.data.email ? state.user.data.email : '';
+    var emailParam = userEmail ? '?prefilled_email=' + encodeURIComponent(userEmail) : '';
+    var proUrl = STRIPE_LINKS.pro + emailParam;
+    var proPlusUrl = STRIPE_LINKS.pro_plus + emailParam;
+
+    document.getElementById('main').innerHTML = `
+      <div class="dashboard-grid">
+        ${proSidebar('pro-mini-site')}
+        <section>
+          <div class="page-header"><h1>🎨 Ma vitrine</h1></div>
+          <div class="card" style="text-align:center;padding:40px 24px;background:linear-gradient(135deg,#eff6ff 0%,#dbeafe 100%);border:2px dashed #2563eb">
+            <div style="font-size:56px;margin-bottom:12px">🎨</div>
+            <h2 style="color:#1e3a8a;margin:0 0 8px 0">Personnalisez votre vitrine publique</h2>
+            <p style="color:#1e40af;max-width:560px;margin:0 auto 24px auto;line-height:1.6">
+              Votre mini-site est déjà <strong>en ligne et accessible à tous</strong>.
+              Avec un abonnement Pro, vous pouvez le <strong>personnaliser à votre image</strong>
+              pour le distinguer et mieux convertir vos visiteurs.
+            </p>
+            <div style="text-align:left;background:white;padding:20px 24px;border-radius:10px;max-width:520px;margin:0 auto 24px auto;box-shadow:0 2px 8px rgba(0,0,0,0.06)">
+              <strong style="color:#1e3a8a;display:block;margin-bottom:10px">✨ Ce que vous pourrez personnaliser :</strong>
+              <ul style="margin:0;padding-left:22px;color:var(--text-1);font-size:14px;line-height:1.8">
+                <li>🎨 <strong>Couleur principale</strong> appliquée à votre vitrine</li>
+                <li>🖼️ <strong>Photo de couverture dédiée</strong>, distincte de votre photo d'annuaire</li>
+                <li>🔀 <strong>Ordre des sections</strong> (À propos, Services, Publications…)</li>
+                <li>⭐ <strong>Service vedette</strong> mis en avant en grand</li>
+              </ul>
+            </div>
+            <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+              <a href="${proUrl}" target="_blank" rel="noopener" class="btn btn-primary" style="padding:14px 24px;font-size:15px;text-decoration:none">
+                💎 Passer à Pro — 39€/mois
+              </a>
+              <a href="${proPlusUrl}" target="_blank" rel="noopener" class="btn btn-secondary" style="padding:14px 24px;font-size:15px;text-decoration:none;background:#7c3aed;color:white;border-color:#7c3aed">
+                ⭐ Pro+ — 149€/mois
+              </a>
+            </div>
+            <div style="margin-top:20px">
+              <a onclick="navigate('pro-subscription')" style="cursor:pointer;color:var(--teal-700);font-size:13px;text-decoration:underline">
+                Voir le détail des formules →
+              </a>
+            </div>
+          </div>
+        </section>
+      </div>
+    `;
+  }
+
+  // ─── Formulaire de personnalisation ─────────────────────────
+
+  function renderProMiniSiteForm_() {
+    var st = _miniSiteEdit;
+
+    // Card 1 : palette de couleurs
+    var swatchesHtml = MINI_SITE_THEME_PRESETS.map(function(p) {
+      var isSelected = st.themeColor === p.hex.toLowerCase();
+      return `
+        <div class="theme-color-swatch ${isSelected ? 'selected' : ''}"
+             style="background:${p.hex}"
+             title="${esc(p.label)} (${p.hex})"
+             onclick="selectMiniSiteThemeColor('${p.hex}')"></div>
+      `;
+    }).join('');
+    var currentColorDisplay = st.themeColor || '#0f766e (défaut)';
+    var colorInputVal = st.themeColor || '#0f766e';
+    var resetBtn = st.themeColor
+      ? `<button type="button" class="theme-color-reset" onclick="selectMiniSiteThemeColor('')">↺ Revenir à la couleur par défaut</button>`
+      : '';
+
+    var colorCardHtml = `
+      <div class="card">
+        <h2>🎨 Couleur principale</h2>
+        <p class="card-sub">Cette couleur est appliquée au hero (quand vous n'avez pas de photo de couverture), aux titres de section, aux badges de prix et au bouton de l'agent IA.</p>
+        <div class="theme-color-grid">${swatchesHtml}</div>
+        <div class="theme-color-custom">
+          <input type="color" value="${esc(colorInputVal)}"
+                 oninput="onMiniSiteCustomColorInput(this.value)"
+                 title="Choisir une couleur libre" />
+          <div class="theme-color-custom-info">
+            <div class="label">Couleur libre</div>
+            <div class="value">${esc(currentColorDisplay)}</div>
+          </div>
+          ${resetBtn}
+        </div>
+      </div>
+    `;
+
+    // Card 2 : photo de couverture (réutilise renderImagePickerHTML)
+    // Pour éviter le conflit avec le champ image_url, on lit la valeur
+    // depuis le hidden input au submit et on l'envoie sous cover_image_url.
+    var coverCardHtml = `
+      <div class="card">
+        <h2>🖼️ Photo de couverture</h2>
+        <p class="card-sub">Cette image apparaît en grand format en haut de votre mini-site. Idéalement format paysage (1200×600 ou plus). Si vide, on utilise votre photo d'annuaire.</p>
+        ${renderImagePickerHTML({
+          context: 'mini-site-cover',
+          labelText: 'Image de couverture',
+          hintText: '',
+          required: false
+        })}
+      </div>
+    `;
+
+    // Card 3 : ordre des sections
+    var sectionItemsHtml = st.sectionsOrder.map(function(key, idx) {
+      var meta = MINI_SITE_SECTION_LABELS[key] || { icon: '❓', label: key };
+      var isFirst = idx === 0;
+      var isLast = idx === st.sectionsOrder.length - 1;
+      return `
+        <div class="sections-reorder-item"
+             draggable="true"
+             data-section-key="${esc(key)}"
+             data-section-idx="${idx}"
+             ondragstart="onSectionDragStart(event)"
+             ondragover="onSectionDragOver(event)"
+             ondragleave="onSectionDragLeave(event)"
+             ondrop="onSectionDrop(event)"
+             ondragend="onSectionDragEnd(event)">
+          <span class="sections-reorder-handle">⋮⋮</span>
+          <span class="sections-reorder-label">${meta.icon} ${esc(meta.label)}</span>
+          <div class="sections-reorder-arrows">
+            <button type="button" class="sections-reorder-arrow"
+                    aria-label="Monter cette section"
+                    onclick="moveSectionUp(${idx})"
+                    ${isFirst ? 'disabled' : ''}>↑</button>
+            <button type="button" class="sections-reorder-arrow"
+                    aria-label="Descendre cette section"
+                    onclick="moveSectionDown(${idx})"
+                    ${isLast ? 'disabled' : ''}>↓</button>
+          </div>
+        </div>
+      `;
+    }).join('');
+    var sectionsCardHtml = `
+      <div class="card">
+        <h2>🔀 Ordre des sections</h2>
+        <p class="card-sub">Glissez-déposez pour réordonner, ou utilisez les flèches ↑↓ (utile sur mobile). Le hero et le bouton de l'agent IA restent toujours en tête.</p>
+        <div class="sections-reorder-list" id="sections-reorder-list">
+          ${sectionItemsHtml}
+        </div>
+      </div>
+    `;
+
+    // Card 4 : service vedette
+    var typeIcons = { 'service': '🛠️', 'article': '📰', 'publication': '📱', 'annonce': '🏠' };
+    var typeLabels = { 'service': 'Service', 'article': 'Article', 'publication': 'Publication', 'annonce': 'Annonce' };
+    var featuredOptionsHtml = '';
+    if (st.pages.length === 0) {
+      featuredOptionsHtml = `
+        <div style="background:#fef3c7;border:1px dashed #f59e0b;border-radius:10px;padding:14px 18px;font-size:13px;color:#92400e">
+          💡 Vous n'avez pas encore créé de page service. <a onclick="navigate('pro-add-page')" style="cursor:pointer;color:#92400e;text-decoration:underline;font-weight:600">Créez-en une</a> pour pouvoir la mettre en vedette.
+        </div>
+      `;
+    } else {
+      // Option "aucun"
+      var isNoneSelected = !st.featuredPageId;
+      featuredOptionsHtml += `
+        <div class="featured-page-option ${isNoneSelected ? 'selected' : ''}"
+             onclick="selectMiniSiteFeatured('')">
+          <span class="featured-page-option-icon">🚫</span>
+          <div class="featured-page-option-info">
+            <div class="featured-page-option-title">Aucun service en vedette</div>
+            <div class="featured-page-option-type">Affichage standard de toutes les pages</div>
+          </div>
+          <span class="featured-page-option-check"></span>
+        </div>
+      `;
+      // Options par page
+      st.pages.forEach(function(p) {
+        var isSel = st.featuredPageId === p.id;
+        var icon = typeIcons[p.type_contenu] || '📄';
+        var tlabel = typeLabels[p.type_contenu] || 'Page';
+        featuredOptionsHtml += `
+          <div class="featured-page-option ${isSel ? 'selected' : ''}"
+               onclick="selectMiniSiteFeatured('${esc(p.id)}')">
+            <span class="featured-page-option-icon">${icon}</span>
+            <div class="featured-page-option-info">
+              <div class="featured-page-option-title">${esc(p.titre_service)}</div>
+              <div class="featured-page-option-type">${esc(tlabel)}</div>
+            </div>
+            <span class="featured-page-option-check"></span>
+          </div>
+        `;
+      });
+    }
+    var featuredCardHtml = `
+      <div class="card">
+        <h2>⭐ Service vedette</h2>
+        <p class="card-sub">Une page service mise en avant apparaît en grand format en tête de vos publications, avec un badge « Notre offre vedette ». Idéal pour mettre en avant votre offre phare.</p>
+        <div class="featured-page-options">${featuredOptionsHtml}</div>
+      </div>
+    `;
+
+    // Actions
+    var actionsHtml = `
+      <div class="customizer-actions">
+        <div class="actions-info">Pensez à enregistrer pour publier vos changements sur votre mini-site.</div>
+        <button type="button" class="btn btn-secondary" onclick="previewMyMiniSite()">👁️ Aperçu</button>
+        <button type="button" class="btn btn-primary" onclick="submitMiniSiteCustomization()">💾 Enregistrer</button>
+      </div>
+    `;
+
+    document.getElementById('main').innerHTML = `
+      <div class="dashboard-grid">
+        ${proSidebar('pro-mini-site')}
+        <section>
+          <div class="page-header">
+            <h1>🎨 Ma vitrine</h1>
+            <div style="color:var(--text-2);font-size:14px;margin-top:4px">Personnalisez votre mini-site public à votre image.</div>
+          </div>
+          <div class="mini-site-customizer">
+            ${colorCardHtml}
+            ${coverCardHtml}
+            ${sectionsCardHtml}
+            ${featuredCardHtml}
+            ${actionsHtml}
+          </div>
+        </section>
+      </div>
+    `;
+
+    // Initialisation du picker d'image avec la cover existante.
+    // renderImagePickerHTML crée un hidden input #img_hidden_input ;
+    // on doit aussi activer un mode par défaut (sinon aucun onglet n'est highlight).
+    // On masque l'onglet IA : il s'appuie sur des champs (titre_service,
+    // description_detaillee) qui n'existent pas ici.
+    var aiTab = document.querySelector('.image-mode-tab[data-mode="ai"]');
+    if (aiTab) aiTab.style.display = 'none';
+    var aiPanel = document.querySelector('.image-mode-panel[data-panel="ai"]');
+    if (aiPanel) aiPanel.style.display = 'none';
+
+    // Active le mode URL par défaut (toujours utile, avec ou sans cover préexistante)
+    if (typeof selectImageMode === 'function') {
+      selectImageMode('url');
+    }
+
+    // Si cover déjà définie, on la pose dans le champ URL + hidden + preview
+    if (_miniSiteEdit.coverUrl) {
+      var urlInput = document.getElementById('img_url_input');
+      if (urlInput) urlInput.value = _miniSiteEdit.coverUrl;
+      var hidden = document.getElementById('img_hidden_input');
+      if (hidden) hidden.value = _miniSiteEdit.coverUrl;
+      var prev = document.getElementById('img_preview_zone');
+      if (prev) {
+        prev.innerHTML = '<img src="' + esc(_miniSiteEdit.coverUrl) + '" style="max-width:100%;margin-top:10px;border-radius:8px" alt="Aperçu" />';
+      }
+    }
+  }
+
+  // ─── Handlers : couleur ─────────────────────────────────────
+
+  function selectMiniSiteThemeColor(hex) {
+    _miniSiteEdit.themeColor = (hex || '').toLowerCase();
+    renderProMiniSiteForm_();
+  }
+  window.selectMiniSiteThemeColor = selectMiniSiteThemeColor;
+
+  function onMiniSiteCustomColorInput(hex) {
+    if (!/^#[0-9a-fA-F]{6}$/.test(hex)) return;
+    _miniSiteEdit.themeColor = hex.toLowerCase();
+    // Live update du label sans re-render complet (sinon on perd le focus
+    // sur le picker natif et l'UX devient saccadée).
+    var info = document.querySelector('.theme-color-custom-info .value');
+    if (info) info.textContent = hex.toLowerCase();
+    // On dé-sélectionne tous les swatches (l'utilisateur est en mode libre)
+    document.querySelectorAll('.theme-color-swatch.selected').forEach(function(el) {
+      el.classList.remove('selected');
+    });
+    // Re-render léger après pause pour afficher le bouton "reset"
+    clearTimeout(window._themeColorDebounce);
+    window._themeColorDebounce = setTimeout(function() {
+      renderProMiniSiteForm_();
+    }, 500);
+  }
+  window.onMiniSiteCustomColorInput = onMiniSiteCustomColorInput;
+
+  // ─── Handlers : sections (drag-and-drop + flèches) ──────────
+
+  function moveSectionUp(idx) {
+    if (idx <= 0 || idx >= _miniSiteEdit.sectionsOrder.length) return;
+    var arr = _miniSiteEdit.sectionsOrder;
+    var tmp = arr[idx - 1];
+    arr[idx - 1] = arr[idx];
+    arr[idx] = tmp;
+    renderProMiniSiteForm_();
+  }
+  window.moveSectionUp = moveSectionUp;
+
+  function moveSectionDown(idx) {
+    var arr = _miniSiteEdit.sectionsOrder;
+    if (idx < 0 || idx >= arr.length - 1) return;
+    var tmp = arr[idx + 1];
+    arr[idx + 1] = arr[idx];
+    arr[idx] = tmp;
+    renderProMiniSiteForm_();
+  }
+  window.moveSectionDown = moveSectionDown;
+
+  var _sectionDragIdx = null;
+
+  function onSectionDragStart(e) {
+    var item = e.currentTarget;
+    _sectionDragIdx = parseInt(item.getAttribute('data-section-idx'), 10);
+    item.classList.add('dragging');
+    // Indique au browser qu'on déplace
+    try {
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', item.getAttribute('data-section-key'));
+    } catch (err) {}
+  }
+  window.onSectionDragStart = onSectionDragStart;
+
+  function onSectionDragOver(e) {
+    e.preventDefault();
+    try { e.dataTransfer.dropEffect = 'move'; } catch (err) {}
+    var item = e.currentTarget;
+    if (!item.classList.contains('dragging')) {
+      item.classList.add('drag-over');
+    }
+  }
+  window.onSectionDragOver = onSectionDragOver;
+
+  function onSectionDragLeave(e) {
+    e.currentTarget.classList.remove('drag-over');
+  }
+  window.onSectionDragLeave = onSectionDragLeave;
+
+  function onSectionDrop(e) {
+    e.preventDefault();
+    var target = e.currentTarget;
+    target.classList.remove('drag-over');
+    var dropIdx = parseInt(target.getAttribute('data-section-idx'), 10);
+    if (_sectionDragIdx === null || isNaN(dropIdx) || dropIdx === _sectionDragIdx) {
+      _sectionDragIdx = null;
+      return;
+    }
+    var arr = _miniSiteEdit.sectionsOrder;
+    var sourceIdx = _sectionDragIdx;
+    var moved = arr.splice(sourceIdx, 1)[0];
+    // Après splice : si on déplace vers l'avant (sourceIdx < dropIdx),
+    // tous les éléments à droite ont reculé de 1, donc on insère à dropIdx-1.
+    // Si on déplace vers l'arrière, dropIdx n'a pas bougé.
+    var insertAt = (sourceIdx < dropIdx) ? dropIdx - 1 : dropIdx;
+    arr.splice(insertAt, 0, moved);
+    _sectionDragIdx = null;
+    renderProMiniSiteForm_();
+  }
+  window.onSectionDrop = onSectionDrop;
+
+  function onSectionDragEnd(e) {
+    e.currentTarget.classList.remove('dragging');
+    // Nettoyer aussi les drag-over résiduels (au cas où dragleave n'a pas fired)
+    document.querySelectorAll('.sections-reorder-item.drag-over').forEach(function(el) {
+      el.classList.remove('drag-over');
+    });
+    _sectionDragIdx = null;
+  }
+  window.onSectionDragEnd = onSectionDragEnd;
+
+  // ─── Handler : service vedette ──────────────────────────────
+
+  function selectMiniSiteFeatured(pageId) {
+    _miniSiteEdit.featuredPageId = pageId || '';
+    renderProMiniSiteForm_();
+  }
+  window.selectMiniSiteFeatured = selectMiniSiteFeatured;
+
+  // ─── Aperçu ─────────────────────────────────────────────────
+
+  async function previewMyMiniSite() {
+    // On ouvre l'aperçu basé sur les données déjà enregistrées
+    // (on suggère d'enregistrer d'abord si le formulaire a été modifié).
+    if (_isMiniSiteFormDirty_()) {
+      var ok = confirm("Vous avez des modifications non enregistrées. L'aperçu affichera la version actuellement publiée. Continuer ?");
+      if (!ok) return;
+    }
+    toast('info', '⏳ Récupération de votre URL…');
+    var r;
+    try {
+      r = await api('getMyCompanySlug', {
+        token: state.user.token,
+        company_id: state.user.id
+      });
+    } catch (err) {
+      toast('error', 'Erreur réseau : ' + err.message);
+      return;
+    }
+    if (!r.ok) { toast('error', r.error || 'Erreur'); return; }
+    var shareUrl = window.location.origin + window.location.pathname + '?slug=' + r.slug;
+    window.open(shareUrl, '_blank', 'noopener');
+  }
+  window.previewMyMiniSite = previewMyMiniSite;
+
+  function _isMiniSiteFormDirty_() {
+    var c = state.user.data;
+    var st = _miniSiteEdit;
+    if ((c.theme_color || '').toLowerCase() !== st.themeColor) return true;
+    var coverNow = (document.getElementById('img_hidden_input') || {}).value || '';
+    if ((c.cover_image_url || '') !== coverNow) return true;
+    if ((c.featured_page_id || '') !== st.featuredPageId) return true;
+    var savedOrder = '';
+    try { savedOrder = c.sections_order ? JSON.stringify(JSON.parse(c.sections_order)) : ''; } catch (e) {}
+    var defaultStr = JSON.stringify(MINI_SITE_DEFAULT_SECTIONS);
+    var currentStr = JSON.stringify(st.sectionsOrder);
+    // On considère que l'ordre par défaut == pas de personnalisation, donc équivalent à savedOrder vide
+    if (!savedOrder && currentStr === defaultStr) return false;
+    if (savedOrder !== currentStr) return true;
+    return false;
+  }
+
+  // ─── Enregistrement ─────────────────────────────────────────
+
+  async function submitMiniSiteCustomization() {
+    var st = _miniSiteEdit;
+    // Récupère la cover depuis le picker
+    var coverHidden = document.getElementById('img_hidden_input');
+    var coverUrl = coverHidden ? (coverHidden.value || '') : '';
+
+    // Si l'ordre est exactement celui par défaut, on envoie chaîne vide
+    // pour ne pas stocker inutilement.
+    var orderToSend = '';
+    var defaultStr = JSON.stringify(MINI_SITE_DEFAULT_SECTIONS);
+    var currentStr = JSON.stringify(st.sectionsOrder);
+    if (currentStr !== defaultStr) orderToSend = currentStr;
+
+    var payload = {
+      company_id: state.user.id,
+      token: state.user.token,
+      theme_color: st.themeColor || '',
+      cover_image_url: coverUrl,
+      sections_order: orderToSend,
+      featured_page_id: st.featuredPageId || ''
+    };
+
+    showLoader('Enregistrement…');
+    var r;
+    try {
+      r = await api('updateCompany', payload);
+    } catch (err) {
+      hideLoader();
+      toast('error', 'Erreur réseau : ' + err.message);
+      return;
+    }
+    hideLoader();
+    if (!r.ok) { toast('error', r.error || 'Erreur'); return; }
+
+    // Refresh des données locales
+    var g = await api('getCompanyData', { company_id: state.user.id, token: state.user.token });
+    if (g.ok) {
+      state.user.data = g.company;
+      saveSession();
+    }
+    toast('success', '✅ Vitrine mise à jour');
+  }
+  window.submitMiniSiteCustomization = submitMiniSiteCustomization;
 
 
   // ============================================================
