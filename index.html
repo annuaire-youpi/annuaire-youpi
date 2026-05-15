@@ -2966,7 +2966,7 @@
 
   const APP = {
     name: 'Annuaire YOUPI',
-    version: 'v2.6.0',
+    version: 'v2.7.0',
     versionDate: '15 mai 2026',
     BACKEND_URL: 'https://script.google.com/macros/s/AKfycbzQNSOAGCJp1QmZU0IE1FYiKmKCcGgTUpqKa3RJG9lwiAND_EC5dGdbh2XCu26ZTMoxtw/exec'
   };
@@ -2979,7 +2979,7 @@
   // ------------------------------------------------------------
   const CHANGELOG = [
     {
-      version: 'v2.6.0',
+      version: 'v2.7.0',
       date: '15 mai 2026',
       title: "🛠️ Améliorations internes",
       entries: [
@@ -5839,7 +5839,15 @@
     sendConfirmed: false,     // checkbox "j'ai vérifié"
     sendQuotaRemaining: null, // mails restants aujourd'hui
     sendResult: null,         // résultat du dernier envoi { sent, failed, errors }
-    sendCampaigns: []         // historique
+    sendCampaigns: [],        // historique
+    // ─── Automations (étape D) ──────────────
+    autos: [],                // liste chargée
+    autoEvents: [],           // liste des déclencheurs disponibles
+    autoEditingId: null,      // 'new' | 'auto_xxx' | null (vue liste)
+    autoDraft: null,          // { name, description, trigger_event, steps[], enabled }
+    autoView: 'list',         // 'list' | 'queue'
+    autoQueueItems: [],       // file d'attente chargée
+    autoQueueFilter: 'pending' // 'pending' | 'sent' | 'error' | 'cancelled' | 'all'
   };
 
   // Statuts d'entreprises disponibles
@@ -5909,6 +5917,7 @@
             <button class="crm-tab ${_crm.tab === 'templates' ? 'active' : ''}" onclick="switchCrmTab('templates')">📝 Modèles</button>
             <button class="crm-tab ${_crm.tab === 'segments' ? 'active' : ''}" onclick="switchCrmTab('segments')">🎯 Segments</button>
             <button class="crm-tab ${_crm.tab === 'send' ? 'active' : ''}" onclick="switchCrmTab('send')">📤 Envoyer une campagne</button>
+            <button class="crm-tab ${_crm.tab === 'autos' ? 'active' : ''}" onclick="switchCrmTab('autos')">🤖 Automatisations</button>
           </div>
 
           <div id="crm-content"></div>
@@ -6081,6 +6090,30 @@
         }
         .crm-confirm-check:hover { border-color: var(--teal-700); }
         .crm-confirm-check input[type="checkbox"]:checked ~ span strong { color: var(--teal-700); }
+        .crm-auto-step {
+          display: flex;
+          gap: 14px;
+          align-items: stretch;
+          padding: 14px;
+          background: var(--sand-50);
+          border-radius: var(--radius);
+          margin-bottom: 10px;
+        }
+        .crm-auto-step-num {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 32px;
+          height: 32px;
+          border-radius: 50%;
+          background: var(--teal-700);
+          color: white;
+          font-weight: 700;
+          font-size: 14px;
+          flex-shrink: 0;
+          align-self: flex-end;
+          margin-bottom: 6px;
+        }
       `;
       document.head.appendChild(style);
     }
@@ -6104,6 +6137,9 @@
     _crm.sendSample = [];
     _crm.sendConfirmed = false;
     _crm.sendResult = null;
+    _crm.autoEditingId = null;
+    _crm.autoDraft = null;
+    _crm.autoView = 'list';
     await renderAdminCrm();
   }
   window.switchCrmTab = switchCrmTab;
@@ -6118,6 +6154,8 @@
       await renderCrmSegments(container);
     } else if (_crm.tab === 'send') {
       await renderCrmSend(container);
+    } else if (_crm.tab === 'autos') {
+      await renderCrmAutomations(container);
     }
   }
 
@@ -7617,6 +7655,585 @@
     }
 
     container.innerHTML = html;
+  }
+
+  // ─── SOUS-SECTION : AUTOMATISATIONS ─────────────────────────
+
+  // Helper : label lisible d'un event key
+  function autoEventLabel(eventKey) {
+    const evt = (_crm.autoEvents || []).find(function(e) { return e.key === eventKey; });
+    return evt ? evt.label : eventKey;
+  }
+
+  async function renderCrmAutomations(container) {
+    // En mode édition
+    if (_crm.autoEditingId !== null) {
+      await renderCrmAutomationEditor(container);
+      return;
+    }
+    // En mode file d'attente
+    if (_crm.autoView === 'queue') {
+      await renderCrmAutomationQueue(container);
+      return;
+    }
+
+    container.innerHTML = `
+      <div class="card crm-empty">
+        <div style="font-size:32px;margin-bottom:8px">⏳</div>
+        <div>Chargement des automatisations...</div>
+      </div>
+    `;
+
+    try {
+      const [autoR, tplR] = await Promise.all([
+        api('adminListMailAutomations', { token: state.user.token }),
+        api('adminListMailTemplates', { token: state.user.token })
+      ]);
+      if (!autoR.ok) throw new Error(autoR.error || 'Erreur chargement');
+      _crm.autos = autoR.automations || [];
+      _crm.autoEvents = autoR.events || [];
+      _crm.templates = tplR.ok ? (tplR.templates || []) : [];
+    } catch (err) {
+      container.innerHTML = `<div class="card"><div style="color:#dc2626">Erreur : ${esc(err.message)}</div></div>`;
+      return;
+    }
+
+    let html = `
+      <div class="card" style="margin-bottom:14px;background:#eff6ff;border-left:4px solid #2563eb">
+        <div style="display:flex;gap:12px;align-items:flex-start">
+          <div style="font-size:24px">💡</div>
+          <div style="font-size:13px;line-height:1.6;color:#1e3a8a">
+            Les <strong>automatisations</strong> envoient des séries de mails programmés
+            quand un événement se produit (nouvelle inscription, mise en pause d'une fiche, etc.).
+            Le traitement automatique a lieu chaque matin à 6h&nbsp;: assurez-vous que les envois quotidiens sont activés ci-dessous.
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:14px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
+        <div style="display:flex;align-items:center;gap:12px">
+          <div style="font-size:14px;font-weight:600">⚙️ Envois automatiques quotidiens</div>
+          <span id="crm-trigger-status" style="font-size:12px;color:var(--text-2)">État inconnu</span>
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <button class="btn btn-secondary btn-sm" onclick="enableAutomationTrigger(true)">✅ Activer</button>
+          <button class="btn btn-ghost btn-sm" onclick="enableAutomationTrigger(false)" style="color:#dc2626">⏹️ Désactiver</button>
+          <button class="btn btn-ghost btn-sm" onclick="processQueueNowFromUI()">⚡ Traiter maintenant</button>
+        </div>
+      </div>
+
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:12px">
+        <div style="color:var(--text-2);font-size:14px">
+          ${_crm.autos.length} automatisation${_crm.autos.length > 1 ? 's' : ''} configurée${_crm.autos.length > 1 ? 's' : ''}
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-secondary btn-sm" onclick="goToAutomationQueue()">📋 File d'attente</button>
+          <button class="btn btn-primary" onclick="startNewAutomation()">+ Nouvelle automatisation</button>
+        </div>
+      </div>
+    `;
+
+    if (_crm.autos.length === 0) {
+      html += `
+        <div class="card crm-empty">
+          <div style="font-size:48px;margin-bottom:12px">🤖</div>
+          <h3 style="margin:0 0 8px 0">Aucune automatisation pour l'instant</h3>
+          <p style="margin:0 0 16px 0">Créez votre première séquence automatique de mails.</p>
+          <button class="btn btn-primary" onclick="startNewAutomation()">+ Créer une automatisation</button>
+        </div>
+      `;
+    } else {
+      html += '<div>';
+      _crm.autos.forEach(function(a) {
+        const stepsLabel = a.steps.length > 0
+          ? a.steps.map(function(s) { return 'J+' + s.delay_days; }).join(' → ')
+          : 'aucune étape';
+        const statusBadge = a.enabled
+          ? '<span style="background:#dcfce7;color:#166534;padding:3px 9px;border-radius:12px;font-size:11px;font-weight:600">● ACTIVE</span>'
+          : '<span style="background:#f1f5f9;color:#64748b;padding:3px 9px;border-radius:12px;font-size:11px;font-weight:600">● INACTIVE</span>';
+        html += `
+          <div class="crm-template-card">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap">
+              <div style="flex:1;min-width:0">
+                <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px">
+                  <div style="font-weight:600;font-size:15px">${esc(a.name)}</div>
+                  ${statusBadge}
+                </div>
+                ${a.description ? `<div style="color:var(--text-2);font-size:13px;margin-bottom:8px">${esc(a.description)}</div>` : ''}
+                <div style="font-size:12px;margin-bottom:6px">
+                  <strong>Déclencheur :</strong> ${esc(autoEventLabel(a.trigger_event))}
+                </div>
+                <div style="font-size:12px;margin-bottom:8px;color:var(--text-1)">
+                  <strong>Séquence :</strong> ${esc(stepsLabel)} (${a.steps.length} étape${a.steps.length > 1 ? 's' : ''})
+                </div>
+                <div style="font-size:12px;display:flex;gap:14px;flex-wrap:wrap;color:var(--text-2)">
+                  <span>📥 <strong style="color:var(--teal-700)">${a.total_enrolled}</strong> entreprise${a.total_enrolled > 1 ? 's' : ''} enrôlée${a.total_enrolled > 1 ? 's' : ''}</span>
+                  <span>📤 <strong style="color:var(--teal-700)">${a.total_sent}</strong> mail${a.total_sent > 1 ? 's' : ''} envoyé${a.total_sent > 1 ? 's' : ''}</span>
+                </div>
+              </div>
+              <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:flex-start">
+                <button class="btn btn-secondary btn-sm" onclick="toggleAutomation('${esc(a.id)}', ${!a.enabled})">
+                  ${a.enabled ? '⏸️ Désactiver' : '▶️ Activer'}
+                </button>
+                <button class="btn btn-secondary btn-sm" onclick="editAutomation('${esc(a.id)}')">✏️ Modifier</button>
+                <button class="btn btn-ghost btn-sm" onclick="deleteAutomation('${esc(a.id)}', '${esc(a.name).replace(/'/g, '&apos;')}')" style="color:#dc2626">🗑️</button>
+              </div>
+            </div>
+          </div>
+        `;
+      });
+      html += '</div>';
+    }
+
+    container.innerHTML = html;
+    // Charge l'état du trigger en arrière-plan
+    refreshTriggerStatusBadge();
+  }
+
+  // Cosmétique uniquement : on n'a pas d'endpoint pour lire l'état du trigger,
+  // donc on affiche un message générique. Le bouton "Activer" est idempotent
+  // côté backend, donc pas besoin de connaître l'état.
+  function refreshTriggerStatusBadge() {
+    const el = document.getElementById('crm-trigger-status');
+    if (el) el.textContent = '(activer pour démarrer les envois quotidiens à 6h)';
+  }
+
+  async function enableAutomationTrigger(enable) {
+    const action = enable ? 'activer' : 'désactiver';
+    if (!confirm('Voulez-vous ' + action + ' les envois automatiques quotidiens ?')) return;
+    try {
+      const r = await api('adminSetupAutomationTrigger', {
+        token: state.user.token,
+        enable: enable
+      });
+      if (!r.ok) { toast('error', 'Erreur : ' + (r.error || 'inconnue')); return; }
+      toast('success', enable
+        ? 'Envois automatiques activés ✅ (déclenchement quotidien à 6h)'
+        : 'Envois automatiques désactivés ⏹️');
+    } catch (err) {
+      toast('error', 'Erreur réseau : ' + err.message);
+    }
+  }
+  window.enableAutomationTrigger = enableAutomationTrigger;
+
+  async function processQueueNowFromUI() {
+    if (!confirm('Traiter immédiatement tous les mails dus dans la file d\'attente ?\n\nUtile pour tester sans attendre le traitement quotidien automatique.')) return;
+    toast('info', '⏳ Traitement en cours...');
+    try {
+      const r = await api('adminProcessQueueNow', { token: state.user.token });
+      if (!r.ok) { toast('error', 'Erreur : ' + (r.error || 'inconnue')); return; }
+      let msg = '✅ ' + r.sent + ' mail' + (r.sent > 1 ? 's' : '') + ' envoyé' + (r.sent > 1 ? 's' : '');
+      if (r.errors > 0) msg += ' · ' + r.errors + ' erreur' + (r.errors > 1 ? 's' : '');
+      if (r.skipped_quota > 0) msg += ' · ' + r.skipped_quota + ' reporté' + (r.skipped_quota > 1 ? 's' : '') + ' (quota)';
+      toast('success', msg, 6000);
+      // Recharge la liste pour mettre à jour les compteurs
+      _crm.autoEditingId = null;
+      _crm.autoDraft = null;
+      await renderCrmContent();
+    } catch (err) {
+      toast('error', 'Erreur réseau : ' + err.message);
+    }
+  }
+  window.processQueueNowFromUI = processQueueNowFromUI;
+
+  function startNewAutomation() {
+    _crm.autoEditingId = 'new';
+    _crm.autoDraft = {
+      name: '',
+      description: '',
+      trigger_event: 'new_registration',
+      enabled: true,
+      steps: [
+        { delay_days: 0, template_id: '', template_name: '' }
+      ]
+    };
+    renderCrmContent();
+  }
+  window.startNewAutomation = startNewAutomation;
+
+  function editAutomation(id) {
+    const a = _crm.autos.find(function(x) { return x.id === id; });
+    if (!a) return;
+    _crm.autoEditingId = id;
+    _crm.autoDraft = {
+      name: a.name,
+      description: a.description || '',
+      trigger_event: a.trigger_event,
+      enabled: a.enabled,
+      steps: (a.steps || []).map(function(s) {
+        return {
+          delay_days: Number(s.delay_days) || 0,
+          template_id: s.template_id || '',
+          template_name: s.template_name || ''
+        };
+      })
+    };
+    renderCrmContent();
+  }
+  window.editAutomation = editAutomation;
+
+  async function toggleAutomation(id, enable) {
+    try {
+      const r = await api('adminToggleMailAutomation', {
+        token: state.user.token,
+        id: id,
+        enabled: enable
+      });
+      if (!r.ok) { toast('error', 'Erreur : ' + (r.error || 'inconnue')); return; }
+      toast('success', enable ? 'Automatisation activée ▶️' : 'Automatisation désactivée ⏸️');
+      const a = _crm.autos.find(function(x) { return x.id === id; });
+      if (a) a.enabled = enable;
+      renderCrmContent();
+    } catch (err) {
+      toast('error', 'Erreur réseau : ' + err.message);
+    }
+  }
+  window.toggleAutomation = toggleAutomation;
+
+  async function deleteAutomation(id, name) {
+    const cancelPending = confirm(
+      '⚠️ Supprimer l\'automatisation « ' + name + ' » ?\n\n' +
+      'OK : supprimer ET annuler les mails en attente liés\n' +
+      'Annuler : ne pas supprimer'
+    );
+    if (!cancelPending) return;
+    try {
+      const r = await api('adminDeleteMailAutomation', {
+        token: state.user.token,
+        id: id,
+        cancel_pending: true
+      });
+      if (!r.ok) { toast('error', 'Erreur : ' + (r.error || 'inconnue')); return; }
+      toast('success', 'Automatisation supprimée');
+      _crm.autos = _crm.autos.filter(function(x) { return x.id !== id; });
+      renderCrmContent();
+    } catch (err) {
+      toast('error', 'Erreur réseau : ' + err.message);
+    }
+  }
+  window.deleteAutomation = deleteAutomation;
+
+  function cancelAutomationEdit() {
+    if (_crm.autoDraft && _crm.autoDraft.name) {
+      if (!confirm('Annuler les modifications en cours ?')) return;
+    }
+    _crm.autoEditingId = null;
+    _crm.autoDraft = null;
+    renderCrmContent();
+  }
+  window.cancelAutomationEdit = cancelAutomationEdit;
+
+  // ─── ÉDITEUR D'AUTOMATISATION ───────────────────────────────
+
+  async function renderCrmAutomationEditor(container) {
+    const isNew = _crm.autoEditingId === 'new';
+    const d = _crm.autoDraft;
+    if (!d) {
+      container.innerHTML = `<div class="card">Aucun brouillon en cours.</div>`;
+      return;
+    }
+
+    // Construire dropdown déclencheurs
+    let eventOptions = '';
+    (_crm.autoEvents || []).forEach(function(e) {
+      eventOptions += `<option value="${esc(e.key)}" ${e.key === d.trigger_event ? 'selected' : ''}>${esc(e.label)}</option>`;
+    });
+
+    // Construire la liste des étapes
+    let stepsHtml = '';
+    d.steps.forEach(function(step, idx) {
+      let tplOptions = '<option value="">— Choisir un modèle —</option>';
+      _crm.templates.forEach(function(t) {
+        tplOptions += `<option value="${esc(t.id)}" ${t.id === step.template_id ? 'selected' : ''}>${esc(t.name)}</option>`;
+      });
+      stepsHtml += `
+        <div class="crm-auto-step">
+          <div class="crm-auto-step-num">${idx + 1}</div>
+          <div style="flex:1;display:grid;grid-template-columns:120px 1fr auto;gap:10px;align-items:end">
+            <div>
+              <label style="display:block;font-size:11px;color:var(--text-2);margin-bottom:4px;font-weight:600">Délai (jours)</label>
+              <input type="number" min="0" max="365" value="${step.delay_days}"
+                oninput="updateAutoStep(${idx}, 'delay_days', parseInt(this.value, 10) || 0)"
+                style="width:100%;padding:8px;border:1px solid var(--border);border-radius:var(--radius);font-size:13px">
+            </div>
+            <div>
+              <label style="display:block;font-size:11px;color:var(--text-2);margin-bottom:4px;font-weight:600">Modèle de mail à envoyer</label>
+              <select onchange="updateAutoStepTemplate(${idx}, this.value)"
+                style="width:100%;padding:8px;border:1px solid var(--border);border-radius:var(--radius);font-size:13px;background:white">
+                ${tplOptions}
+              </select>
+            </div>
+            <div>
+              <button class="btn btn-ghost btn-sm" onclick="removeAutoStep(${idx})" title="Supprimer cette étape" style="color:#dc2626">🗑️</button>
+            </div>
+          </div>
+        </div>
+      `;
+    });
+
+    container.innerHTML = `
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+          <h3 style="margin:0">${isNew ? '➕ Nouvelle automatisation' : '✏️ Modifier l\'automatisation'}</h3>
+          <button class="btn btn-ghost btn-sm" onclick="cancelAutomationEdit()">← Retour</button>
+        </div>
+
+        <label style="display:block;font-size:13px;font-weight:600;margin-bottom:6px">Nom de l'automatisation</label>
+        <input type="text" value="${esc(d.name)}" placeholder="Ex. Onboarding nouvelle inscription"
+          oninput="_crm.autoDraft.name = this.value"
+          style="width:100%;padding:10px;border:1px solid var(--border);border-radius:var(--radius);font-size:14px;margin-bottom:14px">
+
+        <label style="display:block;font-size:13px;font-weight:600;margin-bottom:6px">Description <span style="color:var(--text-2);font-weight:400">(optionnel)</span></label>
+        <input type="text" value="${esc(d.description)}" placeholder="À quoi sert cette séquence ?"
+          oninput="_crm.autoDraft.description = this.value"
+          style="width:100%;padding:10px;border:1px solid var(--border);border-radius:var(--radius);font-size:14px;margin-bottom:20px">
+
+        <label style="display:block;font-size:13px;font-weight:600;margin-bottom:6px">⚡ Déclencheur</label>
+        <div style="font-size:12px;color:var(--text-2);margin-bottom:6px">Événement qui déclenche cette séquence automatiquement.</div>
+        <select onchange="_crm.autoDraft.trigger_event = this.value"
+          style="width:100%;padding:10px;border:1px solid var(--border);border-radius:var(--radius);font-size:14px;background:white;margin-bottom:24px">
+          ${eventOptions}
+        </select>
+
+        <div class="crm-filter-section" style="border-top:1px solid var(--border);padding-top:18px;margin-bottom:0">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+            <div class="crm-filter-title" style="margin:0">📬 Étapes de la séquence</div>
+            <button class="btn btn-secondary btn-sm" onclick="addAutoStep()">+ Ajouter une étape</button>
+          </div>
+          <div style="font-size:12px;color:var(--text-2);margin-bottom:14px">
+            Chaque étape envoie un mail X jours après le déclencheur. Délai 0 = envoi immédiat.
+          </div>
+          ${_crm.templates.length === 0
+            ? `<div style="color:#dc2626;font-size:13px;padding:12px;background:#fee2e2;border-radius:var(--radius)">Aucun modèle disponible. Créez d'abord un modèle dans l'onglet 📝 Modèles.</div>`
+            : stepsHtml || '<div style="color:var(--text-2);font-size:13px;padding:16px;text-align:center">Aucune étape. Cliquez sur « + Ajouter une étape ».</div>'}
+        </div>
+
+        <div style="display:flex;gap:8px;margin-top:24px;flex-wrap:wrap;padding-top:18px;border-top:1px solid var(--border)">
+          <button class="btn btn-primary" onclick="saveAutomation()">${isNew ? 'Créer l\'automatisation' : 'Enregistrer les modifications'}</button>
+          <button class="btn btn-ghost" onclick="cancelAutomationEdit()">Annuler</button>
+        </div>
+      </div>
+    `;
+  }
+
+  function updateAutoStep(idx, key, value) {
+    if (!_crm.autoDraft || !_crm.autoDraft.steps[idx]) return;
+    _crm.autoDraft.steps[idx][key] = value;
+  }
+  window.updateAutoStep = updateAutoStep;
+
+  function updateAutoStepTemplate(idx, tplId) {
+    if (!_crm.autoDraft || !_crm.autoDraft.steps[idx]) return;
+    _crm.autoDraft.steps[idx].template_id = tplId;
+    const tpl = _crm.templates.find(function(t) { return t.id === tplId; });
+    _crm.autoDraft.steps[idx].template_name = tpl ? tpl.name : '';
+  }
+  window.updateAutoStepTemplate = updateAutoStepTemplate;
+
+  function addAutoStep() {
+    if (!_crm.autoDraft) return;
+    // Délai par défaut = max(délais existants) + 7 jours
+    const maxDelay = _crm.autoDraft.steps.reduce(function(m, s) {
+      return Math.max(m, Number(s.delay_days) || 0);
+    }, 0);
+    _crm.autoDraft.steps.push({
+      delay_days: maxDelay + 7,
+      template_id: '',
+      template_name: ''
+    });
+    renderCrmContent();
+  }
+  window.addAutoStep = addAutoStep;
+
+  function removeAutoStep(idx) {
+    if (!_crm.autoDraft) return;
+    if (_crm.autoDraft.steps.length <= 1) {
+      toast('error', 'Une automatisation doit avoir au moins une étape');
+      return;
+    }
+    _crm.autoDraft.steps.splice(idx, 1);
+    renderCrmContent();
+  }
+  window.removeAutoStep = removeAutoStep;
+
+  async function saveAutomation() {
+    const d = _crm.autoDraft;
+    if (!d) return;
+    if (!d.name || !d.name.trim()) { toast('error', 'Le nom est requis'); return; }
+    if (!d.trigger_event) { toast('error', 'Le déclencheur est requis'); return; }
+    if (!Array.isArray(d.steps) || d.steps.length === 0) {
+      toast('error', 'Au moins une étape requise'); return;
+    }
+    for (let i = 0; i < d.steps.length; i++) {
+      if (!d.steps[i].template_id) {
+        toast('error', 'Étape ' + (i + 1) + ' : choisissez un modèle');
+        return;
+      }
+    }
+
+    const payload = {
+      token: state.user.token,
+      name: d.name.trim(),
+      description: (d.description || '').trim(),
+      trigger_event: d.trigger_event,
+      enabled: !!d.enabled,
+      steps: d.steps.map(function(s) {
+        return {
+          delay_days: Number(s.delay_days) || 0,
+          template_id: s.template_id,
+          template_name: s.template_name || ''
+        };
+      })
+    };
+    if (_crm.autoEditingId !== 'new') payload.id = _crm.autoEditingId;
+
+    try {
+      const r = await api('adminSaveMailAutomation', payload);
+      if (!r.ok) { toast('error', 'Erreur : ' + (r.error || 'inconnue')); return; }
+      toast('success', r.created ? 'Automatisation créée ✅' : 'Modifications enregistrées ✅');
+      _crm.autoEditingId = null;
+      _crm.autoDraft = null;
+      await renderCrmContent();
+    } catch (err) {
+      toast('error', 'Erreur réseau : ' + err.message);
+    }
+  }
+  window.saveAutomation = saveAutomation;
+
+  // ─── FILE D'ATTENTE ─────────────────────────────────────────
+
+  function goToAutomationQueue() {
+    _crm.autoView = 'queue';
+    _crm.autoQueueFilter = 'pending';
+    renderCrmContent();
+  }
+  window.goToAutomationQueue = goToAutomationQueue;
+
+  function leaveAutomationQueue() {
+    _crm.autoView = 'list';
+    renderCrmContent();
+  }
+  window.leaveAutomationQueue = leaveAutomationQueue;
+
+  function setAutoQueueFilter(f) {
+    _crm.autoQueueFilter = f;
+    renderCrmContent();
+  }
+  window.setAutoQueueFilter = setAutoQueueFilter;
+
+  async function renderCrmAutomationQueue(container) {
+    container.innerHTML = `
+      <div class="card crm-empty">
+        <div style="font-size:32px;margin-bottom:8px">⏳</div>
+        <div>Chargement de la file d'attente...</div>
+      </div>
+    `;
+
+    try {
+      const r = await api('adminListAutomationQueue', {
+        token: state.user.token,
+        filter: _crm.autoQueueFilter
+      });
+      if (!r.ok) {
+        container.innerHTML = `<div class="card"><div style="color:#dc2626">Erreur : ${esc(r.error || 'inconnue')}</div></div>`;
+        return;
+      }
+      _crm.autoQueueItems = r.items || [];
+    } catch (err) {
+      container.innerHTML = `<div class="card"><div style="color:#dc2626">Erreur réseau : ${esc(err.message)}</div></div>`;
+      return;
+    }
+
+    const filters = [
+      { key: 'pending',   label: '⏳ En attente' },
+      { key: 'sent',      label: '✅ Envoyés' },
+      { key: 'error',     label: '❌ Erreurs' },
+      { key: 'cancelled', label: '🚫 Annulés' },
+      { key: 'skipped',   label: '⏭️ Reportés' },
+      { key: 'all',       label: '📊 Tous' }
+    ];
+    let filterBar = '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px">';
+    filters.forEach(function(f) {
+      const active = f.key === _crm.autoQueueFilter;
+      filterBar += `<button class="btn ${active ? 'btn-primary' : 'btn-ghost'} btn-sm" onclick="setAutoQueueFilter('${f.key}')">${f.label}</button>`;
+    });
+    filterBar += '</div>';
+
+    let html = `
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:12px">
+        <div>
+          <h3 style="margin:0">📋 File d'attente</h3>
+          <div style="color:var(--text-2);font-size:13px;margin-top:4px">${_crm.autoQueueItems.length} entrée${_crm.autoQueueItems.length > 1 ? 's' : ''}</div>
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="leaveAutomationQueue()">← Retour</button>
+      </div>
+      ${filterBar}
+    `;
+
+    if (_crm.autoQueueItems.length === 0) {
+      html += `
+        <div class="card crm-empty">
+          <div style="font-size:48px;margin-bottom:12px">📭</div>
+          <p style="margin:0">Aucune entrée dans cette catégorie.</p>
+        </div>
+      `;
+    } else {
+      html += '<div>';
+      _crm.autoQueueItems.forEach(function(q) {
+        const statusBadge = renderQueueStatusBadge(q.status);
+        const isPast = new Date(q.scheduled_at).getTime() < Date.now();
+        html += `
+          <div class="crm-template-card" style="padding:12px 16px">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap">
+              <div style="flex:1;min-width:0">
+                <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px">
+                  ${statusBadge}
+                  <span style="font-weight:600;font-size:13px">${esc(q.template_name || '(modèle supprimé)')}</span>
+                  <span style="font-size:11px;color:var(--text-2)">étape ${(q.step_index || 0) + 1}</span>
+                </div>
+                <div style="font-size:12px;color:var(--text-1);margin-bottom:4px">
+                  ${esc(q.company_email)} · auto : ${esc(q.automation_name || '—')}
+                </div>
+                <div style="font-size:11px;color:var(--text-2)">
+                  ${q.status === 'pending'
+                    ? '📅 Prévu le ' + formatDateTimeShort(q.scheduled_at) + (isPast ? ' <span style="color:#dc2626">(en retard)</span>' : '')
+                    : q.status === 'sent'
+                      ? '✅ Envoyé le ' + formatDateTimeShort(q.sent_at)
+                      : '⏰ ' + formatDateTimeShort(q.sent_at || q.scheduled_at)
+                  }
+                  ${q.error ? ' · <span style="color:#dc2626">' + esc(q.error) + '</span>' : ''}
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+      });
+      html += '</div>';
+    }
+
+    container.innerHTML = html;
+  }
+
+  function renderQueueStatusBadge(status) {
+    const map = {
+      'pending':   { bg: '#fef3c7', color: '#92400e', label: '⏳ En attente' },
+      'sent':      { bg: '#dcfce7', color: '#166534', label: '✅ Envoyé' },
+      'error':     { bg: '#fee2e2', color: '#991b1b', label: '❌ Erreur' },
+      'cancelled': { bg: '#f1f5f9', color: '#64748b', label: '🚫 Annulé' },
+      'skipped':   { bg: '#e0e7ff', color: '#3730a3', label: '⏭️ Reporté' }
+    };
+    const s = map[status] || { bg: '#f1f5f9', color: '#64748b', label: status };
+    return `<span style="background:${s.bg};color:${s.color};padding:3px 9px;border-radius:12px;font-size:11px;font-weight:600">${s.label}</span>`;
+  }
+
+  function formatDateTimeShort(iso) {
+    if (!iso) return '';
+    try {
+      const d = new Date(iso);
+      return d.toLocaleString('fr-FR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
+    } catch (e) {
+      return iso;
+    }
   }
 
 
