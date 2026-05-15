@@ -2193,6 +2193,58 @@
       50% { opacity: 1; }
     }
 
+    /* Bouton premium pour la génération IA */
+    .btn-generate-ai {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      padding: 14px 20px;
+      background: linear-gradient(135deg, var(--teal-700) 0%, var(--teal-800) 100%);
+      color: #ffffff;
+      border: none;
+      border-radius: var(--radius);
+      font-weight: 700;
+      font-size: 15px;
+      letter-spacing: 0.3px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+      position: relative;
+      overflow: hidden;
+    }
+    .btn-generate-ai::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+      transition: left 0.6s ease;
+    }
+    .btn-generate-ai:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(37, 99, 235, 0.35);
+      background: linear-gradient(135deg, var(--teal-800) 0%, var(--teal-900) 100%);
+    }
+    .btn-generate-ai:hover:not(:disabled)::before {
+      left: 100%;
+    }
+    .btn-generate-ai:active:not(:disabled) {
+      transform: translateY(0);
+    }
+    .btn-generate-ai:disabled {
+      opacity: 0.65;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+    .btn-generate-ai-icon {
+      font-size: 20px;
+      line-height: 1;
+    }
+
 
     /* Badges d'expiration sur les cards de pages */
     .badge-expiration {
@@ -2886,7 +2938,7 @@
 
   <!-- ====================== FOOTER ====================== -->
   <footer class="footer">
-    <div>Annuaire YOUPI<span style="color:var(--teal-700)">®</span> · <a id="footer-version-link" onclick="navigate('changelog')" style="cursor:pointer;text-decoration:underline"><span id="footer-version">v2.3.0</span></a> · <a onclick="navigate('changelog')" style="cursor:pointer;text-decoration:underline">📰 Nouveautés</a></div>
+    <div>Annuaire YOUPI<span style="color:var(--teal-700)">®</span> · <a id="footer-version-link" onclick="navigate('changelog')" style="cursor:pointer;text-decoration:underline"><span id="footer-version">v2.4.0</span></a> · <a onclick="navigate('changelog')" style="cursor:pointer;text-decoration:underline">📰 Nouveautés</a></div>
     <div class="mt-16 text-xs">Conçu pour les entreprises ultra-marines · Martinique 🇲🇶 · Guadeloupe 🇬🇵 · Guyane 🇬🇫</div>
     <div class="footer-admin">
       <a onclick="openLoginAdmin()" style="cursor:pointer">Administration</a>
@@ -2914,7 +2966,7 @@
 
   const APP = {
     name: 'Annuaire YOUPI',
-    version: 'v2.3.0',
+    version: 'v2.4.0',
     versionDate: '15 mai 2026',
     BACKEND_URL: 'https://script.google.com/macros/s/AKfycbzQNSOAGCJp1QmZU0IE1FYiKmKCcGgTUpqKa3RJG9lwiAND_EC5dGdbh2XCu26ZTMoxtw/exec'
   };
@@ -2926,6 +2978,16 @@
   //  → Pour ajouter une nouvelle version, demander à Claude.
   // ------------------------------------------------------------
   const CHANGELOG = [
+    {
+      version: 'v2.4.0',
+      date: '15 mai 2026',
+      title: "✨ Image obligatoire et création d'images facilitée partout",
+      entries: [
+        { type: 'feature', text: "L'image illustrant votre fiche entreprise et chacune de vos pages (service, article, publication Instagram, annonce immobilière) est désormais obligatoire pour garantir une présentation visuelle complète dans l'agent IA et sur Facebook." },
+        { type: 'feature', text: "Les 3 façons d'ajouter une image (URL, téléversement, génération par l'IA) sont maintenant disponibles dans tous les formulaires de l'Annuaire YOUPI® : inscription d'une nouvelle entreprise et création de toutes les pages." },
+        { type: 'design', text: "Le bouton « Générer l'image avec l'IA » est maintenant plus visible et plus engageant, pour mieux mettre en avant cette fonctionnalité." }
+      ]
+    },
     {
       version: 'v2.3.0',
       date: '15 mai 2026',
@@ -3987,9 +4049,12 @@
               </div>
 
               <div class="field field-full">
-                <label>URL de votre logo / image</label>
-                <input name="image_url" type="url" placeholder="https://… (URL directe de l'image)" />
-                <div class="hint">Lien direct vers une image hébergée (Dropbox, Cloudinary, votre site…)</div>
+                ${renderImagePickerHTML({
+                  context: 'company-registration',
+                  labelText: 'Logo ou image illustrant votre entreprise',
+                  hintText: "Choisissez comment ajouter votre logo ou une image représentative. Elle apparaîtra sur votre fiche entreprise dans l'agent IA et la publication Facebook.",
+                  required: true
+                })}
               </div>
             </div>
 
@@ -4008,6 +4073,12 @@
     const f = e.target;
     const data = {};
     new FormData(f).forEach((v, k) => data[k] = String(v).trim());
+
+    // Validation : image obligatoire pour la fiche entreprise
+    if (!data.image_url) {
+      toast('error', 'Veuillez ajouter une image (URL, téléversement ou génération IA)');
+      return;
+    }
 
     showLoader('Création de votre fiche et envoi à l\'IA…');
     const res = await api('registerCompany', data);
@@ -4578,6 +4649,81 @@
     `;
   }
 
+  // ============================================================
+  //  IMAGE PICKER — composant réutilisable (v2.4.0)
+  //  Génère le HTML d'un sélecteur d'image avec 3 modes
+  //  (URL externe / téléversement / génération IA).
+  //  Utilisé dans :
+  //   - inscription d'une nouvelle entreprise (context='company-registration')
+  //   - création de page service/article/instagram/immobilier (context=type)
+  // ============================================================
+
+  /**
+   * Retourne le HTML d'un picker d'image à 3 modes.
+   *
+   * @param {Object} opts
+   *   - opts.context : 'service' | 'article' | 'instagram' | 'immobilier' | 'company-registration'
+   *   - opts.labelText : libellé du champ (ex : "Image illustrant ce service")
+   *   - opts.hintText : texte d'aide affiché sous le label
+   *   - opts.required : booléen (image obligatoire ou non, défaut true)
+   */
+  function renderImagePickerHTML(opts) {
+    opts = opts || {};
+    const context = opts.context || 'service';
+    const labelText = opts.labelText || 'Image illustrant ce contenu';
+    const hintText = opts.hintText || 'Choisissez comment ajouter votre image. Elle apparaîtra dans le fil de discussion de l\'agent IA et sur la publication Facebook.';
+    const required = opts.required !== false; // true par défaut
+    const reqMarker = required
+      ? '<span class="req">*</span>'
+      : '<span style="font-weight:normal;color:var(--text-2);font-size:13px">(optionnel)</span>';
+
+    return `
+      <div class="field">
+        <label>${labelText} ${reqMarker}</label>
+        <div class="hint" style="margin-bottom:10px">${hintText}</div>
+        <div class="image-mode-tabs">
+          <div class="image-mode-tab" data-mode="url" onclick="selectImageMode('url')">
+            <span class="image-mode-tab-icon">🔗</span>
+            <span>URL</span>
+          </div>
+          <div class="image-mode-tab" data-mode="upload" onclick="selectImageMode('upload')">
+            <span class="image-mode-tab-icon">📤</span>
+            <span>Téléverser</span>
+          </div>
+          <div class="image-mode-tab" data-mode="ai" onclick="selectImageMode('ai')">
+            <span class="image-mode-tab-icon">✨</span>
+            <span>Générer avec l'IA</span>
+          </div>
+        </div>
+
+        <div class="image-mode-panel" data-panel="url">
+          <input type="url" id="img_url_input" placeholder="https://…" oninput="onImageUrlInput(this.value)" />
+          <div class="hint" style="margin-top:6px">Collez l'URL d'une image existante (clic droit sur une image &rarr; « Copier l'adresse de l'image »).</div>
+        </div>
+
+        <div class="image-mode-panel" data-panel="upload">
+          <input type="file" id="img_file_input" accept="image/png,image/jpeg,image/jpg,image/webp" onchange="onImageFileSelected(this)" style="display:block;width:100%" />
+          <div class="hint" style="margin-top:6px">Choisissez une image depuis votre appareil (PNG, JPG ou WebP, max 7 Mo).</div>
+        </div>
+
+        <div class="image-mode-panel" data-panel="ai">
+          <p style="margin:0 0 12px;font-size:13px;color:var(--text-2);line-height:1.5">
+            L'IA va créer une image professionnelle 9:16 adaptée à ${context === 'company-registration' ? 'votre activité' : 'votre service'}, sans personnes,
+            dans le contexte visuel de votre ville. La génération prend environ 15 à 30 secondes.
+          </p>
+          <button type="button" class="btn-generate-ai" onclick="generateImageWithAI()" id="btn-generate-ai" data-context="${context}">
+            <span class="btn-generate-ai-icon">✨</span>
+            <span>Générer l'image avec l'IA</span>
+          </button>
+        </div>
+
+        <div id="img_preview_zone"></div>
+
+        <input type="hidden" name="image_url" id="img_hidden_input" value="" />
+      </div>
+    `;
+  }
+
   function renderTypeFields(type) {
     switch (type) {
       case 'service':
@@ -4592,48 +4738,12 @@
             <textarea name="description_detaillee" required maxlength="2500" rows="8" placeholder="En quoi consiste ce service, à qui il s'adresse, ce qui le rend unique, les bénéfices pour vos clients…"></textarea>
             <div class="hint">C'est le champ le plus important. Plus c'est détaillé, plus l'IA pourra vous recommander.</div>
           </div>
-          <div class="field">
-            <label>Image illustrant ce service <span style="font-weight:normal;color:var(--text-2);font-size:13px">(optionnel)</span></label>
-            <div class="hint" style="margin-bottom:10px">Choisissez comment ajouter votre image. Elle apparaîtra dans le fil de discussion de l'agent IA et sur la publication Facebook.</div>
-            <div class="image-mode-tabs">
-              <div class="image-mode-tab" data-mode="url" onclick="selectImageMode('url')">
-                <span class="image-mode-tab-icon">🔗</span>
-                <span>URL</span>
-              </div>
-              <div class="image-mode-tab" data-mode="upload" onclick="selectImageMode('upload')">
-                <span class="image-mode-tab-icon">📤</span>
-                <span>Téléverser</span>
-              </div>
-              <div class="image-mode-tab" data-mode="ai" onclick="selectImageMode('ai')">
-                <span class="image-mode-tab-icon">✨</span>
-                <span>Générer avec l'IA</span>
-              </div>
-            </div>
-
-            <div class="image-mode-panel" data-panel="url">
-              <input type="url" id="img_url_input" placeholder="https://…" oninput="onImageUrlInput(this.value)" />
-              <div class="hint" style="margin-top:6px">Collez l'URL d'une image existante (clic droit sur une image → "Copier l'adresse de l'image").</div>
-            </div>
-
-            <div class="image-mode-panel" data-panel="upload">
-              <input type="file" id="img_file_input" accept="image/png,image/jpeg,image/jpg,image/webp" onchange="onImageFileSelected(this)" style="display:block;width:100%" />
-              <div class="hint" style="margin-top:6px">Choisissez une image depuis votre appareil (PNG, JPG ou WebP, max 7 Mo).</div>
-            </div>
-
-            <div class="image-mode-panel" data-panel="ai">
-              <p style="margin:0 0 10px;font-size:13px;color:var(--text-2)">
-                L'IA va créer une image professionnelle 9:16 adaptée à votre service, sans personnes,
-                dans le contexte visuel de votre ville. La génération prend environ 15 à 30 secondes.
-              </p>
-              <button type="button" class="btn-primary" onclick="generateServiceImageWithAI()" id="btn-generate-ai">
-                ✨ Générer l'image avec l'IA
-              </button>
-            </div>
-
-            <div id="img_preview_zone"></div>
-
-            <input type="hidden" name="image_url" id="img_hidden_input" value="" />
-          </div>
+          ${renderImagePickerHTML({
+            context: 'service',
+            labelText: 'Image illustrant ce service',
+            hintText: "Choisissez comment ajouter votre image. Elle apparaîtra dans le fil de discussion de l'agent IA et sur la publication Facebook.",
+            required: true
+          })}
         `;
 
       case 'article':
@@ -4658,11 +4768,12 @@
             <input name="lien_externe" type="url" required placeholder="https://maboutique.com/produits/ma-robe" />
             <div class="hint">URL directe de la page produit. Sera utilisée pour diriger vos clients vers votre page d'achat.</div>
           </div>
-          <div class="field">
-            <label>URL de la photo de votre produit <span class="req">*</span></label>
-            <input name="image_url" type="url" required placeholder="https://…" />
-            <div class="hint">Clic droit sur l'image dans votre boutique → "Copier l'adresse de l'image", puis collez-la ici.</div>
-          </div>
+          ${renderImagePickerHTML({
+            context: 'article',
+            labelText: 'Photo de votre produit',
+            hintText: 'Choisissez comment ajouter la photo de votre produit. Elle apparaîtra dans le fil de discussion de l\'agent IA et sur la publication Facebook.',
+            required: true
+          })}
           <div class="field">
             <label>Durée de visibilité dans l'agent IA <span class="req">*</span></label>
             <div class="duration-cards">
@@ -4709,11 +4820,12 @@
             <input name="lien_externe" type="url" required placeholder="https://www.instagram.com/p/..." />
             <div class="hint">URL directe de votre publication Instagram.</div>
           </div>
-          <div class="field">
-            <label>URL de l'image de votre publication Instagram <span class="req">*</span></label>
-            <input name="image_url" type="url" required placeholder="https://…" />
-            <div class="hint">L'image apparaîtra dans le fil de discussion de l'agent IA.</div>
-          </div>
+          ${renderImagePickerHTML({
+            context: 'instagram',
+            labelText: 'Image de votre publication Instagram',
+            hintText: "Choisissez comment ajouter l'image de votre publication. Elle apparaîtra dans le fil de discussion de l'agent IA et sur la publication Facebook.",
+            required: true
+          })}
         `;
 
       case 'immobilier':
@@ -4738,11 +4850,12 @@
             <input name="lien_externe" type="url" required placeholder="https://monagence.com/annonce-123" />
             <div class="hint">URL directe de votre annonce. Sera utilisée pour rediriger les clients qui veulent contacter l'agence.</div>
           </div>
-          <div class="field">
-            <label>URL de la photo principale du bien <span class="req">*</span></label>
-            <input name="image_url" type="url" required placeholder="https://…" />
-            <div class="hint">Clic droit sur l'image dans votre annonce → "Copier l'adresse de l'image".</div>
-          </div>
+          ${renderImagePickerHTML({
+            context: 'immobilier',
+            labelText: 'Photo principale du bien',
+            hintText: "Choisissez comment ajouter la photo principale de votre bien. Elle apparaîtra dans le fil de discussion de l'agent IA et sur la publication Facebook.",
+            required: true
+          })}
           <div class="field">
             <label>Durée de visibilité dans l'agent IA <span class="req">*</span></label>
             <div class="duration-cards">
@@ -4809,7 +4922,9 @@
     }
   }
 
-  /** Mode Upload : on convertit en base64 et on envoie au backend pour le déposer sur Drive */
+  /** Mode Upload : on convertit en base64 et on envoie au backend pour le déposer sur Drive.
+   *  Si l'utilisateur n'est pas connecté (mode guest pendant l'inscription),
+   *  on n'envoie pas de token : le backend acceptera l'upload en mode guest. */
   async function onImageFileSelected(input) {
     if (!input.files || !input.files[0]) return;
     const file = input.files[0];
@@ -4842,13 +4957,19 @@
       return;
     }
 
-    // Envoi au backend
-    const r = await api('uploadImageToDrive', {
-      company_id: state.user.id,
-      token: state.user.token,
+    // Construction du payload selon le contexte (auth ou guest)
+    const payload = {
       image_base64: base64,
       filename_hint: file.name
-    });
+    };
+    if (state.user && state.user.type === 'company') {
+      // Mode auth : on ajoute le token
+      payload.company_id = state.user.id;
+      payload.token = state.user.token;
+    }
+    // Sinon : mode guest (le backend acceptera l'upload sans token)
+
+    const r = await api('uploadImageToDrive', payload);
 
     if (!r.ok) {
       preview.innerHTML = '';
@@ -4862,36 +4983,94 @@
     toast('success', 'Image téléversée ✅');
   }
 
-  /** Mode IA : appelle reve.com via le backend */
-  async function generateServiceImageWithAI() {
-    const titre = document.querySelector('input[name="titre_service"]');
-    const desc  = document.querySelector('textarea[name="description_detaillee"]');
-    if (!titre || !titre.value.trim()) {
-      toast('error', 'Renseignez d\'abord le titre du service');
-      titre && titre.focus();
-      return;
-    }
-    if (!desc || !desc.value.trim()) {
-      toast('error', 'Renseignez d\'abord la description du service');
-      desc && desc.focus();
-      return;
-    }
-
+  /** Mode IA : appelle reve.com via le backend.
+   *  Le contexte est lu depuis l'attribut data-context du bouton :
+   *   - 'service' / 'article' / 'instagram' / 'immobilier' : mode auth (page service)
+   *   - 'company-registration' : mode guest (inscription d'une nouvelle entreprise)
+   */
+  async function generateImageWithAI() {
     const btn = document.getElementById('btn-generate-ai');
     const preview = document.getElementById('img_preview_zone');
+    const context = (btn && btn.dataset.context) || 'service';
 
-    if (btn) { btn.disabled = true; btn.textContent = '⏳ Génération en cours…'; }
+    // --- Construction du payload selon le contexte
+    let payload;
+
+    if (context === 'company-registration') {
+      // Mode guest : lit les valeurs du formulaire d'inscription en cours
+      const form = document.getElementById('register-form');
+      if (!form) {
+        toast('error', 'Formulaire d\'inscription introuvable');
+        return;
+      }
+      const fd = new FormData(form);
+      const cd = {};
+      fd.forEach((v, k) => cd[k] = String(v).trim());
+
+      // Champs requis pour générer une image cohérente
+      if (!cd.nom_entreprise) {
+        toast('error', 'Renseignez d\'abord le nom de votre entreprise');
+        const el = form.querySelector('input[name="nom_entreprise"]'); el && el.focus();
+        return;
+      }
+      if (!cd.ville) {
+        toast('error', 'Renseignez d\'abord la ville');
+        const el = form.querySelector('input[name="ville"]'); el && el.focus();
+        return;
+      }
+      if (!cd.description) {
+        toast('error', 'Renseignez d\'abord la description de votre entreprise');
+        const el = form.querySelector('textarea[name="description"]'); el && el.focus();
+        return;
+      }
+
+      payload = {
+        company_data: {
+          nom_entreprise: cd.nom_entreprise,
+          secteur: cd.secteur || '',
+          ville: cd.ville,
+          description: cd.description,
+          liste_services: cd.liste_services || ''
+        }
+      };
+    } else {
+      // Mode auth : page service / article / instagram / immobilier
+      const titre = document.querySelector('input[name="titre_service"]');
+      const desc  = document.querySelector('textarea[name="description_detaillee"]');
+      if (!titre || !titre.value.trim()) {
+        toast('error', 'Renseignez d\'abord le titre');
+        titre && titre.focus();
+        return;
+      }
+      if (!desc || !desc.value.trim()) {
+        toast('error', 'Renseignez d\'abord la description détaillée');
+        desc && desc.focus();
+        return;
+      }
+      payload = {
+        company_id: state.user.id,
+        token: state.user.token,
+        type_contenu: context,
+        titre_service: titre.value.trim(),
+        description_detaillee: desc.value.trim()
+      };
+    }
+
+    // --- UI loading
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = '<span class="btn-generate-ai-icon">⏳</span><span>Génération en cours…</span>';
+    }
     preview.innerHTML = '<div class="image-mode-loader">Génération de l\'image par l\'IA (15 à 30 secondes)…</div>';
 
-    const r = await api('generateImageWithReve', {
-      company_id: state.user.id,
-      token: state.user.token,
-      type_contenu: 'service',
-      titre_service: titre.value.trim(),
-      description_detaillee: desc.value.trim()
-    });
+    // --- Appel API
+    const r = await api('generateImageWithReve', payload);
 
-    if (btn) { btn.disabled = false; btn.textContent = '✨ Générer l\'image avec l\'IA'; }
+    // --- Restauration bouton
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = '<span class="btn-generate-ai-icon">✨</span><span>Générer l\'image avec l\'IA</span>';
+    }
 
     if (!r.ok) {
       preview.innerHTML = '';
@@ -4907,6 +5086,10 @@
     renderImagePreview(r.image_url, caption);
     toast('success', 'Image générée ✅');
   }
+
+  // Alias pour compatibilité — l'ancienne fonction restait référencée par le bouton
+  // mais on a remplacé l'appel par generateImageWithAI() dans renderImagePickerHTML.
+  async function generateServiceImageWithAI() { return generateImageWithAI(); }
 
   /** Affiche un aperçu de l'image avec une légende */
   function renderImagePreview(url, caption) {
@@ -4938,6 +5121,12 @@
     const fd = new FormData(e.target);
     const data = { company_id: state.user.id, token: state.user.token, type_contenu: type };
     fd.forEach((v, k) => data[k] = String(v).trim());
+
+    // Validation : image obligatoire pour tous les types
+    if (!data.image_url) {
+      toast('error', 'Veuillez ajouter une image (URL, téléversement ou génération IA)');
+      return;
+    }
 
     showLoader('Génération IA + envoi à Chatling…');
     const r = await api('addServicePage', data);
