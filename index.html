@@ -3097,7 +3097,7 @@
 
   const APP = {
     name: 'Annuaire YOUPI',
-    version: 'v2.9.0',
+    version: 'v2.9.1',
     versionDate: '15 mai 2026',
     BACKEND_URL: 'https://script.google.com/macros/s/AKfycbzQNSOAGCJp1QmZU0IE1FYiKmKCcGgTUpqKa3RJG9lwiAND_EC5dGdbh2XCu26ZTMoxtw/exec'
   };
@@ -3109,6 +3109,17 @@
   //  → Pour ajouter une nouvelle version, demander à Claude.
   // ------------------------------------------------------------
   const CHANGELOG = [
+    {
+      version: 'v2.9.0',
+      date: '15 mai 2026',
+      title: "💎 Lancement des formules Pro et Pro+",
+      entries: [
+        { type: 'feature', text: "Nouvelles formules d'abonnement disponibles depuis votre espace professionnel, dans le menu « Mon abonnement »." },
+        { type: 'feature', text: "Formule Pro à 39€/mois : outils de gestion d'entreprise, boosts Facebook avantageux et support prioritaire." },
+        { type: 'feature', text: "Formule Pro+ à 149€/mois : agent IA dédié à votre entreprise et tous les avantages Pro inclus." },
+        { type: 'feature', text: "Paiement sécurisé par Stripe, gestion autonome de votre abonnement (changement de plan, mise à jour de carte bancaire, annulation) via un portail dédié." }
+      ]
+    },
     {
       version: 'v2.8.0',
       date: '15 mai 2026',
@@ -6340,7 +6351,10 @@ SIRET : 395 370 182 00036<br>
     // Fetch des infos d'abonnement
     var r;
     try {
-      r = await api('getMySubscription', { token: state.user.token });
+      r = await api('getMySubscription', {
+        token: state.user.token,
+        company_id: state.user.id
+      });
     } catch (err) {
       toast('error', 'Erreur réseau : ' + err.message);
       return;
@@ -6515,6 +6529,7 @@ SIRET : 395 370 182 00036<br>
     try {
       var r = await api('createCustomerPortalSession', {
         token: state.user.token,
+        company_id: state.user.id,
         return_url: window.location.href
       });
       if (!r.ok) {
