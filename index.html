@@ -3410,7 +3410,7 @@
 
   const APP = {
     name: 'Annuaire YOUPI',
-    version: 'v2.11.0',
+    version: 'v2.11.1',
     versionDate: '15 mai 2026',
     BACKEND_URL: 'https://script.google.com/macros/s/AKfycbzQNSOAGCJp1QmZU0IE1FYiKmKCcGgTUpqKa3RJG9lwiAND_EC5dGdbh2XCu26ZTMoxtw/exec'
   };
@@ -3423,7 +3423,7 @@
   // ------------------------------------------------------------
   const CHANGELOG = [
     {
-      version: 'v2.11.0',
+      version: 'v2.11.1',
       date: '15 mai 2026',
       title: "🌐 Chaque entreprise a maintenant sa vitrine en ligne",
       entries: [
@@ -6685,29 +6685,33 @@ SIRET : 395 370 182 00036<br>
    *  - /                           → null
    */
   function _extractMiniSiteSlug_() {
-    // Cas A : paramètre ?slug=
+    // Cas A : paramètre ?slug= (utilisé par 404.html GitHub Pages après redirection)
     try {
       var params = new URLSearchParams(window.location.search);
       var qSlug = params.get('slug');
       if (qSlug && /^[a-z0-9-]{2,80}$/.test(qSlug)) return qSlug;
     } catch (e) {}
 
-    // Cas B : path direct
+    // Cas B : path direct (utile si plus tard on est sur un domaine custom comme annuaire-youpi.ai)
+    // Sur GitHub Pages "user" (annuaire-youpi.github.io), la racine est "/" donc pas de slug ici.
     var path = (window.location.pathname || '').replace(/^\/+|\/+$/g, '');
     if (!path) return null;
 
-    // Si on est sur GitHub Pages "projet" (ex. /annuaire-youpi/le-ti-punch),
-    // on enlève le préfixe du repo. On suppose que le préfixe est toujours
-    // le 1er segment ; si la 1ère partie n'est pas un slug d'entreprise valide
-    // ET qu'il y a un 2e segment, on prend le 2e.
     var parts = path.split('/').filter(Boolean);
-    var candidate = parts[parts.length - 1]; // dernier segment
+    if (parts.length === 0) return null;
+
+    // On prend le 1er segment comme slug candidat
+    var candidate = parts[0];
+
+    // Exclut les noms réservés (admin, index, 404, etc.)
+    var reserved = [
+      'annuaire-youpi', 'index.html', 'index', '404', '404.html',
+      'admin', 'api', 'login', 'register', 'home', 'changelog'
+    ];
+    if (reserved.indexOf(candidate) !== -1) return null;
 
     // Filtre : un slug valide est composé d'alphanum + tirets, 2-80 chars
     if (!/^[a-z0-9-]{2,80}$/.test(candidate)) return null;
-    // Exclut les chemins "techniques"
-    var excluded = ['index.html', 'index', '404', '404.html', 'admin', 'api'];
-    if (excluded.indexOf(candidate) !== -1) return null;
 
     return candidate;
   }
