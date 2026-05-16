@@ -1965,6 +1965,109 @@
     .filleul-status.pro { background: #dcfce7; color: #166534; }
     .filleul-status.free { background: #e0e7ff; color: #3730a3; }
 
+    /* v2.14.0 — Page Statistiques */
+    .stats-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+    .stats-period-selector {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .stats-period-btn {
+      padding: 8px 18px;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      background: var(--card);
+      color: var(--text-1);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .stats-period-btn:hover { border-color: var(--teal-600); }
+    .stats-period-btn.active {
+      background: var(--teal-600);
+      color: white;
+      border-color: var(--teal-600);
+    }
+    .stats-comparison {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 18px;
+      border-radius: 10px;
+      font-size: 14px;
+      border-left: 4px solid;
+    }
+    .stats-comparison.positive { background: #dcfce7; border-color: #16a34a; color: #166534; }
+    .stats-comparison.negative { background: #fee2e2; border-color: #dc2626; color: #991b1b; }
+    .stats-comparison.neutral  { background: var(--sand-50); border-color: var(--text-2); color: var(--text-1); }
+    .stats-comparison-arrow { font-size: 18px; }
+    .stats-summary-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+    }
+    @media (max-width: 760px) {
+      .stats-summary-grid { grid-template-columns: 1fr 1fr; }
+    }
+    .stats-summary-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 18px 16px;
+      text-align: center;
+    }
+    .stats-summary-icon { font-size: 26px; margin-bottom: 6px; }
+    .stats-summary-value {
+      font-size: 28px;
+      font-weight: 800;
+      color: var(--teal-900);
+      line-height: 1;
+    }
+    .stats-summary-label {
+      font-size: 12px;
+      color: var(--text-2);
+      margin-top: 6px;
+    }
+    .stats-chart-wrap {
+      width: 100%;
+      overflow-x: auto;
+    }
+    .stats-chart-svg {
+      width: 100%;
+      min-width: 320px;
+      height: auto;
+      display: block;
+    }
+    .stats-cta-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .stats-cta-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 11px 14px;
+      background: var(--sand-50);
+      border-radius: 8px;
+      font-size: 14px;
+    }
+    .stats-cta-label { color: var(--text-1); }
+    .stats-cta-value {
+      font-weight: 700;
+      color: var(--teal-900);
+      background: var(--card);
+      padding: 2px 12px;
+      border-radius: 12px;
+      min-width: 36px;
+      text-align: center;
+    }
+
     /* v2.13.5 — Section "Les niveaux YOUPI" */
     .levels-list {
       display: flex;
@@ -4409,7 +4512,7 @@
 
   const APP = {
     name: 'Annuaire YOUPI',
-    version: 'v2.13.5',
+    version: 'v2.14.0',
     versionDate: '15 mai 2026',
     BACKEND_URL: 'https://script.google.com/macros/s/AKfycbzQNSOAGCJp1QmZU0IE1FYiKmKCcGgTUpqKa3RJG9lwiAND_EC5dGdbh2XCu26ZTMoxtw/exec'
   };
@@ -4421,6 +4524,16 @@
   //  → Pour ajouter une nouvelle version, demander à Claude.
   // ------------------------------------------------------------
   const CHANGELOG = [
+    {
+      version: 'v2.14.0',
+      date: '15 mai 2026',
+      title: "📊 Statistiques de votre mini-site (Pro et Pro+)",
+      entries: [
+        { type: 'feature', text: "Nouvelle page « Mes statistiques » dans votre espace : suivez le nombre de vues de votre mini-site public, jour par jour, avec un graphique clair." },
+        { type: 'feature', text: "Mesurez l'engagement de vos visiteurs : nombre de clics sur votre téléphone, email, site web, itinéraire, réseaux sociaux et bouton agent IA." },
+        { type: 'feature', text: "Pour les abonnés Pro+ : choisissez la période (7, 30 ou 90 jours) et comparez automatiquement avec la période précédente pour suivre votre progression." }
+      ]
+    },
     {
       version: 'v2.13.5',
       date: '15 mai 2026',
@@ -5167,6 +5280,7 @@
       case 'pro-add-page':        renderProAddPage(params); break;
       case 'pro-mini-site':       renderProMiniSite(); break;
       case 'pro-score':           renderProScore(); break;
+      case 'pro-stats':           renderProStats(); break;
       case 'pro-settings':        renderProSettings(); break;
       case 'pro-subscription':    renderProSubscription(); break;
       case 'pro-contacts':        renderProContacts(); break;
@@ -6899,6 +7013,7 @@ SIRET : 395 370 182 00036<br>
       { view: 'pro-pages',        icon: '📄', label: 'Mes pages services' },
       { view: 'pro-mini-site',    icon: '🎨', label: 'Ma vitrine' },
       { view: 'pro-score',        icon: '🏆', label: 'Mon score' },
+      { view: 'pro-stats',        icon: '📊', label: 'Mes statistiques' },
       { view: 'pro-contacts',     icon: '📬', label: 'Mes contacts' },
       { view: 'pro-subscription', icon: '💎', label: 'Mon abonnement' },
       { view: 'pro-settings',     icon: '⚙️', label: 'Paramètres' }
@@ -7877,8 +7992,52 @@ SIRET : 395 370 182 00036<br>
 
     // Met à jour le titre de l'onglet
     document.title = r.company.nom_entreprise + ' · Annuaire YOUPI®';
+
+    // v2.14.0 — Tracking de la vue du mini-site (fire-and-forget)
+    _trackMiniSiteEvent_(r.company.id, 'view', r.company.slug || '');
   }
   window.renderPublicCompany = renderPublicCompany;
+
+  /**
+   * v2.14.0 — Envoie un événement de statistique au backend.
+   * Fire-and-forget : on n'attend pas la réponse, on n'affiche jamais
+   * d'erreur (le tracking ne doit jamais gêner le visiteur).
+   * @param {string} companyId
+   * @param {string} eventType 'view' | 'cta_phone' | 'cta_email' | ...
+   * @param {string} slug
+   */
+  function _trackMiniSiteEvent_(companyId, eventType, slug) {
+    if (!companyId) return;
+    try {
+      var payload = {
+        action: 'trackMiniSiteEvent',
+        company_id: companyId,
+        event_type: eventType || 'view',
+        slug: slug || '',
+        referrer: document.referrer || '',
+        ua: navigator.userAgent || ''
+      };
+      // sendBeacon si dispo (survit à la navigation, ex: clic sortant),
+      // sinon fetch keepalive en fallback.
+      var url = APP.BACKEND_URL;
+      var body = JSON.stringify(payload);
+      if (navigator.sendBeacon) {
+        var blob = new Blob([body], { type: 'text/plain;charset=UTF-8' });
+        navigator.sendBeacon(url, blob);
+      } else {
+        fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
+          body: body,
+          keepalive: true,
+          mode: 'no-cors'
+        }).catch(function() {});
+      }
+    } catch (e) {
+      // silencieux : le tracking ne casse jamais l'expérience
+    }
+  }
+  window._trackMiniSiteEvent_ = _trackMiniSiteEvent_;
 
   function renderMiniSiteError_(title, message) {
     return `
@@ -8035,7 +8194,7 @@ SIRET : 395 370 182 00036<br>
     var iaQuestion = 'Parle-moi de ' + c.nom_entreprise + ' à ' + (c.ville || regionLabel);
     var iaBtn = `
       <div class="mini-site-ia">
-        <button class="btn btn-primary mini-site-ia-btn" onclick="askAI('${esc(iaQuestion).replace(/'/g, "\\'")}')">
+        <button class="btn btn-primary mini-site-ia-btn" onclick="_trackMiniSiteEvent_('${esc(c.id||'')}','cta_ai','${esc(c.slug||'')}');askAI('${esc(iaQuestion).replace(/'/g, "\\'")}')">
           🤖 Discuter avec l'agent IA YOUPI
         </button>
         <div class="mini-site-ia-help">Posez n'importe quelle question, l'IA vous répondra à partir des infos de l'annuaire.</div>
@@ -8156,19 +8315,20 @@ SIRET : 395 370 182 00036<br>
     ` : '';
 
     // Contact (bloc consolidé)
+    var cid = c.id || '';
     var contactItems = [];
     if (c.telephone) {
-      contactItems.push(`<a href="tel:${esc(c.telephone)}" class="mini-site-contact-item">📞 ${esc(c.telephone)}</a>`);
+      contactItems.push(`<a href="tel:${esc(c.telephone)}" class="mini-site-contact-item" onclick="_trackMiniSiteEvent_('${esc(cid)}','cta_phone','${esc(c.slug||'')}')">📞 ${esc(c.telephone)}</a>`);
     }
     if (c.email) {
-      contactItems.push(`<a href="mailto:${esc(c.email)}" class="mini-site-contact-item">✉️ ${esc(c.email)}</a>`);
+      contactItems.push(`<a href="mailto:${esc(c.email)}" class="mini-site-contact-item" onclick="_trackMiniSiteEvent_('${esc(cid)}','cta_email','${esc(c.slug||'')}')">✉️ ${esc(c.email)}</a>`);
     }
     if (c.site_web) {
-      contactItems.push(`<a href="${esc(c.site_web)}" target="_blank" rel="noopener" class="mini-site-contact-item">🌐 ${esc(c.site_web)}</a>`);
+      contactItems.push(`<a href="${esc(c.site_web)}" target="_blank" rel="noopener" class="mini-site-contact-item" onclick="_trackMiniSiteEvent_('${esc(cid)}','cta_website','${esc(c.slug||'')}')">🌐 ${esc(c.site_web)}</a>`);
     }
     if (c.adresse_complete) {
       var mapsUrl = 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(c.adresse_complete);
-      contactItems.push(`<a href="${mapsUrl}" target="_blank" rel="noopener" class="mini-site-contact-item">📍 ${esc(c.adresse_complete)}</a>`);
+      contactItems.push(`<a href="${mapsUrl}" target="_blank" rel="noopener" class="mini-site-contact-item" onclick="_trackMiniSiteEvent_('${esc(cid)}','cta_maps','${esc(c.slug||'')}')">📍 ${esc(c.adresse_complete)}</a>`);
     }
     var contactHtml = contactItems.length > 0 ? `
       <section class="mini-site-section">
@@ -8180,10 +8340,10 @@ SIRET : 395 370 182 00036<br>
     // Réseaux sociaux
     var socialBtns = [];
     if (c.facebook) {
-      socialBtns.push(`<a href="${esc(c.facebook)}" target="_blank" rel="noopener" class="mini-site-social mini-site-social-fb">📘 Facebook</a>`);
+      socialBtns.push(`<a href="${esc(c.facebook)}" target="_blank" rel="noopener" class="mini-site-social mini-site-social-fb" onclick="_trackMiniSiteEvent_('${esc(cid)}','cta_facebook','${esc(c.slug||'')}')">📘 Facebook</a>`);
     }
     if (c.instagram) {
-      socialBtns.push(`<a href="${esc(c.instagram)}" target="_blank" rel="noopener" class="mini-site-social mini-site-social-ig">📷 Instagram</a>`);
+      socialBtns.push(`<a href="${esc(c.instagram)}" target="_blank" rel="noopener" class="mini-site-social mini-site-social-ig" onclick="_trackMiniSiteEvent_('${esc(cid)}','cta_instagram','${esc(c.slug||'')}')">📷 Instagram</a>`);
     }
     var socialHtml = socialBtns.length > 0 ? `
       <section class="mini-site-section">
@@ -9672,6 +9832,341 @@ SIRET : 395 370 182 00036<br>
     `;
   }
   window.renderProContacts = renderProContacts;
+
+  // ════════════════════════════════════════════════════════════
+  //  PHASE 4 — STATISTIQUES MINI-SITE (v2.14.0)
+  // ════════════════════════════════════════════════════════════
+
+  var _statsState = { period: '30d' };
+
+  async function renderProStats() {
+    if (!state.user || state.user.type !== 'company') return navigate('home');
+
+    // Chargement
+    document.getElementById('main').innerHTML = `
+      <div class="dashboard-grid">
+        ${proSidebar('pro-stats')}
+        <section>
+          <div class="page-header"><h1>📊 Mes statistiques</h1></div>
+          <div class="card" style="text-align:center;padding:40px">
+            <div style="font-size:32px;margin-bottom:8px">⏳</div>
+            <div>Chargement de vos statistiques...</div>
+          </div>
+        </section>
+      </div>
+    `;
+
+    var r;
+    try {
+      r = await api('getMyStats', {
+        token: state.user.token,
+        company_id: state.user.id,
+        period: _statsState.period
+      });
+    } catch (err) {
+      toast('error', 'Erreur réseau : ' + err.message);
+      return;
+    }
+
+    // Verrouillage freemium
+    if (!r.ok && r.upgrade_required) {
+      renderProStatsUpsell_();
+      return;
+    }
+    if (!r.ok) {
+      toast('error', r.error || 'Erreur de chargement');
+      return;
+    }
+
+    var isPlus = !!r.is_pro_plus;
+    var st = r.stats || {};
+    var periodDays = r.period_days || 30;
+
+    // Sélecteur de période (Pro+ uniquement)
+    var periodSelector = '';
+    if (isPlus) {
+      var opts = [
+        { k: '7d',  label: '7 jours' },
+        { k: '30d', label: '30 jours' },
+        { k: '90d', label: '90 jours' }
+      ];
+      periodSelector = `
+        <div class="stats-period-selector">
+          ${opts.map(function(o) {
+            var active = _statsState.period === o.k ? 'active' : '';
+            return `<button class="stats-period-btn ${active}" onclick="changeStatsPeriod('${o.k}')">${o.label}</button>`;
+          }).join('')}
+        </div>
+      `;
+    }
+
+    // Bandeau comparaison (Pro+)
+    var comparisonHtml = '';
+    if (isPlus && r.comparison) {
+      var cmp = r.comparison;
+      var delta = cmp.delta_pct;
+      var arrow = delta > 0 ? '▲' : (delta < 0 ? '▼' : '▬');
+      var cmpCls = delta > 0 ? 'positive' : (delta < 0 ? 'negative' : 'neutral');
+      var sign = delta > 0 ? '+' : '';
+      comparisonHtml = `
+        <div class="stats-comparison ${cmpCls}">
+          <span class="stats-comparison-arrow">${arrow}</span>
+          <span><strong>${sign}${delta}%</strong> de vues par rapport aux ${periodDays} jours précédents
+          (${cmp.previous_views} → ${cmp.current_views})</span>
+        </div>
+      `;
+    }
+
+    // Cartes résumé
+    var dev = st.device || { mobile: 0, desktop: 0 };
+    var devTotal = (dev.mobile || 0) + (dev.desktop || 0);
+    var mobilePct = devTotal > 0 ? Math.round((dev.mobile / devTotal) * 100) : 0;
+    var desktopPct = devTotal > 0 ? (100 - mobilePct) : 0;
+
+    var summaryCards = `
+      <div class="stats-summary-grid">
+        <div class="stats-summary-card">
+          <div class="stats-summary-icon">👁️</div>
+          <div class="stats-summary-value">${st.total_views || 0}</div>
+          <div class="stats-summary-label">Vues du mini-site</div>
+        </div>
+        <div class="stats-summary-card">
+          <div class="stats-summary-icon">👆</div>
+          <div class="stats-summary-value">${st.total_ctas || 0}</div>
+          <div class="stats-summary-label">Interactions (clics)</div>
+        </div>
+        <div class="stats-summary-card">
+          <div class="stats-summary-icon">📱</div>
+          <div class="stats-summary-value">${mobilePct}%</div>
+          <div class="stats-summary-label">Visiteurs sur mobile</div>
+        </div>
+        <div class="stats-summary-card">
+          <div class="stats-summary-icon">🖥️</div>
+          <div class="stats-summary-value">${desktopPct}%</div>
+          <div class="stats-summary-label">Visiteurs sur ordinateur</div>
+        </div>
+      </div>
+    `;
+
+    // Graphe SVG natif
+    var chartHtml = _renderStatsChart_(st.series || []);
+
+    // Détail des CTA
+    var ctaMeta = {
+      cta_phone:     { icon: '📞', label: 'Téléphone' },
+      cta_email:     { icon: '✉️', label: 'Email' },
+      cta_website:   { icon: '🌐', label: 'Site web' },
+      cta_maps:      { icon: '📍', label: 'Itinéraire' },
+      cta_facebook:  { icon: '📘', label: 'Facebook' },
+      cta_instagram: { icon: '📷', label: 'Instagram' },
+      cta_ai:        { icon: '🤖', label: 'Agent IA' }
+    };
+    var ctas = st.ctas || {};
+    var ctaRows = Object.keys(ctaMeta).map(function(k) {
+      var m = ctaMeta[k];
+      var val = ctas[k] || 0;
+      return `
+        <div class="stats-cta-row">
+          <span class="stats-cta-label">${m.icon} ${m.label}</span>
+          <span class="stats-cta-value">${val}</span>
+        </div>
+      `;
+    }).join('');
+    var ctaCard = `
+      <div class="card">
+        <h2 style="margin:0 0 4px 0">👆 Sur quoi vos visiteurs cliquent</h2>
+        <p style="color:var(--text-2);font-size:13px;margin:0 0 14px 0">Nombre de clics sur chaque bouton de votre mini-site sur la période.</p>
+        <div class="stats-cta-list">${ctaRows}</div>
+      </div>
+    `;
+
+    // Top referrers
+    var refs = st.top_referrers || [];
+    var refCard = '';
+    if (refs.length > 0) {
+      var refRows = refs.map(function(rf) {
+        var label = rf.host === 'direct' ? '🔗 Accès direct' : '🌍 ' + esc(rf.host);
+        return `
+          <div class="stats-cta-row">
+            <span class="stats-cta-label">${label}</span>
+            <span class="stats-cta-value">${rf.count}</span>
+          </div>
+        `;
+      }).join('');
+      refCard = `
+        <div class="card">
+          <h2 style="margin:0 0 4px 0">🌍 D'où viennent vos visiteurs</h2>
+          <p style="color:var(--text-2);font-size:13px;margin:0 0 14px 0">Les sources principales de trafic vers votre mini-site.</p>
+          <div class="stats-cta-list">${refRows}</div>
+        </div>
+      `;
+    }
+
+    // Encart info Pro (pas Pro+) : teasing période étendue
+    var proPlusTeaser = '';
+    if (!isPlus) {
+      proPlusTeaser = `
+        <div class="card" style="background:linear-gradient(135deg,#faf5ff 0%,#f5f3ff 100%);border:1px solid #d8b4fe">
+          <div style="display:flex;align-items:flex-start;gap:12px">
+            <div style="font-size:24px">⭐</div>
+            <div>
+              <strong style="color:#5b21b6">Passez à Pro+ pour aller plus loin</strong>
+              <p style="color:var(--text-1);font-size:13px;line-height:1.6;margin:6px 0 10px 0">
+                Avec Pro+, choisissez la période d'analyse (7, 30 ou 90 jours) et comparez automatiquement
+                votre activité avec la période précédente pour suivre votre progression dans le temps.
+              </p>
+              <a onclick="navigate('pro-subscription')" style="cursor:pointer;color:#7c3aed;font-size:13px;font-weight:600;text-decoration:underline">
+                Découvrir Pro+ →
+              </a>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    var periodLabel = periodDays + ' derniers jours';
+
+    document.getElementById('main').innerHTML = `
+      <div class="dashboard-grid">
+        ${proSidebar('pro-stats')}
+        <section>
+          <div class="page-header">
+            <h1>📊 Mes statistiques</h1>
+            <div style="color:var(--text-2);font-size:14px;margin-top:4px">L'audience de votre mini-site public sur les ${esc(String(periodLabel))}.</div>
+          </div>
+          <div class="stats-grid">
+            ${periodSelector}
+            ${comparisonHtml}
+            ${summaryCards}
+            <div class="card">
+              <h2 style="margin:0 0 4px 0">📈 Vues au fil du temps</h2>
+              <p style="color:var(--text-2);font-size:13px;margin:0 0 16px 0">Nombre de visites de votre mini-site, jour par jour.</p>
+              ${chartHtml}
+            </div>
+            ${ctaCard}
+            ${refCard}
+            ${proPlusTeaser}
+          </div>
+        </section>
+      </div>
+    `;
+  }
+  window.renderProStats = renderProStats;
+
+  function changeStatsPeriod(period) {
+    _statsState.period = period;
+    renderProStats();
+  }
+  window.changeStatsPeriod = changeStatsPeriod;
+
+  /**
+   * Génère un graphe en barres SVG natif (zéro dépendance) pour la
+   * série journalière des vues.
+   * @param {Array<{date:string,views:number}>} series
+   */
+  function _renderStatsChart_(series) {
+    if (!series || series.length === 0) {
+      return '<div style="text-align:center;padding:40px;color:var(--text-2)">Aucune donnée pour cette période.</div>';
+    }
+    var W = 720, H = 240;
+    var padL = 36, padR = 12, padT = 16, padB = 36;
+    var plotW = W - padL - padR;
+    var plotH = H - padT - padB;
+
+    var maxV = 0;
+    series.forEach(function(p) { if (p.views > maxV) maxV = p.views; });
+    if (maxV === 0) maxV = 1; // évite division par zéro, axe lisible
+
+    var n = series.length;
+    var barGap = n > 45 ? 1 : 3;
+    var barW = Math.max(2, (plotW / n) - barGap);
+
+    // Lignes de grille horizontales (0, 25%, 50%, 75%, 100%)
+    var gridLines = '';
+    var yLabels = '';
+    for (var g = 0; g <= 4; g++) {
+      var yy = padT + plotH - (plotH * g / 4);
+      var val = Math.round(maxV * g / 4);
+      gridLines += `<line x1="${padL}" y1="${yy}" x2="${W - padR}" y2="${yy}" stroke="var(--border)" stroke-width="1" stroke-dasharray="3 3"/>`;
+      yLabels += `<text x="${padL - 6}" y="${yy + 4}" text-anchor="end" font-size="10" fill="var(--text-2)">${val}</text>`;
+    }
+
+    // Barres
+    var bars = '';
+    var xLabels = '';
+    series.forEach(function(p, i) {
+      var x = padL + i * (plotW / n) + barGap / 2;
+      var h = (p.views / maxV) * plotH;
+      var y = padT + plotH - h;
+      bars += `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${barW.toFixed(1)}" height="${Math.max(h,0).toFixed(1)}" rx="2" fill="var(--teal-600)"><title>${esc(p.date)} : ${p.views} vue(s)</title></rect>`;
+      // Étiquette X : on n'affiche que quelques dates pour ne pas surcharger
+      var showEvery = n <= 10 ? 1 : (n <= 35 ? 5 : 15);
+      if (i % showEvery === 0 || i === n - 1) {
+        var dlabel = p.date.slice(8, 10) + '/' + p.date.slice(5, 7);
+        xLabels += `<text x="${(x + barW / 2).toFixed(1)}" y="${H - 12}" text-anchor="middle" font-size="10" fill="var(--text-2)">${dlabel}</text>`;
+      }
+    });
+
+    return `
+      <div class="stats-chart-wrap">
+        <svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet" class="stats-chart-svg" role="img" aria-label="Graphique des vues par jour">
+          ${gridLines}
+          ${yLabels}
+          ${bars}
+          ${xLabels}
+        </svg>
+      </div>
+    `;
+  }
+
+  function renderProStatsUpsell_() {
+    var userEmail = state.user.data && state.user.data.email ? state.user.data.email : '';
+    var emailParam = userEmail ? '?prefilled_email=' + encodeURIComponent(userEmail) : '';
+    var proUrl = STRIPE_LINKS.pro + emailParam;
+    var proPlusUrl = STRIPE_LINKS.pro_plus + emailParam;
+
+    document.getElementById('main').innerHTML = `
+      <div class="dashboard-grid">
+        ${proSidebar('pro-stats')}
+        <section>
+          <div class="page-header">
+            <h1>📊 Mes statistiques</h1>
+          </div>
+          <div class="card" style="text-align:center;padding:40px 24px;background:linear-gradient(135deg,#eff6ff 0%,#dbeafe 100%);border:2px dashed #2563eb">
+            <div style="font-size:56px;margin-bottom:12px">🔒</div>
+            <h2 style="color:#1e3a8a;margin:0 0 8px 0">Les statistiques sont réservées aux abonnés Pro</h2>
+            <p style="color:#1e40af;max-width:540px;margin:0 auto 24px auto;line-height:1.6">
+              Sachez exactement <strong>combien de personnes consultent votre mini-site</strong> et
+              ce qui les intéresse. Prenez les bonnes décisions pour développer votre activité.
+            </p>
+            <div style="text-align:left;background:white;padding:20px 24px;border-radius:10px;max-width:480px;margin:0 auto 24px auto;box-shadow:0 2px 8px rgba(0,0,0,0.06)">
+              <strong style="color:#1e3a8a;display:block;margin-bottom:10px">✨ Ce que vous pourrez suivre :</strong>
+              <ul style="margin:0;padding-left:22px;color:var(--text-1);font-size:14px;line-height:1.8">
+                <li>👁️ Le nombre de vues de votre mini-site, jour par jour</li>
+                <li>👆 Les clics sur votre téléphone, email, site web, réseaux</li>
+                <li>📱 La part de visiteurs sur mobile et ordinateur</li>
+                <li>🌍 D'où viennent vos visiteurs</li>
+                <li>⭐ Avec Pro+ : périodes 7/30/90 j et comparaison dans le temps</li>
+              </ul>
+            </div>
+            <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+              <a href="${proUrl}" target="_blank" rel="noopener" class="btn btn-primary" style="padding:14px 24px;font-size:15px;text-decoration:none">
+                💎 Passer à Pro — 39€/mois
+              </a>
+              <a href="${proPlusUrl}" target="_blank" rel="noopener" class="btn btn-secondary" style="padding:14px 24px;font-size:15px;text-decoration:none;background:#7c3aed;color:white;border-color:#7c3aed">
+                ⭐ Pro+ — 149€/mois
+              </a>
+            </div>
+            <div style="margin-top:20px">
+              <a onclick="navigate('pro-subscription')" style="cursor:pointer;color:var(--teal-700);font-size:13px;text-decoration:underline">
+                Voir le détail des formules →
+              </a>
+            </div>
+          </div>
+        </section>
+      </div>
+    `;
+  }
 
   // ─── Vue 1 : Page de verrouillage Pro ───────────────────────
 
