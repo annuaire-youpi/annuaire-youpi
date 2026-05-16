@@ -966,6 +966,211 @@
     @media (max-width: 700px) {
       .crm-pro-card-head { flex-direction: column; }
     }
+    /* ─── Mini-CRM : prise en main guidée (v2.14.4) ─── */
+    .crm-method {
+      background: linear-gradient(135deg,#eff6ff 0%,#e0eaff 100%);
+      border: 1px solid #c7d8fb;
+      border-radius: 14px;
+      padding: 18px 20px;
+      margin-bottom: 16px;
+    }
+    .crm-method-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .crm-method-title {
+      font-size: 15px;
+      font-weight: 800;
+      color: var(--teal-900);
+      margin: 0;
+    }
+    .crm-method-sub {
+      font-size: 13px;
+      color: #1e40af;
+      margin: 2px 0 0 0;
+    }
+    .crm-method-toggle {
+      background: white;
+      border: 1px solid #c7d8fb;
+      color: var(--teal-700);
+      font-size: 12px;
+      font-weight: 600;
+      padding: 6px 12px;
+      border-radius: 16px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .crm-method-toggle:hover { background: var(--teal-50); }
+    .crm-method-steps {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-top: 16px;
+    }
+    .crm-method-step {
+      background: white;
+      border-radius: 10px;
+      padding: 14px;
+      border: 1px solid #dbe6fb;
+    }
+    .crm-method-num {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      background: var(--teal-700);
+      color: white;
+      font-weight: 800;
+      font-size: 13px;
+      margin-bottom: 8px;
+    }
+    .crm-method-step b {
+      display: block;
+      font-size: 13.5px;
+      color: var(--teal-900);
+      margin-bottom: 3px;
+    }
+    .crm-method-step span {
+      font-size: 12px;
+      color: var(--text-2);
+      line-height: 1.45;
+    }
+    @media (max-width: 760px) {
+      .crm-method-steps { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 460px) {
+      .crm-method-steps { grid-template-columns: 1fr; }
+    }
+    .crm-guide {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-left: 4px solid var(--teal-700);
+      border-radius: 12px;
+      padding: 16px 18px;
+      margin-bottom: 16px;
+    }
+    .crm-guide-title {
+      font-size: 14px;
+      font-weight: 800;
+      color: var(--teal-900);
+      margin: 0 0 4px 0;
+    }
+    .crm-guide-progress {
+      font-size: 12px;
+      color: var(--text-2);
+      margin-bottom: 12px;
+    }
+    .crm-guide-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 9px 0;
+      border-top: 1px solid var(--sand-100);
+    }
+    .crm-guide-row:first-of-type { border-top: none; }
+    .crm-guide-check {
+      flex: 0 0 22px;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      border: 2px solid var(--sand-300);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      color: transparent;
+      margin-top: 1px;
+    }
+    .crm-guide-row.done .crm-guide-check {
+      background: #16a34a;
+      border-color: #16a34a;
+      color: white;
+    }
+    .crm-guide-body { flex: 1; }
+    .crm-guide-body b { font-size: 13.5px; color: var(--text-1); }
+    .crm-guide-row.done .crm-guide-body b { color: var(--text-2); text-decoration: line-through; }
+    .crm-guide-body p { margin: 2px 0 0 0; font-size: 12.5px; color: var(--text-2); line-height: 1.45; }
+    .crm-guide-cta {
+      margin-top: 7px;
+      background: var(--teal-700);
+      color: white;
+      border: none;
+      padding: 7px 14px;
+      border-radius: var(--radius-sm);
+      font-size: 12.5px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .crm-guide-cta:hover { background: var(--teal-800); }
+    .crm-guide-done {
+      background: #ecfdf5;
+      border: 1px solid #a7f3d0;
+      border-radius: 12px;
+      padding: 12px 16px;
+      margin-bottom: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      font-size: 13px;
+      color: #065f46;
+    }
+    .crm-guide-done a {
+      cursor: pointer;
+      font-size: 12.5px;
+      color: var(--teal-700);
+      text-decoration: underline;
+      white-space: nowrap;
+    }
+    .crm-guide-hint {
+      font-size: 12px;
+      color: var(--teal-800);
+      background: var(--teal-50);
+      border-radius: 8px;
+      padding: 7px 10px;
+      margin: 8px 0 0 0;
+      line-height: 1.4;
+    }
+    .crm-welcome {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 32px 26px;
+      text-align: center;
+    }
+    .crm-welcome-emoji { font-size: 52px; margin-bottom: 8px; }
+    .crm-welcome h2 { margin: 0 0 8px 0; color: var(--teal-900); font-size: 22px; }
+    .crm-welcome-lead {
+      color: var(--text-2);
+      max-width: 560px;
+      margin: 0 auto 22px auto;
+      line-height: 1.6;
+      font-size: 14.5px;
+    }
+    .crm-welcome-cta {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-top: 22px;
+    }
+    .crm-welcome-demo {
+      margin-top: 16px;
+      font-size: 13px;
+      color: var(--text-2);
+    }
+    .crm-welcome-demo a {
+      cursor: pointer;
+      text-decoration: underline;
+      color: var(--teal-700);
+      font-weight: 600;
+    }
     /* ─── Mini-site public partageable (v2.11.0) ─── */
     .mini-site {
       max-width: 920px;
@@ -4513,8 +4718,8 @@
 
   const APP = {
     name: 'Annuaire YOUPI',
-    version: 'v2.14.3',
-    versionDate: '15 mai 2026',
+    version: 'v2.14.4',
+    versionDate: '16 mai 2026',
     BACKEND_URL: 'https://script.google.com/macros/s/AKfycbzQNSOAGCJp1QmZU0IE1FYiKmKCcGgTUpqKa3RJG9lwiAND_EC5dGdbh2XCu26ZTMoxtw/exec'
   };
 
@@ -4525,6 +4730,17 @@
   //  → Pour ajouter une nouvelle version, demander à Claude.
   // ------------------------------------------------------------
   const CHANGELOG = [
+    {
+      version: 'v2.14.4',
+      date: '16 mai 2026',
+      title: "📬 « Mes contacts » : prise en main guidée",
+      entries: [
+        { type: 'feature', text: "La page « Mes contacts » vous accompagne désormais pas à pas : une méthode claire en 4 étapes (ajouter, classer, relancer, fidéliser) pour ne plus jamais perdre un prospect ou un client." },
+        { type: 'feature', text: "Un guide de démarrage qui se coche au fur et à mesure de vos premières actions, un écran d'accueil qui explique l'intérêt de l'outil, et une aide « Comment ça marche ? » accessible à tout moment." },
+        { type: 'feature', text: "Chaque contact affiche maintenant une suggestion d'action selon son statut (à relancer, à fidéliser, à recontacter...) pour savoir quoi faire ensuite." },
+        { type: 'fix', text: "Correction de l'affichage des numéros de téléphone qui pouvaient apparaître en erreur dans certains cas." }
+      ]
+    },
     {
       version: 'v2.14.3',
       date: '15 mai 2026',
@@ -9855,7 +10071,9 @@ SIRET : 395 370 182 00036<br>
     editing: null,   // null | 'new' | <id>
     editDraft: null, // {nom, email, telephone, statut, notes}
     mailing: null,   // null | <contactId> en cours d'envoi mail
-    mailDraft: null  // {subject, body}
+    mailDraft: null, // {subject, body}
+    methodOpen: null,    // null = auto (ouvert si débutant), true/false = choix manuel
+    guideMailedSeen: false // mémo session : a-t-on déjà vu un contact relancé par mail
   };
 
   var CRM_PRO_STATUSES = [
@@ -9868,6 +10086,18 @@ SIRET : 395 370 182 00036<br>
 
   function _crmProStatusMeta(key) {
     return CRM_PRO_STATUSES.find(function(s) { return s.key === key; }) || CRM_PRO_STATUSES[0];
+  }
+
+  // v2.14.4 — Suggestion d'action selon le statut (transforme la liste en assistant)
+  function _crmStatusHint_(statut) {
+    switch (statut) {
+      case 'nouveau':       return '🆕 Premier contact établi&nbsp;? Notez l\'essentiel et donnez-lui une suite rapidement.';
+      case 'a_recontacter': return '👀 À relancer — un petit mail de suivi peut tout débloquer.';
+      case 'client':        return '✅ Client actif — pensez à le fidéliser (une attention, une nouveauté, une offre).';
+      case 'fidele':        return '⭐ Ambassadeur&nbsp;! Demandez-lui un avis ou une recommandation.';
+      case 'perdu':         return '🚫 Perdu de vue — une relance bien tournée récupère parfois un client.';
+      default:              return '';
+    }
   }
 
   async function renderProContacts() {
@@ -10286,25 +10516,32 @@ SIRET : 395 370 182 00036<br>
         <section>
           <div class="page-header">
             <h1>📬 Mes contacts</h1>
+            <div style="color:var(--text-2);font-size:14px;margin-top:4px">L'outil qui transforme vos visiteurs en clients fidèles.</div>
           </div>
-          <div class="card" style="text-align:center;padding:40px 24px;background:linear-gradient(135deg,#eff6ff 0%,#dbeafe 100%);border:2px dashed #2563eb">
-            <div style="font-size:56px;margin-bottom:12px">🔒</div>
-            <h2 style="color:#1e3a8a;margin:0 0 8px 0">Cette fonctionnalité est réservée aux abonnés Pro</h2>
-            <p style="color:#1e40af;max-width:520px;margin:0 auto 24px auto;line-height:1.6">
-              Le mini-CRM intégré vous permet de <strong>gérer tous vos contacts</strong> (prospects, clients, fidèles)
-              directement depuis votre espace YOUPI, sans installer aucun logiciel.
-              Plus besoin d'Excel ou de carnet papier&nbsp;!
+
+          <div class="card" style="text-align:center;padding:34px 24px;background:linear-gradient(135deg,#eff6ff 0%,#dbeafe 100%);border:2px dashed #2563eb;margin-bottom:16px">
+            <div style="font-size:52px;margin-bottom:10px">📬</div>
+            <h2 style="color:#1e3a8a;margin:0 0 10px 0">Combien de clients perdez-vous faute de suivi&nbsp;?</h2>
+            <p style="color:#1e40af;max-width:560px;margin:0 auto;line-height:1.65;font-size:15px">
+              Un devis jamais relancé, un client qu'on oublie de rappeler, un prospect rencontré
+              dont on a perdu le numéro… Chaque contact oublié, c'est de l'argent qui part chez le concurrent.
+              Le <strong>mini-CRM YOUPI</strong> garde tout votre carnet de relations au même endroit
+              et vous dit quoi faire ensuite. Sans logiciel, sans Excel, sans carnet papier.
             </p>
-            <div style="text-align:left;background:white;padding:20px 24px;border-radius:10px;max-width:480px;margin:0 auto 24px auto;box-shadow:0 2px 8px rgba(0,0,0,0.06)">
-              <strong style="color:#1e3a8a;display:block;margin-bottom:10px">✨ Ce que vous pourrez faire :</strong>
-              <ul style="margin:0;padding-left:22px;color:var(--text-1);font-size:14px;line-height:1.8">
-                <li>📋 Ajouter, modifier, organiser vos contacts</li>
-                <li>🏷️ Trier par statut (nouveau, à recontacter, client, fidèle)</li>
-                <li>✉️ Envoyer un email directement depuis YOUPI</li>
-                <li>📝 Stocker vos notes pour chaque contact</li>
-                <li>🔒 Vos données restent privées et sécurisées</li>
-              </ul>
-            </div>
+          </div>
+
+          <div style="margin:0 0 8px 0;font-weight:800;color:var(--teal-900);font-size:15px;text-align:center">
+            🧭 Une méthode simple en 4 étapes
+          </div>
+          ${_crmMethodStepsHtml_()}
+
+          <div class="card" style="margin-top:16px;text-align:center;padding:26px 24px">
+            <p style="margin:0 0 6px 0;font-weight:700;color:var(--teal-900);font-size:16px">
+              Débloquez « Mes contacts » avec un abonnement
+            </p>
+            <p style="margin:0 0 18px 0;color:var(--text-2);font-size:13.5px">
+              Inclus aussi&nbsp;: mini-site enrichi, statistiques de fréquentation, et bien plus.
+            </p>
             <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
               <a href="${proUrl}" target="_blank" rel="noopener" class="btn btn-primary" style="padding:14px 24px;font-size:15px;text-decoration:none">
                 💎 Passer à Pro — 39€/mois
@@ -10313,7 +10550,10 @@ SIRET : 395 370 182 00036<br>
                 ⭐ Pro+ — 149€/mois
               </a>
             </div>
-            <div style="margin-top:20px">
+            <div style="margin-top:14px;font-size:12.5px;color:var(--text-2)">
+              Sans engagement — résiliable à tout moment depuis votre espace.
+            </div>
+            <div style="margin-top:16px">
               <a onclick="navigate('pro-subscription')" style="cursor:pointer;color:var(--teal-700);font-size:13px;text-decoration:underline">
                 Voir le détail des formules →
               </a>
@@ -10326,8 +10566,139 @@ SIRET : 395 370 182 00036<br>
 
   // ─── Vue 2 : Liste des contacts ─────────────────────────────
 
+  // Les 4 étapes de la « méthode YOUPI » (réutilisé : accueil + bandeau).
+  function _crmMethodStepsHtml_() {
+    var steps = [
+      { n: '1', t: '📥 Ajoutez vos contacts', d: 'Chaque personne qui vous appelle, vous écrit ou vous rencontre. Ne perdez plus jamais un prospect.' },
+      { n: '2', t: '🏷️ Classez la relation', d: 'Nouveau, à recontacter, client, fidèle… Vous voyez en un coup d\'œil qui relancer.' },
+      { n: '3', t: '✉️ Relancez au bon moment', d: 'Un mail en 2 clics depuis YOUPI. Les réponses arrivent sur votre boîte habituelle.' },
+      { n: '4', t: '⭐ Fidélisez', d: 'Notez tout (préférences, dates clés), recontactez, transformez un client en ambassadeur.' }
+    ];
+    var h = '<div class="crm-method-steps">';
+    steps.forEach(function(s) {
+      h += '<div class="crm-method-step">'
+        + '<span class="crm-method-num">' + s.n + '</span>'
+        + '<b>' + s.t + '</b>'
+        + '<span>' + s.d + '</span>'
+        + '</div>';
+    });
+    h += '</div>';
+    return h;
+  }
+
+  // Le bandeau méthode est ouvert si débutant (guide non terminé), sinon replié.
+  function _crmMethodIsOpen_(allDone) {
+    if (_crmPro.methodOpen === null) return !allDone;
+    return _crmPro.methodOpen === true;
+  }
+
+  function _crmMethodBannerHtml_(allDone) {
+    var open = _crmMethodIsOpen_(allDone);
+    return ''
+      + '<div class="crm-method">'
+      +   '<div class="crm-method-head">'
+      +     '<div>'
+      +       '<p class="crm-method-title">🧭 La méthode YOUPI pour transformer vos visiteurs en clients</p>'
+      +       '<p class="crm-method-sub">Une page = un objectif : ne plus jamais perdre un prospect ou un client par oubli.</p>'
+      +     '</div>'
+      +     '<button class="crm-method-toggle" onclick="toggleCrmMethod()">'
+      +       (open ? '▲ Masquer' : '❔ Comment ça marche ?')
+      +     '</button>'
+      +   '</div>'
+      +   (open ? _crmMethodStepsHtml_() : '')
+      + '</div>';
+  }
+
+  // Guide de démarrage : 3 étapes qui se cochent selon l'état réel.
+  function _crmGuideHtml_(s1, s2, s3) {
+    var rows = [
+      {
+        done: s1,
+        title: 'Ajoutez votre premier contact',
+        desc: 'Un client, un prospect, une personne rencontrée… Commencez par une seule fiche.',
+        cta: s1 ? '' : '<button class="crm-guide-cta" onclick="startNewContact()">➕ Ajouter un contact</button>'
+      },
+      {
+        done: s2,
+        title: 'Donnez-lui un statut',
+        desc: 'Où en est la relation ? Modifiez un contact et choisissez : nouveau, à recontacter, client, fidèle…',
+        cta: ''
+      },
+      {
+        done: s3,
+        title: 'Envoyez votre premier mail de suivi',
+        desc: 'Une relance, un remerciement, une offre. Vous écrivez depuis YOUPI, les réponses arrivent sur votre email.',
+        cta: ''
+      }
+    ];
+    var doneCount = (s1 ? 1 : 0) + (s2 ? 1 : 0) + (s3 ? 1 : 0);
+    var h = '<div class="crm-guide">'
+      + '<p class="crm-guide-title">🚀 Vos premiers pas</p>'
+      + '<p class="crm-guide-progress">Étape ' + doneCount + ' / 3 — le guide se coche tout seul au fur et à mesure.</p>';
+    rows.forEach(function(r) {
+      h += '<div class="crm-guide-row' + (r.done ? ' done' : '') + '">'
+        + '<div class="crm-guide-check">✓</div>'
+        + '<div class="crm-guide-body">'
+        +   '<b>' + r.title + '</b>'
+        +   '<p>' + r.desc + '</p>'
+        +   (r.done ? '' : r.cta)
+        + '</div>'
+        + '</div>';
+    });
+    h += '</div>';
+    return h;
+  }
+
+  function _crmGuideDoneHtml_() {
+    return ''
+      + '<div class="crm-guide-done">'
+      +   '<div>🎉 <strong>Bravo&nbsp;!</strong> Vous maîtrisez le suivi de vos contacts. Pensez à classer et relancer régulièrement.</div>'
+      +   '<a onclick="reopenCrmGuide()">Revoir la méthode</a>'
+      + '</div>';
+  }
+
+  // Écran d'accueil (0 contact) : explique l'intérêt + appelle à l'action.
+  function _crmWelcomeHtml_() {
+    return ''
+      + '<div class="crm-welcome">'
+      +   '<div class="crm-welcome-emoji">📬</div>'
+      +   '<h2>Ne perdez plus jamais un client</h2>'
+      +   '<p class="crm-welcome-lead">'
+      +     'Combien de prospects vous échappent faute d\'un suivi&nbsp;? Ici, vous gardez en un seul endroit '
+      +     'toutes les personnes qui comptent pour votre activité — et vous savez toujours qui relancer, quand, et pourquoi. '
+      +     'Pas de logiciel à installer, pas d\'Excel, pas de carnet papier.'
+      +   '</p>'
+      +   _crmMethodStepsHtml_()
+      +   '<div class="crm-welcome-cta">'
+      +     '<button class="btn btn-primary" style="padding:13px 22px;font-size:15px" onclick="startNewContact()">➕ Ajouter mon premier contact</button>'
+      +   '</div>'
+      +   '<div class="crm-welcome-demo">'
+      +     'Vous voulez d\'abord voir à quoi ça ressemble&nbsp;? '
+      +     '<a onclick="seedDemoContactsFromUI()">Voir un exemple avec 10 contacts de démo</a> '
+      +     '<span style="color:var(--text-2)">(supprimables ensuite)</span>'
+      +   '</div>'
+      + '</div>';
+  }
+
   function renderContactsList_() {
     var counts = _crmPro.counts || { all: 0 };
+    var total = counts.all || 0;
+
+    // Détection d'état pour le guide (aucune persistance : dérivé du réel)
+    var classed = (counts.client || 0) + (counts.fidele || 0)
+                + (counts.a_recontacter || 0) + (counts.perdu || 0);
+    if (_crmPro.contacts.some(function(c) { return c.last_contacted_at; })) {
+      _crmPro.guideMailedSeen = true;
+    }
+    var s1 = total >= 1;
+    var s2 = classed >= 1;
+    var s3 = !!_crmPro.guideMailedSeen;
+    var allDone = s1 && s2 && s3;
+
+    // ── Cas : aucun contact → écran d'accueil pédagogique ──
+    if (total === 0) {
+      return _crmWelcomeHtml_();
+    }
 
     // Barre des filtres
     var filtersHtml = '<div class="crm-pro-filters">';
@@ -10339,22 +10710,11 @@ SIRET : 395 370 182 00036<br>
 
     var listHtml;
     if (_crmPro.contacts.length === 0) {
-      // Bandeau démo si l'entreprise n'a aucun contact
-      var demoCard = '';
-      if (counts.all === 0) {
-        demoCard = ''
-          + '<div style="background:#fffbeb;border:1px dashed #f59e0b;border-radius:10px;padding:14px 18px;margin-bottom:14px;font-size:13px;color:#92400e">'
-          +   '💡 <strong>Vous découvrez le mini-CRM ?</strong> Pour visualiser le rendu avec quelques contacts, '
-          +   '<a onclick="seedDemoContactsFromUI()" style="cursor:pointer;text-decoration:underline;color:#92400e;font-weight:600">injectez 10 contacts d\'exemple</a> (vous pourrez les supprimer ensuite).'
-          + '</div>';
-      }
-      listHtml = demoCard + `
+      listHtml = `
         <div class="card" style="text-align:center;padding:40px 24px">
-          <div style="font-size:48px;margin-bottom:10px">📭</div>
-          <h3 style="margin:0 0 6px 0">Aucun contact pour le moment</h3>
-          <p style="color:var(--text-2);margin:0">
-            ${_crmPro.filter === 'all' ? 'Commencez par ajouter votre premier contact ci-dessus.' : 'Aucun contact dans cette catégorie.'}
-          </p>
+          <div style="font-size:48px;margin-bottom:10px">🔍</div>
+          <h3 style="margin:0 0 6px 0">Aucun contact dans cette catégorie</h3>
+          <p style="color:var(--text-2);margin:0">Changez de filtre ci-dessus pour voir vos autres contacts.</p>
         </div>
       `;
     } else {
@@ -10366,6 +10726,8 @@ SIRET : 395 370 182 00036<br>
     }
 
     return `
+      ${_crmMethodBannerHtml_(allDone)}
+      ${allDone ? _crmGuideDoneHtml_() : _crmGuideHtml_(s1, s2, s3)}
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px">
         <div style="color:var(--text-2);font-size:14px">
           ${counts.all || 0} contact${counts.all > 1 ? 's' : ''} au total
@@ -10376,6 +10738,23 @@ SIRET : 395 370 182 00036<br>
       ${listHtml}
     `;
   }
+
+  function toggleCrmMethod() {
+    // On bascule par rapport à l'état actuellement affiché
+    var counts = _crmPro.counts || {};
+    var classed = (counts.client || 0) + (counts.fidele || 0)
+                + (counts.a_recontacter || 0) + (counts.perdu || 0);
+    var allDone = (counts.all || 0) >= 1 && classed >= 1 && _crmPro.guideMailedSeen;
+    _crmPro.methodOpen = !_crmMethodIsOpen_(allDone);
+    renderProContacts();
+  }
+  window.toggleCrmMethod = toggleCrmMethod;
+
+  function reopenCrmGuide() {
+    _crmPro.methodOpen = true;
+    renderProContacts();
+  }
+  window.reopenCrmGuide = reopenCrmGuide;
 
   function renderCrmProFilterBtn_(key, label, count) {
     var active = _crmPro.filter === key;
@@ -10395,6 +10774,8 @@ SIRET : 395 370 182 00036<br>
     var notesPart = c.notes
       ? '<div class="crm-pro-card-notes">' + esc(c.notes).replace(/\n/g, '<br>') + '</div>'
       : '';
+    var hintText = _crmStatusHint_(c.statut);
+    var hintPart = hintText ? '<div class="crm-guide-hint">' + hintText + '</div>' : '';
 
     return ''
       + '<div class="crm-pro-card">'
@@ -10407,6 +10788,7 @@ SIRET : 395 370 182 00036<br>
       +   '</div>'
       +   notesPart
       +   (lastContact ? '<div class="crm-pro-card-last">' + lastContact + '</div>' : '')
+      +   hintPart
       +   '<div class="crm-pro-card-actions">'
       +     '<button class="btn btn-secondary btn-sm" onclick="startEditContact(\'' + c.id + '\')">✏️ Modifier</button>'
       +     (c.email
