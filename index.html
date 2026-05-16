@@ -1538,6 +1538,123 @@
       width: 100%;
       margin-top: auto;
     }
+    /* v2.13.2 — Carte palier 500 (bonus auto, non échangeable) */
+    .reward-card.palier-card {
+      border-color: #8b5cf6;
+      background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%);
+    }
+    .reward-card.palier-card.unlocked {
+      border-color: #16a34a;
+      background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+    }
+    .reward-card .reward-hint {
+      font-size: 12px;
+      color: var(--text-2);
+      line-height: 1.4;
+      margin-top: 2px;
+    }
+    .palier-done {
+      background: #16a34a;
+      color: white;
+      padding: 8px 12px;
+      border-radius: 8px;
+      text-align: center;
+      font-weight: 700;
+      font-size: 13px;
+      margin-top: auto;
+    }
+    .palier-todo {
+      background: #8b5cf6;
+      color: white;
+      padding: 8px 12px;
+      border-radius: 8px;
+      text-align: center;
+      font-weight: 700;
+      font-size: 13px;
+      margin-top: auto;
+    }
+
+    /* v2.13.3 — Encart "Mes récompenses actives" avec coupons Stripe */
+    .active-rewards-card {
+      background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+      border: 1px solid #86efac;
+    }
+    .active-rewards-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .active-reward-item {
+      background: white;
+      border: 1px solid #bbf7d0;
+      border-radius: 12px;
+      padding: 14px 16px;
+    }
+    .active-reward-item.active-coupon {
+      border-color: #d97706;
+      background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+    }
+    .active-reward-head {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+    .active-reward-icon {
+      font-size: 24px;
+      line-height: 1;
+    }
+    .active-reward-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text-1);
+      line-height: 1.3;
+    }
+    .active-reward-sub {
+      font-size: 12px;
+      color: var(--text-2);
+      margin-top: 2px;
+    }
+    .active-coupon-code {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      padding: 10px 14px;
+      background: white;
+      border: 2px dashed #d97706;
+      border-radius: 10px;
+      margin-bottom: 8px;
+    }
+    .active-coupon-code code {
+      flex: 1;
+      min-width: 0;
+      font-family: monospace;
+      font-size: 16px;
+      font-weight: 700;
+      color: #78350f;
+      letter-spacing: 1px;
+      background: transparent;
+      padding: 0;
+      word-break: break-all;
+    }
+    .btn-copy-code {
+      background: #d97706;
+      color: white;
+      border: none;
+      padding: 6px 14px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .btn-copy-code:hover { background: #b45309; }
+    .active-reward-hint {
+      font-size: 12px;
+      color: var(--text-2);
+      line-height: 1.4;
+    }
 
     /* Historique */
     .score-history {
@@ -4059,7 +4176,7 @@
 
   const APP = {
     name: 'Annuaire YOUPI',
-    version: 'v2.13.1',
+    version: 'v2.13.3',
     versionDate: '15 mai 2026',
     BACKEND_URL: 'https://script.google.com/macros/s/AKfycbzQNSOAGCJp1QmZU0IE1FYiKmKCcGgTUpqKa3RJG9lwiAND_EC5dGdbh2XCu26ZTMoxtw/exec'
   };
@@ -4071,6 +4188,25 @@
   //  → Pour ajouter une nouvelle version, demander à Claude.
   // ------------------------------------------------------------
   const CHANGELOG = [
+    {
+      version: 'v2.13.3',
+      date: '15 mai 2026',
+      title: "🎟️ Vos récompenses Pro et Pro+ sont maintenant en codes promo Stripe",
+      entries: [
+        { type: 'feature', text: "Échanger 1500 points contre « 1er mois Pro offert » génère désormais un code promo à utiliser sur Stripe lors de votre abonnement. Le 1er mois est entièrement gratuit, puis vous payez 39€/mois ensuite, sans surprise." },
+        { type: 'feature', text: "Échanger 6000 points contre « -50% sur le 1er mois Pro+ » génère un code promo qui s'applique automatiquement sur Stripe lors de votre abonnement Pro+. Vous payez 74,50€ le 1er mois, puis 149€/mois ensuite." },
+        { type: 'feature', text: "Vos codes promo actifs apparaissent dans la section « Mes récompenses actives » avec un bouton « Copier le code » pour vous faciliter le paiement." }
+      ]
+    },
+    {
+      version: 'v2.13.2',
+      date: '15 mai 2026',
+      title: "🎁 Refonte de la grille de récompenses",
+      entries: [
+        { type: 'feature', text: "Nouvelle grille de récompenses cohérente et progressive : bonus de 200 points cadeau à 500 points, 1er mois Pro offert à 1500 points, 2 boosts Facebook à 3000 points, 50% de réduction sur le 1er mois Pro+ à 6000 points, et 3 boosts Facebook à 10000 points." },
+        { type: 'feature', text: "Refonte du message de parrainage partagé sur WhatsApp et par email : plus court, plus percutant, met en avant la valeur concrète pour le destinataire." }
+      ]
+    },
     {
       version: 'v2.13.1',
       date: '15 mai 2026',
@@ -8492,11 +8628,10 @@ SIRET : 395 370 182 00036<br>
   ];
 
   var SCORE_REWARD_META = {
-    free_boost:         { icon: '🚀', label: '1 boost Facebook offert',  auto: true,  cost: 500 },
-    one_month_pro:      { icon: '💎', label: '1 mois Pro offert',         auto: true,  cost: 1500 },
-    newsletter:         { icon: '📰', label: 'Mise en avant newsletter',  auto: false, cost: 3000 },
-    one_month_pro_plus: { icon: '⭐', label: '1 mois Pro+ offert',        auto: true,  cost: 6000 },
-    blog_article:       { icon: '📝', label: 'Article blog YOUPI',        auto: false, cost: 10000 }
+    one_month_pro:       { icon: '💎', label: '1er mois Pro offert',                     auto: true, cost: 1500,  hint: 'Profitez de toutes les fonctions Pro pendant 30 jours, sans engagement.' },
+    two_boosts:          { icon: '🚀', label: '2 boosts Facebook offerts',                auto: true, cost: 3000,  hint: 'Visibilité maximale sur Facebook pour 2 de vos publications.' },
+    half_month_pro_plus: { icon: '🎟️', label: '-50% sur votre 1er mois Pro+',           auto: true, cost: 6000,  hint: 'Bon de réduction de 50% appliqué automatiquement sur Stripe.' },
+    three_boosts:        { icon: '🚀', label: '3 boosts Facebook offerts',                auto: true, cost: 10000, hint: 'Boostez 3 publications quand vous le souhaitez.' }
   };
 
   var SCORE_EVENT_LABELS = {
@@ -8509,7 +8644,8 @@ SIRET : 395 370 182 00036<br>
     weekly_login: { icon: '📅', label: 'Connexion hebdomadaire' },
     anniversary_bonus: { icon: '🎂', label: 'Anniversaire de votre fiche' },
     monthly_update_bonus: { icon: '✏️', label: 'Mise à jour mensuelle' },
-    retroactive_migration: { icon: '✨', label: 'Bonus de bienvenue rétroactif' }
+    retroactive_migration: { icon: '✨', label: 'Bonus de bienvenue rétroactif' },
+    palier_500_bonus: { icon: '🎁', label: 'Bonus palier 500 points atteint' }
   };
 
   var _scoreState = {
@@ -8520,6 +8656,11 @@ SIRET : 395 370 182 00036<br>
     reserved_months_pro: 0,
     reserved_months_pro_plus: 0,
     free_boost_credits: 0,
+    half_month_pro_plus_credits: 0,
+    coupon_pro_free_available: 0,
+    coupon_proplus_half_available: 0,
+    coupon_pro_free_code: '',
+    coupon_proplus_half_code: '',
     rewards: {},
     events: [],
     filleuls: [],
@@ -8569,6 +8710,11 @@ SIRET : 395 370 182 00036<br>
     _scoreState.reserved_months_pro = scoreR.reserved_months_pro || 0;
     _scoreState.reserved_months_pro_plus = scoreR.reserved_months_pro_plus || 0;
     _scoreState.free_boost_credits = scoreR.free_boost_credits || 0;
+    _scoreState.half_month_pro_plus_credits = scoreR.half_month_pro_plus_credits || 0;
+    _scoreState.coupon_pro_free_available = scoreR.coupon_pro_free_available || 0;
+    _scoreState.coupon_proplus_half_available = scoreR.coupon_proplus_half_available || 0;
+    _scoreState.coupon_pro_free_code = scoreR.coupon_pro_free_code || '';
+    _scoreState.coupon_proplus_half_code = scoreR.coupon_proplus_half_code || '';
     _scoreState.rewards = scoreR.rewards || {};
     _scoreState.events = (historyR && historyR.ok) ? (historyR.events || []) : [];
     if (referralR && referralR.ok) {
@@ -8589,16 +8735,107 @@ SIRET : 395 370 182 00036<br>
       ? `<div class="score-hero-next">Plus que <strong>${lvl.points_to_next}</strong> points pour atteindre <strong>${esc(lvl.next_label)}</strong></div>`
       : `<div class="score-hero-next">🎉 Vous avez atteint le niveau maximum !</div>`;
 
+    // Mes récompenses actives — encart unifié avec coupons + crédits
+    var hasActive = (s.free_boost_credits > 0)
+                 || (s.coupon_pro_free_available > 0)
+                 || (s.coupon_proplus_half_available > 0)
+                 || (s.reserved_months_pro > 0)
+                 || (s.reserved_months_pro_plus > 0);
     var reservesNote = '';
-    if (s.reserved_months_pro > 0 || s.reserved_months_pro_plus > 0 || s.free_boost_credits > 0) {
-      var parts = [];
-      if (s.free_boost_credits > 0) parts.push('🚀 ' + s.free_boost_credits + ' boost(s)');
-      if (s.reserved_months_pro > 0) parts.push('💎 ' + s.reserved_months_pro + ' mois Pro');
-      if (s.reserved_months_pro_plus > 0) parts.push('⭐ ' + s.reserved_months_pro_plus + ' mois Pro+');
+    if (hasActive) {
+      var blocs = [];
+
+      // Coupon Pro free
+      if (s.coupon_pro_free_available > 0) {
+        var nbCp = s.coupon_pro_free_available;
+        blocs.push(`
+          <div class="active-reward-item active-coupon">
+            <div class="active-reward-head">
+              <span class="active-reward-icon">💎</span>
+              <div>
+                <div class="active-reward-title">${nbCp}× 1er mois Pro offert</div>
+                <div class="active-reward-sub">Code promo à utiliser sur Stripe</div>
+              </div>
+            </div>
+            <div class="active-coupon-code">
+              <code>${esc(s.coupon_pro_free_code)}</code>
+              <button class="btn-copy-code" onclick="copyCouponCode('${esc(s.coupon_pro_free_code)}')">📋 Copier</button>
+            </div>
+            <div class="active-reward-hint">À saisir dans le champ « Code promo » lors de votre abonnement Pro sur Stripe.</div>
+          </div>
+        `);
+      }
+
+      // Coupon Pro+ -50%
+      if (s.coupon_proplus_half_available > 0) {
+        var nbCh = s.coupon_proplus_half_available;
+        blocs.push(`
+          <div class="active-reward-item active-coupon">
+            <div class="active-reward-head">
+              <span class="active-reward-icon">🎟️</span>
+              <div>
+                <div class="active-reward-title">${nbCh}× -50% sur le 1er mois Pro+</div>
+                <div class="active-reward-sub">Code promo à utiliser sur Stripe</div>
+              </div>
+            </div>
+            <div class="active-coupon-code">
+              <code>${esc(s.coupon_proplus_half_code)}</code>
+              <button class="btn-copy-code" onclick="copyCouponCode('${esc(s.coupon_proplus_half_code)}')">📋 Copier</button>
+            </div>
+            <div class="active-reward-hint">À saisir dans le champ « Code promo » lors de votre abonnement Pro+ sur Stripe.</div>
+          </div>
+        `);
+      }
+
+      // Boosts Facebook
+      if (s.free_boost_credits > 0) {
+        blocs.push(`
+          <div class="active-reward-item">
+            <div class="active-reward-head">
+              <span class="active-reward-icon">🚀</span>
+              <div>
+                <div class="active-reward-title">${s.free_boost_credits} boost(s) Facebook offert(s)</div>
+                <div class="active-reward-sub">Crédités sur votre compte, utilisables quand vous voulez</div>
+              </div>
+            </div>
+            <div class="active-reward-hint">L'équipe YOUPI applique automatiquement vos boosts gratuits sur vos prochaines publications à booster.</div>
+          </div>
+        `);
+      }
+
+      // Mois en réserve (legacy, peut exister pour certaines fiches)
+      if (s.reserved_months_pro > 0) {
+        blocs.push(`
+          <div class="active-reward-item">
+            <div class="active-reward-head">
+              <span class="active-reward-icon">💎</span>
+              <div>
+                <div class="active-reward-title">${s.reserved_months_pro} mois Pro en réserve</div>
+                <div class="active-reward-sub">À appliquer à la fin de votre abonnement actuel</div>
+              </div>
+            </div>
+          </div>
+        `);
+      }
+      if (s.reserved_months_pro_plus > 0) {
+        blocs.push(`
+          <div class="active-reward-item">
+            <div class="active-reward-head">
+              <span class="active-reward-icon">⭐</span>
+              <div>
+                <div class="active-reward-title">${s.reserved_months_pro_plus} mois Pro+ en réserve</div>
+                <div class="active-reward-sub">À appliquer à la fin de votre abonnement actuel</div>
+              </div>
+            </div>
+          </div>
+        `);
+      }
+
       reservesNote = `
-        <div class="card" style="background:#f0fdf4;border:1px solid #bbf7d0">
-          <strong style="color:#166534">🎁 Vos récompenses actives :</strong>
-          <div style="margin-top:6px;color:#166534;font-size:14px">${parts.join(' · ')}</div>
+        <div class="card active-rewards-card">
+          <h2 style="margin:0 0 4px 0">🎁 Mes récompenses actives</h2>
+          <p style="color:var(--text-2);font-size:13px;margin:0 0 14px 0">Voici les avantages que vous avez débloqués et qui sont prêts à être utilisés.</p>
+          <div class="active-rewards-list">${blocs.join('')}</div>
         </div>
       `;
     }
@@ -8698,14 +8935,44 @@ SIRET : 395 370 182 00036<br>
     `;
 
     // Récompenses
-    var rewardKeys = ['free_boost', 'one_month_pro', 'newsletter', 'one_month_pro_plus', 'blog_article'];
-    var rewardsHtml = rewardKeys.map(function(key) {
+    var rewardKeys = ['one_month_pro', 'two_boosts', 'half_month_pro_plus', 'three_boosts'];
+
+    // Carte spéciale "palier 500" (bonus automatique, pas échangeable)
+    var palierCard;
+    if (s.score_total >= 500) {
+      palierCard = `
+        <div class="reward-card palier-card unlocked">
+          <div class="reward-card-head">
+            <span class="reward-icon">🎁</span>
+            <div class="reward-title">+200 points cadeau</div>
+          </div>
+          <span class="reward-cost">Atteint à 500 pts</span>
+          <div class="reward-hint">Bonus offert automatiquement, déjà crédité sur votre compte.</div>
+          <div class="palier-done">✓ Débloqué</div>
+        </div>
+      `;
+    } else {
+      palierCard = `
+        <div class="reward-card palier-card locked">
+          <div class="reward-card-head">
+            <span class="reward-icon">🎁</span>
+            <div class="reward-title">+200 points cadeau</div>
+          </div>
+          <span class="reward-cost">Atteint à 500 pts</span>
+          <div class="reward-hint">Bonus offert automatiquement dès que vous franchissez le palier 500.</div>
+          <div class="palier-todo">Encore ${500 - s.score_total} pts</div>
+        </div>
+      `;
+    }
+
+    var rewardsHtml = palierCard + rewardKeys.map(function(key) {
       var r = SCORE_REWARD_META[key];
       if (!r) return '';
       var canAfford = s.score_solde >= r.cost;
       var cls = canAfford ? 'reward-card affordable' : 'reward-card locked';
-      var btnLabel = canAfford ? (r.auto ? '✨ Échanger maintenant' : '✋ Demander') : `Encore ${r.cost - s.score_solde} pts`;
+      var btnLabel = canAfford ? '✨ Échanger maintenant' : `Encore ${r.cost - s.score_solde} pts`;
       var btnDisabled = canAfford ? '' : 'disabled';
+      var hintHtml = r.hint ? `<div class="reward-hint">${esc(r.hint)}</div>` : '';
       return `
         <div class="${cls}">
           <div class="reward-card-head">
@@ -8713,6 +8980,7 @@ SIRET : 395 370 182 00036<br>
             <div class="reward-title">${esc(r.label)}</div>
           </div>
           <span class="reward-cost">${r.cost} pts</span>
+          ${hintHtml}
           <button class="btn ${canAfford ? 'btn-primary' : 'btn-secondary'}" ${btnDisabled} onclick="confirmRedeemReward('${esc(key)}')">${btnLabel}</button>
         </div>
       `;
@@ -8720,7 +8988,7 @@ SIRET : 395 370 182 00036<br>
     var rewardsCard = `
       <div class="card">
         <h2 style="margin:0 0 4px 0">🎁 Mes récompenses</h2>
-        <p style="color:var(--text-2);font-size:13px;margin:0 0 14px 0">Échangez votre solde de <strong>${s.score_solde} points</strong> contre des avantages concrets.</p>
+        <p style="color:var(--text-2);font-size:13px;margin:0 0 14px 0">Échangez votre solde de <strong>${s.score_solde} points</strong> contre des avantages concrets. Plus vous montez de niveau, plus vous débloquez de récompenses de valeur.</p>
         <div class="rewards-grid">${rewardsHtml}</div>
       </div>
     `;
@@ -8798,49 +9066,34 @@ SIRET : 395 370 182 00036<br>
   }
   window.copyReferralLink = copyReferralLink;
 
+  function copyCouponCode(code) {
+    if (!code) return;
+    _copyToClipboard_(code, '✅ Code promo copié ! Collez-le sur Stripe pour l\'appliquer.');
+  }
+  window.copyCouponCode = copyCouponCode;
+
   // ─── v2.13.1 — Partage WhatsApp et Email avec message pré-rempli ────
 
   /**
    * Construit le message de parrainage personnalisé.
-   * Réutilisé pour WhatsApp et Email (avec adaptations légères).
+   * Court, percutant, sans emojis (qui s'affichent mal dans certains clients).
+   * Réutilisé pour WhatsApp et Email.
    */
   function _buildReferralMessage_(mode) {
     var code = _scoreState.referral_code || '';
     var shareUrl = window.location.origin + window.location.pathname + '?ref=' + code;
-    var nomEntreprise = (state.user && state.user.data && state.user.data.nom_entreprise) || '';
 
-    if (mode === 'email') {
-      // Format email : retours à la ligne classiques, plus formel
-      var lines = [
-        'Bonjour,',
-        '',
-        'Je te recommande l\'Annuaire YOUPI®, l\'annuaire conversationnel des entreprises ultra-marines (Martinique, Guadeloupe, Guyane).',
-        '',
-        'C\'est un annuaire avec un agent IA qui répond aux questions des clients à propos des entreprises locales. L\'inscription est gratuite et permet de référencer ton entreprise et de gagner en visibilité.',
-        '',
-        'Pour t\'inscrire en utilisant mon code de parrainage (' + code + '), clique sur ce lien :',
-        shareUrl,
-        '',
-        'À bientôt !',
-        nomEntreprise ? '— ' + nomEntreprise : ''
-      ];
-      return lines.join('\n');
-    }
-
-    // Format WhatsApp : plus chaleureux, emojis ok
-    var waLines = [
-      'Salut ! 👋',
+    // Message identique pour WhatsApp et Email — court, direct, percutant.
+    // Pas d'emojis pour éviter les "?" sur certains clients (WhatsApp Web, Outlook).
+    var lines = [
+      'Tu as une entreprise et personne ne te trouve sur Google ?',
       '',
-      'Je t\'invite à découvrir l\'Annuaire YOUPI®, l\'annuaire conversationnel des entreprises ultra-marines.',
+      'L\'Annuaire YOUPI référence GRATUITEMENT ton activité, et notre agent IA te recommande aux clients qui cherchent ce que tu fais en Martinique. Direct. Sans pub. Sans effort.',
       '',
-      'C\'est gratuit et tu peux y inscrire ton entreprise pour gagner en visibilité grâce à l\'agent IA qui répond aux questions des clients.',
-      '',
-      '🎁 Utilise mon code de parrainage : *' + code + '*',
-      '🔗 ' + shareUrl,
-      '',
-      'À bientôt !' + (nomEntreprise ? ' ' + nomEntreprise : '')
+      'Inscris-toi avec mon code ' + code + ' :',
+      shareUrl
     ];
-    return waLines.join('\n');
+    return lines.join('\n');
   }
 
   /**
@@ -8864,7 +9117,7 @@ SIRET : 395 370 182 00036<br>
   function shareReferralEmail() {
     var code = _scoreState.referral_code || '';
     if (!code) { toast('error', 'Code de parrainage indisponible'); return; }
-    var subject = 'Je te recommande l\'Annuaire YOUPI®';
+    var subject = 'Fais-toi connaître gratuitement avec l\'Annuaire YOUPI';
     var body = _buildReferralMessage_('email');
     var url = 'mailto:?subject=' + encodeURIComponent(subject)
             + '&body=' + encodeURIComponent(body);
@@ -8918,7 +9171,14 @@ SIRET : 395 370 182 00036<br>
       toast('error', result.error || 'Erreur');
       return;
     }
-    toast('success', result.message || '✅ Récompense activée !');
+
+    // Si c'est un coupon Stripe, on affiche un modal dédié avec le code à copier
+    if (result.applied === 'coupon_pro_free' || result.applied === 'coupon_proplus_half') {
+      _showCouponModal_(result, rewardKey);
+    } else {
+      // Sinon toast standard
+      toast('success', result.message || '✅ Récompense activée !');
+    }
 
     // Refresh des données utilisateur (statut Pro a pu changer)
     try {
@@ -8933,6 +9193,69 @@ SIRET : 395 370 182 00036<br>
     renderProScore();
   }
   window.confirmRedeemReward = confirmRedeemReward;
+
+  /**
+   * Affiche un modal dédié quand un coupon Stripe est généré.
+   * Donne le code à l'utilisateur + bouton "copier" + explication claire.
+   */
+  function _showCouponModal_(result, rewardKey) {
+    var code = result.coupon_code || '';
+    var isProPlus = rewardKey === 'half_month_pro_plus';
+    var planLabel = isProPlus ? 'Pro+' : 'Pro';
+    var benefit = isProPlus ? '50% de réduction sur votre 1er mois' : 'votre 1er mois entièrement gratuit';
+
+    var modal = document.getElementById('modal-zone');
+    if (!modal) return;
+    modal.innerHTML = `
+      <div class="modal-backdrop" onclick="closeCouponModal(event)">
+        <div class="modal-content" onclick="event.stopPropagation()" style="max-width:560px">
+          <div class="modal-header">
+            <h2 style="margin:0">🎉 Votre code promo est prêt !</h2>
+            <button class="modal-close" onclick="closeCouponModal()">×</button>
+          </div>
+          <div style="padding:8px 4px">
+            <p style="color:var(--text-1);font-size:14px;line-height:1.6;margin:0 0 16px 0">
+              Voici votre code promo pour bénéficier de <strong>${benefit}</strong> sur votre abonnement <strong>${planLabel}</strong> :
+            </p>
+
+            <div style="background:linear-gradient(135deg,#fffbeb 0%,#fef3c7 100%);padding:18px 20px;border-radius:12px;border:2px dashed #d97706;margin-bottom:16px;text-align:center">
+              <div style="font-family:monospace;font-size:22px;font-weight:800;color:#78350f;letter-spacing:2px;word-break:break-all">${esc(code)}</div>
+            </div>
+
+            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px">
+              <button class="btn btn-primary" onclick="copyCouponCode('${esc(code).replace(/'/g, "\\'")}')">
+                📋 Copier le code
+              </button>
+              <button class="btn btn-secondary" onclick="navigate('pro-subscription')">
+                💳 Voir mes abonnements
+              </button>
+            </div>
+
+            <div style="background:#eff6ff;border-left:4px solid #2563eb;padding:12px 16px;border-radius:6px;font-size:13px;color:#1e3a8a;line-height:1.7">
+              <strong>Comment l'utiliser :</strong>
+              <ol style="margin:6px 0 0 0;padding-left:20px">
+                <li>Cliquez sur « S'abonner ${planLabel} » depuis votre espace abonnement</li>
+                <li>Sur la page de paiement Stripe, cliquez sur « <em>Ajouter un code promo</em> »</li>
+                <li>Collez votre code : <code style="background:#dbeafe;padding:2px 6px;border-radius:4px">${esc(code)}</code></li>
+                <li>Validez : le tarif est mis à jour automatiquement</li>
+              </ol>
+            </div>
+
+            <div style="margin-top:14px;font-size:12px;color:var(--text-2);text-align:center">
+              💡 Ce code reste disponible dans votre encart « Mes récompenses actives » tant que vous ne l'avez pas utilisé.
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  function closeCouponModal(event) {
+    if (event && event.target && !event.target.classList.contains('modal-backdrop')) return;
+    var modal = document.getElementById('modal-zone');
+    if (modal) modal.innerHTML = '';
+  }
+  window.closeCouponModal = closeCouponModal;
 
 
   // ============================================================
