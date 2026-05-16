@@ -1965,8 +1965,9 @@
     .filleul-status.pro { background: #dcfce7; color: #166534; }
     .filleul-status.free { background: #e0e7ff; color: #3730a3; }
 
-    /* v2.14.0 — Page Statistiques */
-    .stats-grid {
+    /* v2.14.0 — Page Statistiques (préfixe pro- pour éviter collision
+       avec .stats-grid du tableau de bord admin/pro) */
+    .pro-stats-grid {
       display: flex;
       flex-direction: column;
       gap: 18px;
@@ -4512,7 +4513,7 @@
 
   const APP = {
     name: 'Annuaire YOUPI',
-    version: 'v2.14.0',
+    version: 'v2.14.1',
     versionDate: '15 mai 2026',
     BACKEND_URL: 'https://script.google.com/macros/s/AKfycbzQNSOAGCJp1QmZU0IE1FYiKmKCcGgTUpqKa3RJG9lwiAND_EC5dGdbh2XCu26ZTMoxtw/exec'
   };
@@ -4524,6 +4525,14 @@
   //  → Pour ajouter une nouvelle version, demander à Claude.
   // ------------------------------------------------------------
   const CHANGELOG = [
+    {
+      version: 'v2.14.1',
+      date: '15 mai 2026',
+      title: "🛠️ Correction de l'affichage de la page Statistiques",
+      entries: [
+        { type: 'fix', text: "Correction d'un problème d'affichage qui rendait la page « Mes statistiques » illisible (colonnes écrasées). La page s'affiche désormais correctement, sur toute la largeur." }
+      ]
+    },
     {
       version: 'v2.14.0',
       date: '15 mai 2026',
@@ -10034,7 +10043,7 @@ SIRET : 395 370 182 00036<br>
             <h1>📊 Mes statistiques</h1>
             <div style="color:var(--text-2);font-size:14px;margin-top:4px">L'audience de votre mini-site public sur les ${esc(String(periodLabel))}.</div>
           </div>
-          <div class="stats-grid">
+          <div class="pro-stats-grid">
             ${periodSelector}
             ${comparisonHtml}
             ${summaryCards}
