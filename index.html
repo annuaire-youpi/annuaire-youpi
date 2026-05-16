@@ -997,6 +997,32 @@
     }
     .mini-site-hero-noimg .mini-site-hero-content { color: white; }
     .mini-site-hero-content { color: white; }
+    /* v2.13.5 — Badge de niveau YOUPI sur le mini-site public */
+    .mini-site-level-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 12px;
+      padding: 7px 16px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+      backdrop-filter: blur(4px);
+      box-shadow: 0 2px 10px rgba(0,0,0,0.25);
+    }
+    .mini-site-level-argent {
+      background: linear-gradient(135deg, #cbd5e1 0%, #94a3b8 100%);
+      color: #1e293b;
+    }
+    .mini-site-level-or {
+      background: linear-gradient(135deg, #fde68a 0%, #f59e0b 100%);
+      color: #78350f;
+    }
+    .mini-site-level-diamant {
+      background: linear-gradient(135deg, #a5b4fc 0%, #818cf8 100%);
+      color: #1e1b4b;
+    }
     .mini-site-hero-region {
       font-size: 14px;
       opacity: 0.95;
@@ -1938,6 +1964,65 @@
     }
     .filleul-status.pro { background: #dcfce7; color: #166534; }
     .filleul-status.free { background: #e0e7ff; color: #3730a3; }
+
+    /* v2.13.5 — Section "Les niveaux YOUPI" */
+    .levels-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .level-row {
+      display: grid;
+      grid-template-columns: 200px 1fr;
+      gap: 16px;
+      align-items: center;
+      padding: 14px 16px;
+      background: var(--sand-50);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+    @media (max-width: 640px) {
+      .level-row { grid-template-columns: 1fr; gap: 8px; }
+    }
+    .level-row-current {
+      border-color: #f59e0b;
+      background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+      box-shadow: 0 2px 8px rgba(245,158,11,0.15);
+    }
+    .level-row-badge {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .level-row-emoji { font-size: 30px; line-height: 1; }
+    .level-row-name {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text-1);
+    }
+    .level-row-you {
+      display: inline-block;
+      background: #f59e0b;
+      color: white;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      padding: 2px 7px;
+      border-radius: 10px;
+      margin-left: 6px;
+      vertical-align: middle;
+    }
+    .level-row-range {
+      font-size: 12px;
+      color: var(--text-2);
+      margin-top: 2px;
+    }
+    .level-row-perk {
+      font-size: 13px;
+      color: var(--text-1);
+      line-height: 1.5;
+    }
     .sidebar {
       background: var(--card);
       border: 1px solid var(--border);
@@ -4324,7 +4409,7 @@
 
   const APP = {
     name: 'Annuaire YOUPI',
-    version: 'v2.13.4',
+    version: 'v2.13.5',
     versionDate: '15 mai 2026',
     BACKEND_URL: 'https://script.google.com/macros/s/AKfycbzQNSOAGCJp1QmZU0IE1FYiKmKCcGgTUpqKa3RJG9lwiAND_EC5dGdbh2XCu26ZTMoxtw/exec'
   };
@@ -4336,6 +4421,15 @@
   //  → Pour ajouter une nouvelle version, demander à Claude.
   // ------------------------------------------------------------
   const CHANGELOG = [
+    {
+      version: 'v2.13.5',
+      date: '15 mai 2026',
+      title: "🏅 Les niveaux YOUPI deviennent un gage de confiance",
+      entries: [
+        { type: 'feature', text: "Nouvelle section « Les niveaux YOUPI » dans votre espace Mon score : elle explique clairement les 4 niveaux (Bronze, Argent, Or, Diamant), leurs seuils et ce qu'ils apportent." },
+        { type: 'feature', text: "À partir du niveau Argent, un badge de prestige (« Entreprise Niveau Or sur l'Annuaire YOUPI ») apparaît sur votre mini-site public. Vos visiteurs voient en un coup d'œil votre engagement et votre sérieux, ce qui renforce leur confiance." }
+      ]
+    },
     {
       version: 'v2.13.4',
       date: '15 mai 2026',
@@ -7779,7 +7873,7 @@ SIRET : 395 370 182 00036<br>
       return;
     }
 
-    document.getElementById('main').innerHTML = renderMiniSiteContent_(r.company, r.pages || []);
+    document.getElementById('main').innerHTML = renderMiniSiteContent_(r.company, r.pages || [], r.youpi_level || null);
 
     // Met à jour le titre de l'onglet
     document.title = r.company.nom_entreprise + ' · Annuaire YOUPI®';
@@ -7886,7 +7980,7 @@ SIRET : 395 370 182 00036<br>
   }
   window.copyMiniSiteUrl = copyMiniSiteUrl;
 
-  function renderMiniSiteContent_(company, pages) {
+  function renderMiniSiteContent_(company, pages, youpiLevel) {
     var c = company;
     var regionFlag = ({ MQ: '🇲🇶', GP: '🇬🇵', GF: '🇬🇫' })[c.region] || '🏝️';
     // v2.12.0 : la cover image dédiée du mini-site Pro est prioritaire
@@ -7896,6 +7990,18 @@ SIRET : 395 370 182 00036<br>
     var ville = c.ville || '';
     var regionLabel = ({ MQ: 'Martinique', GP: 'Guadeloupe', GF: 'Guyane' })[c.region] || '';
     var emplacement = ville + (ville && regionLabel ? ' · ' : '') + regionLabel;
+
+    // v2.13.5 : badge de niveau YOUPI (prestige). Affiché uniquement à
+    // partir d'Argent — Bronze est le niveau de départ, sans valeur de
+    // distinction, donc on ne l'affiche pas publiquement.
+    var levelBadgeHtml = '';
+    if (youpiLevel && youpiLevel.key && youpiLevel.key !== 'bronze') {
+      levelBadgeHtml = `
+        <div class="mini-site-level-badge mini-site-level-${esc(youpiLevel.key)}">
+          ${youpiLevel.emoji || '🏅'} Entreprise Niveau ${esc(youpiLevel.label)} sur l'Annuaire YOUPI®
+        </div>
+      `;
+    }
 
     // Bandeau couverture
     var heroHtml;
@@ -7907,6 +8013,7 @@ SIRET : 395 370 182 00036<br>
               <div class="mini-site-hero-region">${regionFlag} ${esc(emplacement)}</div>
               <h1 class="mini-site-hero-title">${esc(c.nom_entreprise)}</h1>
               <div class="mini-site-hero-sector">${esc(c.secteur || '')}</div>
+              ${levelBadgeHtml}
             </div>
           </div>
         </div>
@@ -7918,6 +8025,7 @@ SIRET : 395 370 182 00036<br>
             <div class="mini-site-hero-region">${regionFlag} ${esc(emplacement)}</div>
             <h1 class="mini-site-hero-title">${esc(c.nom_entreprise)}</h1>
             <div class="mini-site-hero-sector">${esc(c.secteur || '')}</div>
+            ${levelBadgeHtml}
           </div>
         </div>
       `;
@@ -8773,6 +8881,28 @@ SIRET : 395 370 182 00036<br>
   //   6. Historique : 30 derniers événements
   // ─────────────────────────────────────────────────────────────
 
+  // Description des 4 niveaux YOUPI (cohérent avec SCORE_LEVELS backend).
+  // En option A : le niveau est un BADGE DE PRESTIGE affiché sur le mini-site
+  // public à partir d'Argent. Bronze = niveau de départ, pas de badge public.
+  var YOUPI_LEVELS_INFO = [
+    {
+      key: 'bronze', emoji: '🥉', label: 'Bronze', range: '0 à 999 points',
+      perk: 'Niveau de départ de toutes les entreprises. Accumulez des points pour passer Argent.'
+    },
+    {
+      key: 'argent', emoji: '🥈', label: 'Argent', range: '1 000 à 2 999 points',
+      perk: 'Le badge « Entreprise Niveau Argent » apparaît sur votre mini-site public : un premier gage de sérieux pour vos visiteurs.'
+    },
+    {
+      key: 'or', emoji: '🥇', label: 'Or', range: '3 000 à 7 999 points',
+      perk: 'Le badge « Niveau Or » sur votre mini-site renforce nettement la confiance : il montre une entreprise active et engagée sur l\'annuaire.'
+    },
+    {
+      key: 'diamant', emoji: '💎', label: 'Diamant', range: '8 000 points et plus',
+      perk: 'Le badge « Niveau Diamant », le plus prestigieux, distingue votre entreprise comme une référence sur l\'Annuaire YOUPI.'
+    }
+  ];
+
   var SCORE_SOURCES = [
     { key: 'welcome_bonus',         icon: '🎉', label: 'Bienvenue (à l\'inscription)',           pts: '+200' },
     { key: 'first_page_bonus',      icon: '📄', label: 'Création de votre 1ère page',            pts: '+50' },
@@ -9188,6 +9318,35 @@ SIRET : 395 370 182 00036<br>
       </div>
     `;
 
+    // Carte "Les niveaux YOUPI" — explique les 4 paliers et leur intérêt
+    var currentLevelKey = (s.level && s.level.key) || 'bronze';
+    var levelsRows = YOUPI_LEVELS_INFO.map(function(lv) {
+      var isCurrent = lv.key === currentLevelKey;
+      return `
+        <div class="level-row ${isCurrent ? 'level-row-current' : ''}">
+          <div class="level-row-badge">
+            <span class="level-row-emoji">${lv.emoji}</span>
+            <div>
+              <div class="level-row-name">${esc(lv.label)}${isCurrent ? ' <span class="level-row-you">vous êtes ici</span>' : ''}</div>
+              <div class="level-row-range">${esc(lv.range)}</div>
+            </div>
+          </div>
+          <div class="level-row-perk">${esc(lv.perk)}</div>
+        </div>
+      `;
+    }).join('');
+    var levelsCard = `
+      <div class="card">
+        <h2 style="margin:0 0 4px 0">🏅 Les niveaux YOUPI</h2>
+        <p style="color:var(--text-2);font-size:13px;margin:0 0 16px 0">
+          Votre niveau dépend de votre score total cumulé (il ne baisse jamais, même quand vous échangez des points).
+          À partir d'<strong>Argent</strong>, un badge de prestige apparaît automatiquement sur votre mini-site public&nbsp;:
+          c'est un gage de confiance visible par tous vos visiteurs.
+        </p>
+        <div class="levels-list">${levelsRows}</div>
+      </div>
+    `;
+
     document.getElementById('main').innerHTML = `
       <div class="dashboard-grid">
         ${proSidebar('pro-score')}
@@ -9199,6 +9358,7 @@ SIRET : 395 370 182 00036<br>
           <div class="score-grid">
             ${heroHtml}
             ${reservesNote}
+            ${levelsCard}
             ${referralCard}
             ${rewardsCard}
             ${sourcesCard}
