@@ -1367,6 +1367,270 @@
       font-size: 13px;
       color: var(--text-2);
     }
+
+    /* ─── Page YOUPI Score (v2.13.0) ─── */
+    .score-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    .score-hero {
+      background: linear-gradient(135deg, var(--teal-900) 0%, var(--teal-700) 100%);
+      color: white;
+      border-radius: 16px;
+      padding: 28px;
+      position: relative;
+      overflow: hidden;
+    }
+    .score-hero[data-level="bronze"]  { background: linear-gradient(135deg, #92400e 0%, #b45309 100%); }
+    .score-hero[data-level="argent"]  { background: linear-gradient(135deg, #475569 0%, #64748b 100%); }
+    .score-hero[data-level="or"]      { background: linear-gradient(135deg, #b45309 0%, #f59e0b 100%); }
+    .score-hero[data-level="diamant"] { background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%); }
+    .score-hero-row {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      flex-wrap: wrap;
+    }
+    .score-hero-emoji {
+      font-size: 64px;
+      line-height: 1;
+      filter: drop-shadow(0 2px 8px rgba(0,0,0,0.3));
+    }
+    .score-hero-info { flex: 1; min-width: 200px; }
+    .score-hero-level {
+      font-size: 14px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      opacity: 0.85;
+      font-weight: 600;
+      margin-bottom: 2px;
+    }
+    .score-hero-total {
+      font-size: 42px;
+      font-weight: 800;
+      line-height: 1.1;
+      margin-bottom: 4px;
+    }
+    .score-hero-total small {
+      font-size: 16px;
+      font-weight: 500;
+      opacity: 0.85;
+      margin-left: 6px;
+    }
+    .score-hero-next {
+      font-size: 13px;
+      opacity: 0.9;
+      margin-top: 4px;
+    }
+    .score-progress-track {
+      background: rgba(255,255,255,0.2);
+      height: 8px;
+      border-radius: 4px;
+      overflow: hidden;
+      margin-top: 14px;
+    }
+    .score-progress-fill {
+      background: white;
+      height: 100%;
+      border-radius: 4px;
+      transition: width 0.4s ease;
+    }
+    .score-stats-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 12px;
+      margin-top: 18px;
+    }
+    .score-stat-card {
+      background: rgba(255,255,255,0.12);
+      backdrop-filter: blur(4px);
+      border-radius: 10px;
+      padding: 12px 16px;
+    }
+    .score-stat-card .label {
+      font-size: 11px;
+      opacity: 0.85;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+    }
+    .score-stat-card .value {
+      font-size: 22px;
+      font-weight: 700;
+    }
+
+    /* Sources de points */
+    .score-sources-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 10px;
+    }
+    .score-source {
+      background: var(--sand-50);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .score-source-icon { font-size: 22px; line-height: 1; }
+    .score-source-info { flex: 1; min-width: 0; }
+    .score-source-title { font-size: 13px; font-weight: 600; color: var(--text-1); }
+    .score-source-pts {
+      background: var(--teal-700);
+      color: white;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    /* Récompenses */
+    .rewards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 14px;
+    }
+    .reward-card {
+      background: white;
+      border: 2px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .reward-card.affordable {
+      border-color: #f59e0b;
+      background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+    }
+    .reward-card.locked { opacity: 0.65; }
+    .reward-card-head {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .reward-icon { font-size: 26px; line-height: 1; }
+    .reward-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text-1);
+      line-height: 1.3;
+    }
+    .reward-cost {
+      display: inline-block;
+      background: var(--teal-900);
+      color: white;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 14px;
+      font-size: 12px;
+      align-self: flex-start;
+    }
+    .reward-card.affordable .reward-cost {
+      background: #d97706;
+    }
+    .reward-card button {
+      width: 100%;
+      margin-top: auto;
+    }
+
+    /* Historique */
+    .score-history {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      max-height: 380px;
+      overflow-y: auto;
+    }
+    .score-event {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: 8px;
+      background: var(--sand-50);
+      font-size: 13px;
+    }
+    .score-event-icon { font-size: 18px; }
+    .score-event-info { flex: 1; min-width: 0; }
+    .score-event-label { color: var(--text-1); font-weight: 500; }
+    .score-event-date { color: var(--text-2); font-size: 11px; }
+    .score-event-pts {
+      font-weight: 700;
+      padding: 2px 10px;
+      border-radius: 10px;
+      font-size: 13px;
+      flex-shrink: 0;
+    }
+    .score-event-pts.positive { color: #166534; background: #dcfce7; }
+    .score-event-pts.negative { color: #b91c1c; background: #fee2e2; }
+
+    /* Parrainage */
+    .referral-code-box {
+      background: linear-gradient(135deg, var(--teal-700) 0%, var(--teal-900) 100%);
+      color: white;
+      border-radius: 12px;
+      padding: 20px;
+      text-align: center;
+      margin-bottom: 14px;
+    }
+    .referral-code-label {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      opacity: 0.85;
+      margin-bottom: 8px;
+    }
+    .referral-code-value {
+      font-family: monospace;
+      font-size: 32px;
+      font-weight: 800;
+      letter-spacing: 4px;
+      margin-bottom: 12px;
+    }
+    .referral-actions {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .referral-actions .btn {
+      background: rgba(255,255,255,0.2);
+      color: white;
+      border: 1px solid rgba(255,255,255,0.3);
+    }
+    .referral-actions .btn:hover {
+      background: rgba(255,255,255,0.3);
+      color: white;
+    }
+    .filleuls-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-top: 10px;
+    }
+    .filleul-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 12px;
+      background: var(--sand-50);
+      border-radius: 8px;
+      font-size: 13px;
+    }
+    .filleul-status {
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-weight: 600;
+    }
+    .filleul-status.pro { background: #dcfce7; color: #166534; }
+    .filleul-status.free { background: #e0e7ff; color: #3730a3; }
     .sidebar {
       background: var(--card);
       border: 1px solid var(--border);
@@ -3753,7 +4017,7 @@
 
   const APP = {
     name: 'Annuaire YOUPI',
-    version: 'v2.12.0',
+    version: 'v2.13.0',
     versionDate: '15 mai 2026',
     BACKEND_URL: 'https://script.google.com/macros/s/AKfycbzQNSOAGCJp1QmZU0IE1FYiKmKCcGgTUpqKa3RJG9lwiAND_EC5dGdbh2XCu26ZTMoxtw/exec'
   };
@@ -3765,6 +4029,18 @@
   //  → Pour ajouter une nouvelle version, demander à Claude.
   // ------------------------------------------------------------
   const CHANGELOG = [
+    {
+      version: 'v2.13.0',
+      date: '15 mai 2026',
+      title: "🏆 YOUPI Score : la gamification arrive !",
+      entries: [
+        { type: 'feature', text: "Chaque entreprise dispose désormais d'un score qui progresse au fil du temps. Plus vous êtes actif, plus vous montez de niveau : Bronze, Argent, Or, Diamant." },
+        { type: 'feature', text: "Gagnez des points à chaque action : inscription (+200), création de page service, achat de boost Facebook, parrainage d'une autre entreprise (+200 par filleul, +500 quand le filleul devient Pro), connexion régulière (+5 par semaine), anniversaire de votre fiche (+300 par an)." },
+        { type: 'feature', text: "Échangez vos points contre des récompenses concrètes : 1 boost Facebook offert (1000 pts), 1 mois Pro offert (1500 pts), 1 mois Pro+ offert (4000 pts), logo Or sur votre fiche, mise en avant newsletter, invitation soirée YOUPI, article blog dédié." },
+        { type: 'feature', text: "Votre code de parrainage personnel est généré automatiquement. Partagez-le sur vos réseaux et chaque inscription qui mentionne votre code vous fait gagner 200 points." },
+        { type: 'feature', text: "Nouveau menu « Mon score » dans votre espace pro pour suivre votre progression, votre solde, votre historique de points et vos filleuls." }
+      ]
+    },
     {
       version: 'v2.12.0',
       date: '15 mai 2026',
@@ -4451,6 +4727,7 @@
       case 'pro-pages':           renderProPages(); break;
       case 'pro-add-page':        renderProAddPage(params); break;
       case 'pro-mini-site':       renderProMiniSite(); break;
+      case 'pro-score':           renderProScore(); break;
       case 'pro-settings':        renderProSettings(); break;
       case 'pro-subscription':    renderProSubscription(); break;
       case 'pro-contacts':        renderProContacts(); break;
@@ -5925,6 +6202,12 @@ SIRET : 395 370 182 00036<br>
                 <input name="instagram" placeholder="https://instagram.com/…" />
               </div>
 
+              <div class="field field-full" id="referral-field" style="display:none">
+                <label>🤝 Code de parrainage <span style="font-weight:normal;color:var(--text-2);font-size:13px">(optionnel)</span></label>
+                <input name="referred_by" id="referred-by-input" maxlength="8" style="text-transform:uppercase;font-family:monospace;letter-spacing:2px" placeholder="Ex : LTPFDF" />
+                <div class="hint" id="referral-hint">Si une entreprise vous a recommandé YOUPI, entrez son code ici. Elle gagne 200 points lorsque vous validez votre fiche.</div>
+              </div>
+
               <div class="field field-full">
                 ${renderImagePickerHTML({
                   context: 'company-registration',
@@ -5943,13 +6226,51 @@ SIRET : 395 370 182 00036<br>
         </div>
       </div>
     `;
+
+    // Pré-remplit le champ parrain si on a un code en sessionStorage (depuis ?ref=)
+    _hydrateReferralField_();
   }
+
+  /**
+   * Pré-remplit le champ "Code parrain" si on a capturé un ?ref= au chargement
+   * de la page, et valide le code en arrière-plan.
+   */
+  function _hydrateReferralField_() {
+    var code = '';
+    try { code = sessionStorage.getItem('youpi_referral_code') || ''; } catch (e) {}
+    if (!code) return;
+    var input = document.getElementById('referred-by-input');
+    var field = document.getElementById('referral-field');
+    var hint = document.getElementById('referral-hint');
+    if (!input || !field) return;
+    input.value = code;
+    field.style.display = '';
+    // Valide le code côté backend
+    api('validateReferralCode', { code: code }).then(function(r) {
+      if (r && r.ok && r.valid && hint) {
+        hint.innerHTML = '✅ Code valide : <strong>' + esc(r.parrain_name || '') + '</strong> sera créditée de 200 points à votre inscription.';
+        hint.style.color = '#166534';
+      } else if (hint) {
+        hint.innerHTML = '⚠️ Code de parrainage non reconnu. Vérifiez avec votre parrain ou laissez vide.';
+        hint.style.color = '#b45309';
+      }
+    }).catch(function() {});
+  }
+  window._hydrateReferralField_ = _hydrateReferralField_;
 
   async function submitRegister(e) {
     e.preventDefault();
     const f = e.target;
     const data = {};
     new FormData(f).forEach((v, k) => data[k] = String(v).trim());
+
+    // Normalisation du code parrain (uppercase, sans espaces)
+    if (data.referred_by) {
+      data.referred_by = data.referred_by.toUpperCase().replace(/\s+/g, '');
+      if (!/^[A-Z0-9]{4,8}$/.test(data.referred_by)) {
+        delete data.referred_by; // invalide → on ignore
+      }
+    }
 
     // Validation : image obligatoire pour la fiche entreprise
     if (!data.image_url) {
@@ -5965,6 +6286,9 @@ SIRET : 395 370 182 00036<br>
       toast('error', res.error || 'Erreur lors de l\'inscription');
       return;
     }
+    // Nettoie le code parrain de la session après usage
+    try { sessionStorage.removeItem('youpi_referral_code'); } catch (e) {}
+
     toast('success', 'Inscription réussie ! 🎉');
     navigate('register-success', { company_id: res.company_id, pin: res.pin });
   }
@@ -6135,6 +6459,7 @@ SIRET : 395 370 182 00036<br>
       { view: 'pro-edit',         icon: '✏️', label: 'Modifier ma fiche' },
       { view: 'pro-pages',        icon: '📄', label: 'Mes pages services' },
       { view: 'pro-mini-site',    icon: '🎨', label: 'Ma vitrine' },
+      { view: 'pro-score',        icon: '🏆', label: 'Mon score' },
       { view: 'pro-contacts',     icon: '📬', label: 'Mes contacts' },
       { view: 'pro-subscription', icon: '💎', label: 'Mon abonnement' },
       { view: 'pro-settings',     icon: '⚙️', label: 'Paramètres' }
@@ -8085,6 +8410,395 @@ SIRET : 395 370 182 00036<br>
     toast('success', '✅ Vitrine mise à jour');
   }
   window.submitMiniSiteCustomization = submitMiniSiteCustomization;
+
+
+  // ============================================================
+  //  PAGE YOUPI SCORE — GAMIFICATION (v2.13.0)
+  // ============================================================
+  //
+  // Accessible à TOUTES les entreprises (gratuit ET Pro), c'est le
+  // moteur de rétention et de conversion freemium → Pro.
+  //
+  // Sections affichées :
+  //   1. Hero : niveau + score total + barre de progression
+  //   2. Stats : solde, filleuls, réserves
+  //   3. Sources de points (comment gagner)
+  //   4. Parrainage : code + lien + filleuls
+  //   5. Récompenses : grid des 7 récompenses
+  //   6. Historique : 30 derniers événements
+  // ─────────────────────────────────────────────────────────────
+
+  var SCORE_SOURCES = [
+    { key: 'welcome_bonus',         icon: '🎉', label: 'Bienvenue (à l\'inscription)',           pts: '+200' },
+    { key: 'first_page_bonus',      icon: '📄', label: 'Création de votre 1ère page',            pts: '+50' },
+    { key: 'new_page_bonus',        icon: '➕', label: 'Page service supplémentaire',            pts: '+20' },
+    { key: 'boost_purchase',        icon: '🚀', label: 'Achat d\'un boost Facebook',             pts: '+50' },
+    { key: 'referral_signup',       icon: '🤝', label: 'Une entreprise s\'inscrit grâce à vous', pts: '+200' },
+    { key: 'referral_pro_upgrade',  icon: '💎', label: 'Votre filleul passe Pro',                pts: '+500' },
+    { key: 'weekly_login',          icon: '📅', label: 'Connexion hebdomadaire',                 pts: '+5' },
+    { key: 'anniversary_bonus',     icon: '🎂', label: 'Anniversaire de votre fiche',            pts: '+300' },
+    { key: 'monthly_update_bonus',  icon: '✏️', label: 'Mise à jour mensuelle significative',   pts: '+50' }
+  ];
+
+  var SCORE_REWARD_META = {
+    free_boost:         { icon: '🚀', label: '1 boost Facebook offert',     auto: true,  cost: 1000 },
+    one_month_pro:      { icon: '💎', label: '1 mois Pro offert',            auto: true,  cost: 1500 },
+    logo_or:            { icon: '🏅', label: 'Logo "YOUPI Or" sur ma fiche', auto: false, cost: 2000 },
+    newsletter:         { icon: '📰', label: 'Mise en avant newsletter',     auto: false, cost: 2500 },
+    evening_invite:     { icon: '🥂', label: 'Invitation soirée YOUPI',      auto: false, cost: 3000 },
+    one_month_pro_plus: { icon: '⭐', label: '1 mois Pro+ offert',           auto: true,  cost: 4000 },
+    blog_article:       { icon: '📝', label: 'Article blog YOUPI',           auto: false, cost: 5000 }
+  };
+
+  var SCORE_EVENT_LABELS = {
+    welcome_bonus: { icon: '🎉', label: 'Bienvenue sur YOUPI' },
+    first_page_bonus: { icon: '📄', label: '1ère page créée' },
+    new_page_bonus: { icon: '➕', label: 'Nouvelle page créée' },
+    boost_purchase: { icon: '🚀', label: 'Boost Facebook acheté' },
+    referral_signup: { icon: '🤝', label: 'Filleul inscrit' },
+    referral_pro_upgrade: { icon: '💎', label: 'Filleul passé Pro' },
+    weekly_login: { icon: '📅', label: 'Connexion hebdomadaire' },
+    anniversary_bonus: { icon: '🎂', label: 'Anniversaire de votre fiche' },
+    monthly_update_bonus: { icon: '✏️', label: 'Mise à jour mensuelle' },
+    retroactive_migration: { icon: '✨', label: 'Bonus de bienvenue rétroactif' }
+  };
+
+  var _scoreState = {
+    score_total: 0,
+    score_solde: 0,
+    level: null,
+    referral_code: '',
+    reserved_months_pro: 0,
+    reserved_months_pro_plus: 0,
+    free_boost_credits: 0,
+    rewards: {},
+    events: [],
+    filleuls: [],
+    filleuls_count: 0,
+    filleuls_pro_count: 0
+  };
+
+  async function renderProScore() {
+    if (!state.user || state.user.type !== 'company') return navigate('home');
+
+    document.getElementById('main').innerHTML = `
+      <div class="dashboard-grid">
+        ${proSidebar('pro-score')}
+        <section>
+          <div class="page-header"><h1>🏆 Mon score YOUPI</h1></div>
+          <div class="card" style="text-align:center;padding:40px">
+            <div style="font-size:32px;margin-bottom:8px">⏳</div>
+            <div>Chargement de votre score…</div>
+          </div>
+        </section>
+      </div>
+    `;
+
+    // Charge en parallèle
+    var scoreR, historyR, referralR;
+    try {
+      var results = await Promise.all([
+        api('getMyScore', { token: state.user.token, company_id: state.user.id }),
+        api('getScoreHistory', { token: state.user.token, company_id: state.user.id }),
+        api('getReferralInfo', { token: state.user.token, company_id: state.user.id })
+      ]);
+      scoreR = results[0]; historyR = results[1]; referralR = results[2];
+    } catch (err) {
+      toast('error', 'Erreur réseau : ' + err.message);
+      return;
+    }
+
+    if (!scoreR.ok) {
+      toast('error', scoreR.error || 'Impossible de charger votre score');
+      return;
+    }
+
+    _scoreState.score_total = scoreR.score_total || 0;
+    _scoreState.score_solde = scoreR.score_solde || 0;
+    _scoreState.level = scoreR.level || { key: 'bronze', label: 'Bronze', emoji: '🥉', progress: 0 };
+    _scoreState.referral_code = scoreR.referral_code || '';
+    _scoreState.reserved_months_pro = scoreR.reserved_months_pro || 0;
+    _scoreState.reserved_months_pro_plus = scoreR.reserved_months_pro_plus || 0;
+    _scoreState.free_boost_credits = scoreR.free_boost_credits || 0;
+    _scoreState.rewards = scoreR.rewards || {};
+    _scoreState.events = (historyR && historyR.ok) ? (historyR.events || []) : [];
+    if (referralR && referralR.ok) {
+      _scoreState.filleuls = referralR.filleuls || [];
+      _scoreState.filleuls_count = referralR.filleuls_count || 0;
+      _scoreState.filleuls_pro_count = referralR.filleuls_pro_count || 0;
+      if (referralR.code && !_scoreState.referral_code) _scoreState.referral_code = referralR.code;
+    }
+
+    renderProScoreContent_();
+  }
+  window.renderProScore = renderProScore;
+
+  function renderProScoreContent_() {
+    var s = _scoreState;
+    var lvl = s.level || {};
+    var progressTxt = (lvl.next_label)
+      ? `<div class="score-hero-next">Plus que <strong>${lvl.points_to_next}</strong> points pour atteindre <strong>${esc(lvl.next_label)}</strong></div>`
+      : `<div class="score-hero-next">🎉 Vous avez atteint le niveau maximum !</div>`;
+
+    var reservesNote = '';
+    if (s.reserved_months_pro > 0 || s.reserved_months_pro_plus > 0 || s.free_boost_credits > 0) {
+      var parts = [];
+      if (s.free_boost_credits > 0) parts.push('🚀 ' + s.free_boost_credits + ' boost(s)');
+      if (s.reserved_months_pro > 0) parts.push('💎 ' + s.reserved_months_pro + ' mois Pro');
+      if (s.reserved_months_pro_plus > 0) parts.push('⭐ ' + s.reserved_months_pro_plus + ' mois Pro+');
+      reservesNote = `
+        <div class="card" style="background:#f0fdf4;border:1px solid #bbf7d0">
+          <strong style="color:#166534">🎁 Vos récompenses actives :</strong>
+          <div style="margin-top:6px;color:#166534;font-size:14px">${parts.join(' · ')}</div>
+        </div>
+      `;
+    }
+
+    // Hero
+    var heroHtml = `
+      <div class="score-hero" data-level="${esc(lvl.key || 'bronze')}">
+        <div class="score-hero-row">
+          <div class="score-hero-emoji">${lvl.emoji || '🥉'}</div>
+          <div class="score-hero-info">
+            <div class="score-hero-level">Niveau ${esc(lvl.label || 'Bronze')}</div>
+            <div class="score-hero-total">${s.score_total}<small>points</small></div>
+            ${progressTxt}
+            <div class="score-progress-track">
+              <div class="score-progress-fill" style="width:${lvl.progress || 0}%"></div>
+            </div>
+          </div>
+        </div>
+        <div class="score-stats-row">
+          <div class="score-stat-card">
+            <div class="label">Solde dépensable</div>
+            <div class="value">${s.score_solde}</div>
+          </div>
+          <div class="score-stat-card">
+            <div class="label">Filleuls inscrits</div>
+            <div class="value">${s.filleuls_count}</div>
+          </div>
+          <div class="score-stat-card">
+            <div class="label">Filleuls Pro</div>
+            <div class="value">${s.filleuls_pro_count}</div>
+          </div>
+        </div>
+      </div>
+    `;
+
+    // Sources
+    var sourcesHtml = SCORE_SOURCES.map(function(src) {
+      return `
+        <div class="score-source">
+          <span class="score-source-icon">${src.icon}</span>
+          <div class="score-source-info">
+            <div class="score-source-title">${esc(src.label)}</div>
+          </div>
+          <span class="score-source-pts">${src.pts}</span>
+        </div>
+      `;
+    }).join('');
+    var sourcesCard = `
+      <div class="card">
+        <h2 style="margin:0 0 4px 0">⚡ Comment gagner des points</h2>
+        <p style="color:var(--text-2);font-size:13px;margin:0 0 14px 0">Chaque action sur l'Annuaire YOUPI vous fait progresser. Plus vous êtes actif, plus vite vous montez de niveau.</p>
+        <div class="score-sources-grid">${sourcesHtml}</div>
+      </div>
+    `;
+
+    // Parrainage
+    var shareUrl = window.location.origin + window.location.pathname + '?ref=' + s.referral_code;
+    var filleulsHtml = '';
+    if (s.filleuls && s.filleuls.length > 0) {
+      filleulsHtml = '<div class="filleuls-list">' + s.filleuls.map(function(f) {
+        var statusCls = f.is_pro ? 'pro' : 'free';
+        var statusTxt = f.is_pro ? '💎 Pro' : 'Gratuit';
+        return `
+          <div class="filleul-item">
+            <span style="flex:1;color:var(--text-1)">${esc(f.nom_entreprise)}${f.ville ? ' · <span style="color:var(--text-2)">' + esc(f.ville) + '</span>' : ''}</span>
+            <span class="filleul-status ${statusCls}">${statusTxt}</span>
+          </div>
+        `;
+      }).join('') + '</div>';
+    } else {
+      filleulsHtml = '<p style="color:var(--text-2);font-size:13px;margin:10px 0 0 0;text-align:center">Aucun filleul pour le moment. Partagez votre code !</p>';
+    }
+    var referralCard = `
+      <div class="card">
+        <h2 style="margin:0 0 4px 0">🤝 Mon parrainage</h2>
+        <p style="color:var(--text-2);font-size:13px;margin:0 0 14px 0">Partagez votre code et gagnez <strong>200 points</strong> à chaque inscription, puis <strong>500 points bonus</strong> si votre filleul passe Pro.</p>
+        <div class="referral-code-box">
+          <div class="referral-code-label">Votre code de parrainage</div>
+          <div class="referral-code-value">${esc(s.referral_code || '------')}</div>
+          <div class="referral-actions">
+            <button class="btn btn-sm" onclick="copyReferralCode()">📋 Copier le code</button>
+            <button class="btn btn-sm" onclick="copyReferralLink('${esc(shareUrl).replace(/'/g, "\\'")}')">🔗 Copier le lien</button>
+          </div>
+        </div>
+        ${filleulsHtml}
+      </div>
+    `;
+
+    // Récompenses
+    var rewardKeys = ['free_boost', 'one_month_pro', 'logo_or', 'newsletter', 'evening_invite', 'one_month_pro_plus', 'blog_article'];
+    var rewardsHtml = rewardKeys.map(function(key) {
+      var r = SCORE_REWARD_META[key];
+      if (!r) return '';
+      var canAfford = s.score_solde >= r.cost;
+      var cls = canAfford ? 'reward-card affordable' : 'reward-card locked';
+      var btnLabel = canAfford ? (r.auto ? '✨ Échanger maintenant' : '✋ Demander') : `Encore ${r.cost - s.score_solde} pts`;
+      var btnDisabled = canAfford ? '' : 'disabled';
+      return `
+        <div class="${cls}">
+          <div class="reward-card-head">
+            <span class="reward-icon">${r.icon}</span>
+            <div class="reward-title">${esc(r.label)}</div>
+          </div>
+          <span class="reward-cost">${r.cost} pts</span>
+          <button class="btn ${canAfford ? 'btn-primary' : 'btn-secondary'}" ${btnDisabled} onclick="confirmRedeemReward('${esc(key)}')">${btnLabel}</button>
+        </div>
+      `;
+    }).join('');
+    var rewardsCard = `
+      <div class="card">
+        <h2 style="margin:0 0 4px 0">🎁 Mes récompenses</h2>
+        <p style="color:var(--text-2);font-size:13px;margin:0 0 14px 0">Échangez votre solde de <strong>${s.score_solde} points</strong> contre des avantages concrets.</p>
+        <div class="rewards-grid">${rewardsHtml}</div>
+      </div>
+    `;
+
+    // Historique
+    var historyHtml = '';
+    if (s.events.length === 0) {
+      historyHtml = '<p style="color:var(--text-2);font-size:13px;margin:0;text-align:center">Aucun événement pour le moment.</p>';
+    } else {
+      historyHtml = '<div class="score-history">' + s.events.map(function(e) {
+        var meta = SCORE_EVENT_LABELS[e.event_type] || { icon: '✨', label: e.event_type };
+        // Préfixe "redeem:" et "refund:" géré dynamiquement
+        if (typeof e.event_type === 'string' && e.event_type.indexOf('redeem:') === 0) {
+          var rk = e.event_type.slice(7);
+          var rm = SCORE_REWARD_META[rk];
+          meta = { icon: rm ? rm.icon : '🎁', label: 'Échange : ' + (rm ? rm.label : rk) };
+        } else if (typeof e.event_type === 'string' && e.event_type.indexOf('refund:') === 0) {
+          meta = { icon: '↩️', label: 'Remboursement' };
+        }
+        var pts = parseInt(e.points, 10) || 0;
+        var cls = pts >= 0 ? 'positive' : 'negative';
+        var sign = pts >= 0 ? '+' : '';
+        var date = e.timestamp ? new Date(e.timestamp).toLocaleString('fr-FR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : '';
+        return `
+          <div class="score-event">
+            <span class="score-event-icon">${meta.icon}</span>
+            <div class="score-event-info">
+              <div class="score-event-label">${esc(meta.label)}</div>
+              <div class="score-event-date">${esc(date)}</div>
+            </div>
+            <span class="score-event-pts ${cls}">${sign}${pts}</span>
+          </div>
+        `;
+      }).join('') + '</div>';
+    }
+    var historyCard = `
+      <div class="card">
+        <h2 style="margin:0 0 14px 0">📜 Historique des derniers événements</h2>
+        ${historyHtml}
+      </div>
+    `;
+
+    document.getElementById('main').innerHTML = `
+      <div class="dashboard-grid">
+        ${proSidebar('pro-score')}
+        <section>
+          <div class="page-header">
+            <h1>🏆 Mon score YOUPI</h1>
+            <div style="color:var(--text-2);font-size:14px;margin-top:4px">Suivez votre progression, votre solde et vos récompenses.</div>
+          </div>
+          <div class="score-grid">
+            ${heroHtml}
+            ${reservesNote}
+            ${referralCard}
+            ${rewardsCard}
+            ${sourcesCard}
+            ${historyCard}
+          </div>
+        </section>
+      </div>
+    `;
+  }
+
+  // ─── Handlers parrainage ────────────────────────────────────
+
+  function copyReferralCode() {
+    var code = _scoreState.referral_code || '';
+    if (!code) return;
+    _copyToClipboard_(code, '✅ Code copié !');
+  }
+  window.copyReferralCode = copyReferralCode;
+
+  function copyReferralLink(url) {
+    _copyToClipboard_(url, '✅ Lien de parrainage copié !');
+  }
+  window.copyReferralLink = copyReferralLink;
+
+  function _copyToClipboard_(text, successMsg) {
+    try {
+      navigator.clipboard.writeText(text).then(function() {
+        toast('success', successMsg);
+      });
+    } catch (e) {
+      var tmp = document.createElement('textarea');
+      tmp.value = text;
+      document.body.appendChild(tmp);
+      tmp.select();
+      try { document.execCommand('copy'); toast('success', successMsg); }
+      catch (err) { toast('error', 'Copie impossible'); }
+      document.body.removeChild(tmp);
+    }
+  }
+
+  // ─── Handler échange de récompense ──────────────────────────
+
+  async function confirmRedeemReward(rewardKey) {
+    var r = SCORE_REWARD_META[rewardKey];
+    if (!r) return;
+    var msg = r.auto
+      ? `Échanger ${r.cost} points contre « ${r.label} » ?\n\nVotre récompense sera appliquée immédiatement.`
+      : `Échanger ${r.cost} points contre « ${r.label} » ?\n\nUne demande sera envoyée à l'équipe YOUPI qui vous contactera pour activer votre récompense.`;
+    if (!confirm(msg)) return;
+
+    showLoader('Échange en cours…');
+    var result;
+    try {
+      result = await api('redeemReward', {
+        token: state.user.token,
+        company_id: state.user.id,
+        reward_key: rewardKey
+      });
+    } catch (err) {
+      hideLoader();
+      toast('error', 'Erreur réseau : ' + err.message);
+      return;
+    }
+    hideLoader();
+
+    if (!result.ok) {
+      toast('error', result.error || 'Erreur');
+      return;
+    }
+    toast('success', result.message || '✅ Récompense activée !');
+
+    // Refresh des données utilisateur (statut Pro a pu changer)
+    try {
+      var g = await api('getCompanyData', { company_id: state.user.id, token: state.user.token });
+      if (g.ok) {
+        state.user.data = g.company;
+        saveSession();
+      }
+    } catch (e) {}
+
+    // Re-render la page score
+    renderProScore();
+  }
+  window.confirmRedeemReward = confirmRedeemReward;
 
 
   // ============================================================
@@ -13282,6 +13996,18 @@ SIRET : 395 370 182 00036<br>
 
     // 1. Charger la session si présente (synchrone, localStorage)
     loadSession();
+
+    // ─── Capture du code de parrainage (?ref=) — v2.13.0 ──────
+    // Stocke en sessionStorage pour pré-remplir le formulaire d'inscription
+    // même si l'utilisateur navigue ailleurs avant de cliquer sur "S'inscrire".
+    try {
+      var refParams = new URLSearchParams(window.location.search);
+      var refCode = (refParams.get('ref') || '').trim().toUpperCase();
+      if (/^[A-Z0-9]{4,8}$/.test(refCode)) {
+        sessionStorage.setItem('youpi_referral_code', refCode);
+      }
+    } catch (e) {}
+    // ──────────────────────────────────────────────────────────
 
     // 2. Définir un state.config SYNCHRONE avec le fallback offline
     //    → la home peut être rendue immédiatement, pas d'attente réseau
