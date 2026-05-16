@@ -1224,6 +1224,45 @@
       color: var(--teal-700);
       font-weight: 600;
     }
+    /* v2.14.6 — modèles de message + bouton WhatsApp */
+    .crm-tpl-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 4px;
+    }
+    .crm-tpl-label {
+      font-size: 12.5px;
+      font-weight: 600;
+      color: var(--text-2);
+      margin-right: 2px;
+    }
+    .crm-tpl-chip {
+      padding: 6px 12px;
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      background: var(--sand-50);
+      color: var(--text-1);
+      font-size: 12.5px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .crm-tpl-chip:hover {
+      background: var(--teal-50);
+      border-color: var(--teal-700);
+      color: var(--teal-800);
+    }
+    .btn-wa {
+      background: #25d366;
+      color: #fff;
+      border-color: #1ebe5d;
+    }
+    .btn-wa:hover {
+      background: #1ebe5d;
+      border-color: #1ebe5d;
+      color: #fff;
+    }
     /* ─── Mini-site public partageable (v2.11.0) ─── */
     .mini-site {
       max-width: 920px;
@@ -4771,7 +4810,7 @@
 
   const APP = {
     name: 'Annuaire YOUPI',
-    version: 'v2.14.5',
+    version: 'v2.14.6',
     versionDate: '16 mai 2026',
     BACKEND_URL: 'https://script.google.com/macros/s/AKfycbzQNSOAGCJp1QmZU0IE1FYiKmKCcGgTUpqKa3RJG9lwiAND_EC5dGdbh2XCu26ZTMoxtw/exec'
   };
@@ -4783,6 +4822,15 @@
   //  → Pour ajouter une nouvelle version, demander à Claude.
   // ------------------------------------------------------------
   const CHANGELOG = [
+    {
+      version: 'v2.14.6',
+      date: '16 mai 2026',
+      title: "💬 WhatsApp et modèles de message dans « Mes contacts »",
+      entries: [
+        { type: 'feature', text: "Nouveau bouton « WhatsApp » à côté du bouton mail : contactez vos clients directement sur WhatsApp, avec un message pré-rempli prêt à envoyer." },
+        { type: 'feature', text: "Modèles de message rédigés selon le statut du contact (premier contact, relance, remerciement, demande d'avis, reprise de contact...), pour le mail comme pour WhatsApp. Un clic, le message est prêt — et vous pouvez toujours le modifier ou tout écrire vous-même." }
+      ]
+    },
     {
       version: 'v2.14.5',
       date: '16 mai 2026',
@@ -10133,6 +10181,8 @@ SIRET : 395 370 182 00036<br>
     editDraft: null, // {nom, email, telephone, statut, notes}
     mailing: null,   // null | <contactId> en cours d'envoi mail
     mailDraft: null, // {subject, body}
+    waing: null,     // null | <contactId> en cours de message WhatsApp
+    waDraft: null,   // {text}
     methodOpen: null,    // null = auto (ouvert si débutant), true/false = choix manuel
     guideMailedSeen: false, // mémo session : a-t-on déjà vu un contact relancé par mail
     expanded: {}         // { contactId: true } — cartes dépliées
@@ -10210,6 +10260,8 @@ SIRET : 395 370 182 00036<br>
       bodyHtml = renderContactEditor_();
     } else if (_crmPro.mailing !== null) {
       bodyHtml = renderContactMailer_();
+    } else if (_crmPro.waing !== null) {
+      bodyHtml = renderContactWa_();
     } else {
       bodyHtml = renderContactsList_();
     }
@@ -10873,6 +10925,9 @@ SIRET : 395 370 182 00036<br>
       +       (c.email
           ? '<button class="btn btn-secondary btn-sm" onclick="startMailContact(\'' + idJs + '\')">✉️ Envoyer un mail</button>'
           : '')
+      +       (c.telephone
+          ? '<button class="btn btn-wa btn-sm" onclick="startWaContact(\'' + idJs + '\')">💬 WhatsApp</button>'
+          : '')
       +       '<button class="btn btn-ghost btn-sm" onclick="deleteContactFromUI(\'' + idJs + '\', \'' + esc(c.nom).replace(/'/g, "\\'") + '\')" style="color:#dc2626">🗑️ Supprimer</button>'
       +     '</div>'
       +   '</div>'
@@ -11066,6 +11121,169 @@ SIRET : 395 370 182 00036<br>
 
   // ─── Vue 4 : Composer un mail vers un contact ───────────────
 
+  // ─── v2.14.6 — Modèles de message selon le statut + canal WhatsApp ──
+
+  // Normalise un numéro pour WhatsApp (même logique que le backend).
+  function _waNormalizePhone_(raw, region) {
+    if (!raw) return null;
+    var phone = String(raw).replace(/[^0-9]/g, '');
+    if (!phone) return null;
+    if (phone.indexOf('00') === 0) phone = phone.substring(2);
+    var regionCodes = { MQ: '596', GP: '590', GF: '594' };
+    var defaultCode = regionCodes[region] || '596';
+    if (phone.indexOf('596') === 0 || phone.indexOf('590') === 0 ||
+        phone.indexOf('594') === 0 || phone.indexOf('33') === 0) {
+      return phone;
+    }
+    if (phone.indexOf('0') === 0) return defaultCode + phone.substring(1);
+    if (phone.length === 9 && (phone.charAt(0) === '6' || phone.charAt(0) === '7')) {
+      return defaultCode + phone;
+    }
+    return defaultCode + phone;
+  }
+
+  // Modèles rédigés selon le statut. Le dernier = message vierge (libre).
+  function _crmTemplates_(statut, prenom, entreprise) {
+    prenom = prenom || '';
+    var sig = entreprise ? '\n\n' + entreprise : '';
+    var T = {
+      nouveau: [
+        { label: 'Premier contact', subject: 'Ravi de notre échange',
+          text: 'Bonjour ' + prenom + ',\n\nRavi d\'avoir fait votre connaissance. Je reste à votre disposition pour toute question.' + sig },
+        { label: 'Proposer un échange', subject: 'On en discute ?',
+          text: 'Bonjour ' + prenom + ',\n\nSouhaitez-vous qu\'on prenne un moment pour échanger sur votre besoin ? Dites-moi vos disponibilités.' + sig }
+      ],
+      a_recontacter: [
+        { label: 'Relance suivi', subject: 'Suivi de votre demande',
+          text: 'Bonjour ' + prenom + ',\n\nJe reviens vers vous concernant votre demande. Avez-vous eu le temps d\'y réfléchir ? Je reste disponible.' + sig },
+        { label: 'Relance douce', subject: 'Petit message de suivi',
+          text: 'Bonjour ' + prenom + ',\n\nJuste un petit message pour prendre de vos nouvelles. Toujours intéressé(e) ?' + sig }
+      ],
+      client: [
+        { label: 'Remerciement', subject: 'Merci pour votre confiance',
+          text: 'Bonjour ' + prenom + ',\n\nMerci encore pour votre confiance. N\'hésitez pas à me solliciter pour la suite.' + sig },
+        { label: 'Nouveauté', subject: 'Une nouveauté pour vous',
+          text: 'Bonjour ' + prenom + ',\n\nJ\'ai une nouveauté qui pourrait vous intéresser. Souhaitez-vous que je vous en dise plus ?' + sig }
+      ],
+      fidele: [
+        { label: 'Demander un avis', subject: 'Votre avis compte',
+          text: 'Bonjour ' + prenom + ',\n\nVotre satisfaction compte beaucoup. Accepteriez-vous de laisser un avis ou de me recommander autour de vous ? Un grand merci.' + sig },
+        { label: 'Remerciement privilégié', subject: 'Un mot pour vous',
+          text: 'Bonjour ' + prenom + ',\n\nEn tant que client fidèle, je tenais à vous remercier personnellement. À très vite.' + sig }
+      ],
+      perdu: [
+        { label: 'Reprendre contact', subject: 'Cela fait longtemps',
+          text: 'Bonjour ' + prenom + ',\n\nCela fait un moment. Je serais ravi de retravailler avec vous si l\'occasion se présente.' + sig },
+        { label: 'Offre de retour', subject: 'Une proposition pour vous',
+          text: 'Bonjour ' + prenom + ',\n\nJ\'aimerais vous proposer quelque chose pour renouer le contact. Êtes-vous disponible pour en parler ?' + sig }
+      ]
+    };
+    var list = (T[statut] || T.nouveau).slice();
+    list.push({ label: '✏️ Message vierge', subject: '', text: 'Bonjour ' + prenom + ',\n\n' });
+    return list;
+  }
+
+  function _crmTplChips_(kind, statut, prenom, entreprise) {
+    var list = _crmTemplates_(statut, prenom, entreprise);
+    var h = '<div class="crm-tpl-row"><span class="crm-tpl-label">Modèles selon le statut :</span>';
+    list.forEach(function(t, i) {
+      h += '<button type="button" class="crm-tpl-chip" onclick="applyCrmTemplate(\'' + kind + '\',' + i + ')">' + esc(t.label) + '</button>';
+    });
+    h += '</div>';
+    return h;
+  }
+
+  function applyCrmTemplate(kind, idx) {
+    var id = kind === 'wa' ? _crmPro.waing : _crmPro.mailing;
+    var c = _crmPro.contacts.find(function(x) { return x.id === id; });
+    if (!c) return;
+    var prenom = (c.nom || '').split(' ')[0];
+    var ent = (state.user.data && state.user.data.nom_entreprise) || '';
+    var list = _crmTemplates_(c.statut, prenom, ent);
+    var t = list[idx];
+    if (!t) return;
+    if (kind === 'wa') {
+      _crmPro.waDraft = { text: t.text };
+    } else {
+      _crmPro.mailDraft = { subject: t.subject, body: t.text };
+    }
+    renderProContacts();
+  }
+  window.applyCrmTemplate = applyCrmTemplate;
+
+  function startWaContact(id) {
+    var c = _crmPro.contacts.find(function(x) { return x.id === id; });
+    if (!c) return;
+    if (!c.telephone) { toast('error', 'Pas de numéro pour ce contact'); return; }
+    _crmPro.editing = null;
+    _crmPro.mailing = null;
+    _crmPro.waing = id;
+    var prenom = (c.nom || '').split(' ')[0];
+    _crmPro.waDraft = { text: 'Bonjour ' + prenom + ',\n\n' };
+    renderProContacts();
+  }
+  window.startWaContact = startWaContact;
+
+  function cancelWaContact() {
+    _crmPro.waing = null;
+    _crmPro.waDraft = null;
+    renderProContacts();
+  }
+  window.cancelWaContact = cancelWaContact;
+
+  function renderContactWa_() {
+    var c = _crmPro.contacts.find(function(x) { return x.id === _crmPro.waing; });
+    if (!c) { cancelWaContact(); return ''; }
+    var d = _crmPro.waDraft || { text: '' };
+    var company = state.user.data || {};
+    var region = company.region || 'MQ';
+    var num = _waNormalizePhone_(c.telephone, region);
+    var prenom = (c.nom || '').split(' ')[0];
+    var chips = _crmTplChips_('wa', c.statut, prenom, company.nom_entreprise || '');
+
+    return `
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
+          <h3 style="margin:0">💬 WhatsApp à ${esc(c.nom)}</h3>
+          <button class="btn btn-ghost btn-sm" onclick="cancelWaContact()">← Retour</button>
+        </div>
+
+        <div style="background:var(--sand-50);padding:12px 14px;border-radius:8px;margin-bottom:16px;font-size:13px;color:var(--text-1)">
+          <div><strong>À :</strong> ${esc(c.nom)} — ${esc(c.telephone)}</div>
+          <div style="margin-top:6px;font-size:12px;color:var(--text-2)">💡 Le message s'ouvrira dans WhatsApp (application ou WhatsApp Web), pré-rempli. Vous pourrez le relire avant l'envoi définitif.</div>
+        </div>
+
+        ${chips}
+
+        <label style="display:block;font-size:13px;font-weight:600;margin:14px 0 6px">Message <span style="color:#dc2626">*</span></label>
+        <textarea rows="10" placeholder="Votre message..."
+          oninput="_crmPro.waDraft.text = this.value"
+          style="width:100%;padding:10px;border:1px solid var(--border);border-radius:var(--radius);font-size:14px;font-family:inherit;resize:vertical;line-height:1.6">${esc(d.text)}</textarea>
+
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:18px">
+          <button class="btn btn-wa" onclick="openWaFromUI()">💬 Ouvrir WhatsApp</button>
+          <button class="btn btn-ghost" onclick="cancelWaContact()">Annuler</button>
+        </div>
+        ${num ? '' : '<div style="margin-top:10px;font-size:12px;color:#dc2626">⚠️ Numéro non reconnu : vérifiez le téléphone du contact (format conseillé : +596 696 12 34 56).</div>'}
+      </div>
+    `;
+  }
+
+  function openWaFromUI() {
+    var d = _crmPro.waDraft;
+    if (!d || !d.text || !d.text.trim()) { toast('error', 'Le message est requis'); return; }
+    var c = _crmPro.contacts.find(function(x) { return x.id === _crmPro.waing; });
+    if (!c) { cancelWaContact(); return; }
+    var company = state.user.data || {};
+    var region = company.region || 'MQ';
+    var num = _waNormalizePhone_(c.telephone, region);
+    if (!num) { toast('error', 'Numéro de téléphone non valide pour WhatsApp'); return; }
+    var url = 'https://wa.me/' + num + '?text=' + encodeURIComponent(d.text.trim());
+    window.open(url, '_blank', 'noopener');
+    toast('success', 'WhatsApp ouvert dans un nouvel onglet');
+  }
+  window.openWaFromUI = openWaFromUI;
+
   function startMailContact(id) {
     var c = _crmPro.contacts.find(function(x) { return x.id === id; });
     if (!c) return;
@@ -11073,6 +11291,8 @@ SIRET : 395 370 182 00036<br>
       toast('error', 'Pas d\'email pour ce contact');
       return;
     }
+    _crmPro.editing = null;
+    _crmPro.waing = null;
     _crmPro.mailing = id;
     _crmPro.mailDraft = {
       subject: '',
@@ -11111,7 +11331,9 @@ SIRET : 395 370 182 00036<br>
           <div style="margin-top:6px;font-size:12px;color:var(--text-2)">💡 Les réponses arriveront directement sur votre email <strong>${esc(company.email)}</strong></div>
         </div>
 
-        <label style="display:block;font-size:13px;font-weight:600;margin-bottom:6px">Sujet <span style="color:#dc2626">*</span></label>
+        ${_crmTplChips_('mail', c.statut, (c.nom || '').split(' ')[0], company.nom_entreprise || '')}
+
+        <label style="display:block;font-size:13px;font-weight:600;margin:14px 0 6px">Sujet <span style="color:#dc2626">*</span></label>
         <input type="text" value="${esc(d.subject)}" placeholder="Ex. Suivi de votre demande"
           oninput="_crmPro.mailDraft.subject = this.value"
           style="width:100%;padding:10px;border:1px solid var(--border);border-radius:var(--radius);font-size:14px;margin-bottom:14px">
