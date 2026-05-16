@@ -4513,7 +4513,7 @@
 
   const APP = {
     name: 'Annuaire YOUPI',
-    version: 'v2.14.2',
+    version: 'v2.14.3',
     versionDate: '15 mai 2026',
     BACKEND_URL: 'https://script.google.com/macros/s/AKfycbzQNSOAGCJp1QmZU0IE1FYiKmKCcGgTUpqKa3RJG9lwiAND_EC5dGdbh2XCu26ZTMoxtw/exec'
   };
@@ -4525,6 +4525,14 @@
   //  → Pour ajouter une nouvelle version, demander à Claude.
   // ------------------------------------------------------------
   const CHANGELOG = [
+    {
+      version: 'v2.14.3',
+      date: '15 mai 2026',
+      title: "📄 Mise à jour des documents légaux",
+      entries: [
+        { type: 'fix', text: "Mise à jour de la politique de confidentialité, de la politique de cookies et des conditions générales de vente pour refléter fidèlement les nouvelles fonctionnalités (statistiques de fréquentation, programme de fidélité YOUPI Score, parrainage, abonnements Pro et Pro+)." }
+      ]
+    },
     {
       version: 'v2.14.2',
       date: '15 mai 2026',
@@ -5895,7 +5903,7 @@
 <p>La présente politique a pour objet de vous informer de manière transparente sur les cookies et technologies de stockage utilisés sur le site <strong>Annuaire YOUPI®</strong>, conformément au Règlement Général sur la Protection des Données (RGPD) et aux recommandations de la CNIL.</p>
 
 <div class="legal-highlight">
-  💡 <strong>En résumé&nbsp;:</strong> Annuaire YOUPI® n'utilise <strong>aucun cookie de tracking, aucun cookie publicitaire et aucun service d'analyse d'audience</strong> (ni Google Analytics, ni Facebook Pixel, ni équivalent). Seul un stockage local technique est utilisé pour maintenir votre session connectée à votre espace pro.
+  💡 <strong>En résumé&nbsp;:</strong> Annuaire YOUPI® n'utilise <strong>aucun cookie de tracking, aucun cookie publicitaire et aucun outil tiers d'analyse d'audience</strong> (ni Google Analytics, ni Facebook Pixel, ni équivalent). Seul un stockage local technique est utilisé pour maintenir votre session connectée à votre espace pro. Une mesure de fréquentation des mini-sites est réalisée de façon interne, <strong>sans aucun cookie ni traceur</strong> et sans identifier les visiteurs (voir section&nbsp;3).
 </div>
 
 <h2>1. Qu'est-ce qu'un cookie&nbsp;?</h2>
@@ -5917,7 +5925,16 @@
 <p>Ce stockage ne contient aucune information de tracking, ne permet aucun profilage et n'est jamais transmis à des tiers.</p>
 
 <h3>Aucun cookie de tracking ou publicitaire</h3>
-<p>Annuaire YOUPI® ne dépose <strong>aucun</strong> cookie ou traceur publicitaire, ne fait appel à <strong>aucun</strong> service d'analyse d'audience (Google Analytics, Matomo, etc.) et n'intègre <strong>aucun</strong> pixel de réseau social (Facebook Pixel, etc.).</p>
+<p>Annuaire YOUPI® ne dépose <strong>aucun</strong> cookie ou traceur publicitaire, ne fait appel à <strong>aucun</strong> outil tiers d'analyse d'audience (Google Analytics, Matomo, etc.) et n'intègre <strong>aucun</strong> pixel de réseau social (Facebook Pixel, etc.).</p>
+
+<h3>Mesure de fréquentation interne (sans cookie)</h3>
+<p>Afin de fournir aux entreprises abonnées des statistiques sur la fréquentation de leur propre mini-site, Annuaire YOUPI® enregistre côté serveur certains événements de visite (affichage d'un mini-site, clic sur un bouton de contact). Cette mesure&nbsp;:</p>
+<ul>
+  <li>ne dépose <strong>aucun cookie</strong> et n'utilise <strong>aucun stockage</strong> sur votre terminal&nbsp;;</li>
+  <li>n'enregistre <strong>aucune adresse IP</strong> et ne constitue <strong>aucune empreinte de terminal</strong> permettant de vous ré-identifier&nbsp;;</li>
+  <li>se limite à des données techniques approximatives et agrégées (type d'appareil, domaine de provenance), au seul bénéfice de l'entreprise propriétaire du mini-site.</li>
+</ul>
+<p>Mise en œuvre dans ces conditions strictes, cette mesure d'audience relève des dispositifs susceptibles d'être exemptés de consentement au sens des recommandations de la CNIL. Le détail figure dans notre <a onclick="navigate('legal', {doc: 'privacy'})" style="cursor:pointer">politique de confidentialité</a>.</p>
 
 <h2>3. Services tiers accessibles depuis le site</h2>
 <p>Annuaire YOUPI® propose des liens vers des services tiers que vous pouvez choisir d'utiliser. Lorsque vous suivez ces liens, vous quittez Annuaire YOUPI® et accédez à des sites tiers qui appliquent leurs propres politiques en matière de cookies.</p>
@@ -5930,7 +5947,7 @@
   </tr>
   <tr>
     <td data-label="Service">Stripe</td>
-    <td data-label="Finalité">Paiement sécurisé des services de mise en avant (boost Facebook)</td>
+    <td data-label="Finalité">Paiement sécurisé des services payants (boost Facebook, abonnements Pro et Pro+)</td>
     <td data-label="Politique de cookies"><a href="https://stripe.com/fr/privacy" target="_blank">stripe.com</a></td>
   </tr>
   <tr>
@@ -5968,7 +5985,7 @@
   function legalDocPrivacy() {
     return `
 <div class="legal-highlight">
-  💡 <strong>En résumé&nbsp;:</strong> Annuaire YOUPI® collecte uniquement les informations professionnelles que vous fournissez volontairement (nom de l'entreprise, secteur, coordonnées, etc.) afin de référencer votre activité dans l'annuaire des entreprises ultra-marines. Vos données ne sont jamais vendues. Vous disposez d'un droit d'accès, de rectification et de suppression que vous pouvez exercer à tout moment.
+  💡 <strong>En résumé&nbsp;:</strong> Annuaire YOUPI® collecte principalement les informations professionnelles que vous fournissez volontairement (nom de l'entreprise, secteur, coordonnées, etc.) afin de référencer votre activité. Nous générons aussi des données liées à votre fidélité (YOUPI Score, parrainage) et, pour les abonnés, des statistiques de fréquentation de votre mini-site mesurées sans cookie ni traceur et sans identifier les visiteurs. Vos données ne sont jamais vendues. Vous disposez d'un droit d'accès, de rectification et de suppression que vous pouvez exercer à tout moment.
 </div>
 
 <div class="legal-toc">
@@ -6026,10 +6043,29 @@
 <p>Annuaire YOUPI® propose un agent conversationnel basé sur l'intelligence artificielle, accessible depuis la page d'accueil. <strong>Aucune donnée personnelle nominative n'est requise</strong> pour utiliser cet agent&nbsp;: vous pouvez poser vos questions de manière anonyme. Cependant, le contenu de vos échanges avec l'agent est traité par notre prestataire technique (Chatling, voir section&nbsp;7).</p>
 
 <h3>3.4 Données collectées lors d'un paiement</h3>
-<p>Lorsque vous souscrivez à un service payant (mise en avant Facebook), les données de paiement (numéro de carte bancaire, etc.) sont collectées et traitées exclusivement par notre prestataire de paiement Stripe (voir section&nbsp;7). <strong>Annuaire YOUPI® n'a jamais accès ni ne stocke vos données bancaires.</strong></p>
+<p>Lorsque vous souscrivez à un service payant — mise en avant Facebook (boost) ou <strong>abonnement Pro ou Pro+</strong> — les données de paiement (numéro de carte bancaire, etc.) sont collectées et traitées exclusivement par notre prestataire de paiement Stripe (voir section&nbsp;7). <strong>Annuaire YOUPI® n'a jamais accès ni ne stocke vos données bancaires.</strong> Pour les abonnements, nous conservons uniquement l'identifiant client Stripe, le type de formule souscrite, le statut de l'abonnement et la date d'échéance, afin de gérer votre accès aux fonctionnalités correspondantes.</p>
 
-<h3>3.5 Données techniques de connexion</h3>
-<p>Aucune donnée de navigation, adresse IP ou empreinte de terminal n'est collectée à des fins d'analyse d'audience ou de profilage. Annuaire YOUPI® n'utilise <strong>aucun outil de mesure d'audience</strong> (Google Analytics, Matomo ou équivalent).</p>
+<h3>3.5 Données collectées lors de la consultation d'un mini-site public</h3>
+<p>Chaque entreprise référencée dispose d'un mini-site public. Afin de fournir aux entreprises abonnées des <strong>statistiques de fréquentation</strong> de leur propre mini-site, nous enregistrons, lorsqu'un visiteur consulte un mini-site ou clique sur l'un de ses boutons d'action (téléphone, email, site web, itinéraire, réseaux sociaux, agent IA), les informations techniques suivantes&nbsp;:</p>
+<table>
+  <tr class="kv"><th>Données enregistrées</th><td>Type d'événement (vue ou clic), horodatage, type d'appareil (mobile ou ordinateur, déduit de manière approximative), nom de domaine du site référent (la provenance, par exemple un moteur de recherche ou un réseau social), identifiant de la fiche consultée</td></tr>
+  <tr class="kv"><th>Données NON enregistrées</th><td>Aucune adresse IP n'est stockée, aucun cookie ni traceur n'est déposé, aucune empreinte de terminal permettant de ré-identifier une personne n'est constituée. Ces mesures ne permettent pas d'identifier individuellement un visiteur.</td></tr>
+</table>
+<p>Ces statistiques sont strictement agrégées et destinées au seul usage de l'entreprise propriétaire du mini-site concerné, pour l'aider à mesurer sa visibilité. Elles ne sont jamais utilisées à des fins publicitaires, ne sont jamais revendues, et ne font l'objet d'aucun recoupement entre entreprises.</p>
+<div class="legal-highlight">
+  💡 <strong>À noter&nbsp;:</strong> cette mesure d'audience interne ne repose sur <strong>aucun cookie ni traceur</strong> et ne collecte aucune donnée directement identifiante. Elle relève des mesures d'audience qui, mises en œuvre dans ces conditions strictes, peuvent être exemptées de consentement selon les recommandations de la CNIL.
+</div>
+
+<h3>3.6 Données liées au programme de fidélité (YOUPI Score) et au parrainage</h3>
+<p>Annuaire YOUPI® propose aux entreprises un programme de fidélité gratuit, le «&nbsp;YOUPI Score&nbsp;», ainsi qu'un dispositif de parrainage. À ce titre sont collectées et générées&nbsp;:</p>
+<table>
+  <tr class="kv"><th>Données de fidélité</th><td>Nombre de points cumulés et solde de points, niveau atteint, historique daté des événements ayant généré ou utilisé des points, récompenses débloquées</td></tr>
+  <tr class="kv"><th>Données de parrainage</th><td>Code de parrainage unique attribué à votre entreprise, lien éventuel entre une entreprise parrainée et l'entreprise marraine (afin d'attribuer les points correspondants)</td></tr>
+</table>
+<p>Le niveau de fidélité (à partir du niveau Argent) peut être affiché publiquement sur votre mini-site, sous forme d'un badge de prestige, dans le but de valoriser votre engagement auprès de vos visiteurs. Aucune autre donnée de fidélité (solde, historique, etc.) n'est rendue publique.</p>
+
+<h3>3.7 Données techniques de connexion</h3>
+<p>En dehors de la mesure d'audience interne décrite au point&nbsp;3.5, Annuaire YOUPI® n'utilise <strong>aucun outil tiers de mesure d'audience ni de profilage publicitaire</strong> (ni Google Analytics, ni Matomo, ni Facebook Pixel ou équivalent) et ne constitue aucun profil comportemental de ses visiteurs.</p>
 
 <h2>4. Finalités du traitement</h2>
 <p>Vos données sont traitées pour les finalités suivantes&nbsp;:</p>
@@ -6041,7 +6077,9 @@
   <tr><td data-label="Finalité"><strong>Publier votre entreprise</strong> sur la page Facebook officielle d'Annuaire YOUPI®</td><td data-label="Données concernées">Informations publiques de la fiche, image illustrative</td></tr>
   <tr><td data-label="Finalité"><strong>Vous adresser des communications opérationnelles</strong> (confirmation d'inscription, code PIN, expiration de visibilité, etc.)</td><td data-label="Données concernées">Email, prénom du contact, nom de l'entreprise</td></tr>
   <tr><td data-label="Finalité"><strong>Vous adresser des communications informatives et commerciales</strong> relatives au service (relances, nouveautés, services additionnels)</td><td data-label="Données concernées">Email, prénom du contact, nom de l'entreprise, secteur, ville, région</td></tr>
-  <tr><td data-label="Finalité"><strong>Traiter votre paiement</strong> pour les services payants (boost Facebook)</td><td data-label="Données concernées">Données bancaires (traitées exclusivement par Stripe)</td></tr>
+  <tr><td data-label="Finalité"><strong>Traiter votre paiement</strong> pour les services payants (boost Facebook, abonnement Pro ou Pro+)</td><td data-label="Données concernées">Données bancaires (traitées exclusivement par Stripe), formule et statut d'abonnement</td></tr>
+  <tr><td data-label="Finalité"><strong>Fournir les statistiques de fréquentation</strong> de votre mini-site (vues, clics) aux entreprises abonnées</td><td data-label="Données concernées">Événements de visite agrégés (type, horodatage, type d'appareil, domaine référent)</td></tr>
+  <tr><td data-label="Finalité"><strong>Faire fonctionner le programme de fidélité YOUPI Score et le parrainage</strong></td><td data-label="Données concernées">Points, niveau, historique, code de parrainage, lien parrain/filleul</td></tr>
   <tr><td data-label="Finalité"><strong>Améliorer le service</strong> et tenir un historique opérationnel (journal d'audit interne)</td><td data-label="Données concernées">Actions effectuées sur le service, horodatage</td></tr>
   <tr><td data-label="Finalité"><strong>Répondre à nos obligations légales</strong></td><td data-label="Données concernées">Toutes données nécessaires</td></tr>
 </table>
@@ -6054,7 +6092,9 @@
   <tr><td data-label="Traitement">Communications opérationnelles indispensables (PIN, expiration, confirmation)</td><td data-label="Base légale">Exécution du contrat (article 6.1.b RGPD)</td></tr>
   <tr><td data-label="Traitement">Communications commerciales et de relance par email</td><td data-label="Base légale">Intérêt légitime (article 6.1.f RGPD) — vous êtes un client professionnel d'un service auquel vous êtes activement abonné, et vous pouvez vous y opposer à tout moment</td></tr>
   <tr><td data-label="Traitement">Publication sur Facebook</td><td data-label="Base légale">Intérêt légitime (article 6.1.f RGPD) — promotion du service au bénéfice mutuel</td></tr>
-  <tr><td data-label="Traitement">Traitement des paiements</td><td data-label="Base légale">Exécution du contrat (article 6.1.b RGPD)</td></tr>
+  <tr><td data-label="Traitement">Traitement des paiements et gestion des abonnements</td><td data-label="Base légale">Exécution du contrat (article 6.1.b RGPD)</td></tr>
+  <tr><td data-label="Traitement">Programme de fidélité YOUPI Score et parrainage</td><td data-label="Base légale">Exécution du contrat (article 6.1.b RGPD) — le programme fait partie intégrante du service auquel vous adhérez</td></tr>
+  <tr><td data-label="Traitement">Statistiques de fréquentation des mini-sites</td><td data-label="Base légale">Intérêt légitime (article 6.1.f RGPD) — fournir aux entreprises une mesure de leur visibilité, au moyen d'une mesure d'audience sans cookie et sans donnée identifiante</td></tr>
   <tr><td data-label="Traitement">Conservation du journal d'audit interne</td><td data-label="Base légale">Intérêt légitime (article 6.1.f RGPD) — sécurité du service et lutte contre la fraude</td></tr>
 </table>
 
@@ -6065,6 +6105,8 @@
   <tr><td data-label="Donnée">Fiche entreprise archivée (suite à suppression)</td><td data-label="Durée">Conservation dans nos archives sous forme de trace historique, sans diffusion publique. Anonymisation possible sur demande (voir section 10)</td></tr>
   <tr><td data-label="Donnée">Historique d'envoi des emails (campagnes, automatisations)</td><td data-label="Durée">3 ans à compter du dernier envoi</td></tr>
   <tr><td data-label="Donnée">Journal d'audit technique</td><td data-label="Durée">2 ans à compter de l'événement</td></tr>
+  <tr><td data-label="Donnée">Statistiques de fréquentation des mini-sites (événements de visite)</td><td data-label="Durée">13 mois à compter de l'événement, conformément à la recommandation de la CNIL sur la mesure d'audience</td></tr>
+  <tr><td data-label="Donnée">Données du programme de fidélité (points, niveau, historique, parrainage)</td><td data-label="Durée">Tant que la fiche entreprise est active, puis supprimées ou anonymisées avec la fiche</td></tr>
   <tr><td data-label="Donnée">Données de paiement</td><td data-label="Durée">Annuaire YOUPI® ne stocke aucune donnée de paiement. La durée de conservation chez Stripe est régie par leur propre politique</td></tr>
   <tr><td data-label="Donnée">Factures et documents comptables (obligations légales)</td><td data-label="Durée">10 ans à compter de la fin de l'exercice comptable (article L123-22 du Code de commerce)</td></tr>
 </table>
@@ -6158,7 +6200,7 @@ Route du Vert Pré, 97232 Le Lamentin, Martinique<br>
   function legalDocCgu() {
     return `
 <div class="legal-highlight">
-  💡 <strong>En résumé&nbsp;:</strong> Les présentes conditions définissent les règles d'utilisation d'Annuaire YOUPI®. L'inscription dans l'annuaire est <strong>gratuite</strong> pour les entreprises ultra-marines, qui s'engagent à fournir des informations exactes et licites. Les éventuels services payants (boost Facebook) sont régis par des Conditions Générales de Vente distinctes.
+  💡 <strong>En résumé&nbsp;:</strong> Les présentes conditions définissent les règles d'utilisation d'Annuaire YOUPI®. L'inscription dans l'annuaire est <strong>gratuite</strong> pour les entreprises ultra-marines, qui s'engagent à fournir des informations exactes et licites. Les services payants (boost Facebook, abonnements Pro et Pro+) sont régis par des Conditions Générales de Vente distinctes.
 </div>
 
 <h2>1. Objet</h2>
@@ -6185,7 +6227,7 @@ Route du Vert Pré, 97232 Le Lamentin, Martinique<br>
 <ul>
   <li>aux <strong>Visiteurs</strong>, de rechercher gratuitement des entreprises par mot-clé, secteur d'activité, ville ou via un agent conversationnel basé sur l'intelligence artificielle,</li>
   <li>aux <strong>Entreprises référencées</strong>, de bénéficier d'une visibilité en ligne via une fiche dédiée, complétée par des pages de services, articles, publications et annonces,</li>
-  <li>aux <strong>Entreprises référencées</strong>, d'accéder à des services additionnels payants (notamment la mise en avant via Facebook), régis par des Conditions Générales de Vente distinctes.</li>
+  <li>aux <strong>Entreprises référencées</strong>, d'accéder à des services additionnels payants (mise en avant via Facebook, abonnements Pro et Pro+), régis par des Conditions Générales de Vente distinctes.</li>
 </ul>
 
 <h2>5. Accès au service</h2>
@@ -6204,7 +6246,7 @@ Route du Vert Pré, 97232 Le Lamentin, Martinique<br>
   <li>dont l'activité est <strong>licite</strong> et respecte les lois en vigueur.</li>
 </ul>
 <h3>6.2 Gratuité de l'inscription</h3>
-<p>L'inscription dans l'annuaire et la création d'une fiche entreprise sont entièrement <strong>gratuites</strong>. Seuls les services additionnels de mise en avant (boost Facebook) sont payants et soumis à des Conditions Générales de Vente spécifiques.</p>
+<p>L'inscription dans l'annuaire et la création d'une fiche entreprise sont entièrement <strong>gratuites</strong>. Seuls les services additionnels (boost Facebook, abonnements Pro et Pro+) sont payants et soumis à des Conditions Générales de Vente spécifiques. Le programme de fidélité YOUPI Score et le parrainage sont proposés gratuitement, à titre gracieux, dans les conditions prévues aux CGV.</p>
 <h3>6.3 Informations fournies</h3>
 <p>L'Entreprise référencée s'engage à fournir des informations <strong>exactes, complètes et à jour</strong> lors de son inscription et à les maintenir telles. Cela inclut notamment&nbsp;:</p>
 <ul>
@@ -6365,14 +6407,18 @@ Route du Vert Pré, 97232 Le Lamentin, Martinique<br>
   function legalDocCgv() {
     return `
 <div class="legal-highlight">
-  💡 <strong>En résumé&nbsp;:</strong> Les présentes CGV régissent la vente du service de mise en avant payante (boost Facebook) proposé par Annuaire YOUPI® aux entreprises référencées dans l'annuaire. Service réservé aux <strong>professionnels (B2B)</strong>, prix unique de <strong>39 € TTC</strong>, prestation réalisée sous 48 heures.
+  💡 <strong>En résumé&nbsp;:</strong> Les présentes CGV régissent les services payants proposés par Annuaire YOUPI® aux entreprises référencées&nbsp;: la mise en avant ponctuelle (boost Facebook, 39&nbsp;€ TTC) et les abonnements mensuels <strong>Pro (39&nbsp;€/mois)</strong> et <strong>Pro+ (149&nbsp;€/mois)</strong>. Services réservés aux <strong>professionnels (B2B)</strong>. Les abonnements sont à reconduction tacite mensuelle, résiliables à tout moment avec effet en fin de période en cours, sans remboursement du mois entamé.
 </div>
 
 <h2>1. Objet et champ d'application</h2>
-<p>Les présentes Conditions Générales de Vente (ci-après «&nbsp;CGV&nbsp;») ont pour objet de définir les conditions dans lesquelles <strong>Annuaire YOUPI®</strong> propose et vend son service de mise en avant via Facebook Ads (ci-après «&nbsp;Boost Facebook&nbsp;») aux entreprises référencées dans l'annuaire.</p>
+<p>Les présentes Conditions Générales de Vente (ci-après «&nbsp;CGV&nbsp;») ont pour objet de définir les conditions dans lesquelles <strong>Annuaire YOUPI®</strong> propose et vend ses services payants aux entreprises référencées dans l'annuaire&nbsp;:</p>
+<ul>
+  <li>le service de mise en avant ponctuelle via Facebook Ads (ci-après «&nbsp;Boost Facebook&nbsp;»), traité aux articles 1 à 20&nbsp;;</li>
+  <li>les <strong>abonnements mensuels Pro et Pro+</strong>, traités à l'article 21, qui leur est spécifiquement dédié.</li>
+</ul>
 <p>Les présentes CGV complètent les Conditions Générales d'Utilisation (CGU) du Site, qui restent applicables. En cas de contradiction entre les CGU et les CGV, les CGV prévalent pour ce qui concerne les services payants.</p>
 <div class="legal-warning">
-  ⚠️ <strong>Service strictement B2B&nbsp;:</strong> Le service Boost Facebook est exclusivement proposé aux <strong>entreprises et professionnels</strong> référencés dans l'annuaire. Il n'est pas accessible aux consommateurs. Les présentes CGV s'appliquent dans le cadre de relations entre professionnels.
+  ⚠️ <strong>Services strictement B2B&nbsp;:</strong> Les services payants sont exclusivement proposés aux <strong>entreprises et professionnels</strong> référencés dans l'annuaire. Ils ne sont pas accessibles aux consommateurs. Les présentes CGV s'appliquent dans le cadre de relations entre professionnels.
 </div>
 
 <h2>2. Définitions</h2>
@@ -6560,8 +6606,49 @@ Route du Vert Pré, 97232 Le Lamentin, Martinique<br>
 <h3>19.3 Juridiction compétente</h3>
 <p>À défaut d'accord amiable, et la relation étant strictement B2B (entre professionnels), tout litige relatif à l'interprétation, l'exécution ou la rupture des présentes CGV sera soumis à la compétence exclusive des <strong>tribunaux de Fort-de-France (Martinique)</strong>, y compris en cas de pluralité de défendeurs, d'appel en garantie ou de procédure d'urgence.</p>
 
-<h2>20. Contact</h2>
-<p>Pour toute question relative aux présentes CGV ou au service Boost Facebook&nbsp;:</p>
+<h2>21. Dispositions spécifiques aux abonnements Pro et Pro+</h2>
+<p>Le présent article régit spécifiquement les abonnements mensuels <strong>Pro</strong> et <strong>Pro+</strong>. En cas de contradiction avec les autres articles des présentes CGV, le présent article 21 prévaut pour ce qui concerne ces abonnements.</p>
+
+<h3>21.1 Description et tarifs</h3>
+<table>
+  <tr><th>Formule</th><th>Prix</th><th>Nature</th></tr>
+  <tr><td data-label="Formule"><strong>Pro</strong></td><td data-label="Prix">39,00 € / mois</td><td data-label="Nature">Abonnement mensuel à reconduction tacite</td></tr>
+  <tr><td data-label="Formule"><strong>Pro+</strong></td><td data-label="Prix">149,00 € / mois</td><td data-label="Nature">Abonnement mensuel à reconduction tacite</td></tr>
+</table>
+<p>Les prix sont indiqués en euros, toutes taxes comprises. Conformément à l'article 293&nbsp;B du Code Général des Impôts, Annuaire YOUPI® bénéficie de la franchise en base de TVA&nbsp;: <strong>TVA non applicable</strong>. Le détail des fonctionnalités incluses dans chaque formule est présenté dans l'espace «&nbsp;Mon abonnement&nbsp;» et peut évoluer dans le temps&nbsp;; les fonctionnalités essentielles d'une formule ne peuvent toutefois être supprimées sans information préalable du Client abonné.</p>
+
+<h3>21.2 Souscription</h3>
+<p>La souscription s'effectue en ligne, depuis l'espace professionnel du Client, via notre prestataire de paiement Stripe. La souscription suppose la communication d'un moyen de paiement valide. L'accès aux fonctionnalités de la formule est activé dès la confirmation du paiement par Stripe.</p>
+
+<h3>21.3 Reconduction tacite</h3>
+<div class="legal-warning">
+  ⚠️ <strong>Reconduction tacite&nbsp;:</strong> Chaque abonnement est conclu pour une durée d'un mois et se <strong>renouvelle automatiquement par tacite reconduction</strong>, par périodes successives d'un mois, tant que le Client ne l'a pas résilié. Chaque renouvellement donne lieu au prélèvement du prix mensuel en vigueur, via Stripe, à la date anniversaire de la souscription.
+</div>
+
+<h3>21.4 Résiliation</h3>
+<p>Le Client peut résilier son abonnement <strong>à tout moment, sans frais ni justification</strong>, depuis le portail de gestion d'abonnement sécurisé Stripe accessible depuis son espace «&nbsp;Mon abonnement&nbsp;».</p>
+<p>La résiliation prend effet <strong>à la fin de la période mensuelle en cours déjà payée</strong>&nbsp;: le Client conserve l'accès aux fonctionnalités de sa formule jusqu'à cette échéance, après quoi l'abonnement prend fin et la fiche bascule automatiquement en formule gratuite. <strong>Aucun renouvellement n'est facturé après la prise d'effet de la résiliation.</strong></p>
+<p>Le Prestataire peut résilier ou suspendre un abonnement, après information du Client, en cas de manquement grave aux CGU/CGV, de défaut de paiement, ou d'utilisation frauduleuse du service.</p>
+
+<h3>21.5 Absence de remboursement</h3>
+<div class="legal-warning">
+  ⚠️ <strong>Important&nbsp;:</strong> Les abonnements étant des services à exécution successive fournis à des professionnels, <strong>aucun remboursement, même partiel ou au prorata, n'est dû pour un mois entamé</strong>, qu'il y ait résiliation, non-utilisation du service ou passage à une autre formule en cours de mois. Le mois en cours reste dû dans son intégralité.</p>
+</div>
+
+<h3>21.6 Changement de formule</h3>
+<p>Le Client peut passer d'une formule à une autre depuis son espace. Le changement et son traitement tarifaire (proratisation éventuelle, nouvelle échéance) sont gérés automatiquement par Stripe selon ses règles standard. Le passage à une formule inférieure ou la résiliation ne donnent lieu à aucun remboursement du mois en cours, conformément à l'article 21.5.</p>
+
+<h3>21.7 Programme de fidélité et récompenses</h3>
+<p>Le programme «&nbsp;YOUPI Score&nbsp;» et les récompenses associées (notamment les bons de réduction sur abonnement, boosts offerts, points cadeaux) sont proposés à titre commercial et gracieux. Ils ne constituent pas un droit acquis&nbsp;: le Prestataire se réserve la faculté de faire évoluer la grille des récompenses, les barèmes de points ou les niveaux, sans que cela n'ouvre droit à indemnité. Les points et récompenses n'ont aucune valeur monétaire, ne sont pas convertibles en argent et ne peuvent être ni cédés ni remboursés. Les bons de réduction éventuellement obtenus s'appliquent exclusivement via Stripe lors de la souscription concernée et dans les conditions affichées.</p>
+
+<h3>21.8 Modification des tarifs</h3>
+<p>Le Prestataire peut modifier le prix des abonnements. Toute modification tarifaire est portée à la connaissance du Client abonné par email avec un préavis raisonnable avant sa prise d'effet. Le nouveau tarif s'applique au premier renouvellement suivant l'expiration du préavis&nbsp;; le Client qui refuse la modification peut résilier son abonnement dans les conditions de l'article 21.4 avant cette prise d'effet.</p>
+
+<h3>21.9 Disponibilité du service</h3>
+<p>Le Prestataire s'efforce d'assurer la disponibilité du service avec diligence, sans garantie de disponibilité ininterrompue, le service reposant sur des infrastructures tierces (Google, Stripe, etc.). Les interruptions temporaires pour maintenance ou dues à un cas de force majeure (article 15) n'ouvrent pas droit à remboursement, sauf indisponibilité majeure et prolongée imputable au Prestataire.</p>
+
+<h2>22. Contact</h2>
+<p>Pour toute question relative aux présentes CGV (Boost Facebook ou abonnements Pro/Pro+)&nbsp;:</p>
 <p><strong>Olivier COURTY — Annuaire YOUPI®</strong><br>
 Route du Vert Pré, 97232 Le Lamentin, Martinique<br>
 SIRET : 395 370 182 00036<br>
