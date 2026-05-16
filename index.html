@@ -1608,6 +1608,48 @@
       background: rgba(255,255,255,0.3);
       color: white;
     }
+    /* v2.13.1 — Boutons de partage WhatsApp / Email / Copier */
+    .referral-share-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-top: 4px;
+    }
+    @media (max-width: 480px) {
+      .referral-share-grid { grid-template-columns: 1fr; }
+    }
+    .referral-share-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 12px 14px;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.3);
+      background: rgba(255,255,255,0.15);
+      color: white;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.12s, background 0.15s, box-shadow 0.15s;
+    }
+    .referral-share-btn:hover {
+      background: rgba(255,255,255,0.28);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.18);
+    }
+    .referral-share-btn:active { transform: translateY(0); }
+    .referral-share-btn.whatsapp {
+      background: #25d366;
+      border-color: #1ebe5d;
+    }
+    .referral-share-btn.whatsapp:hover { background: #1ebe5d; }
+    .referral-share-btn.email {
+      background: #ea4335;
+      border-color: #d33125;
+    }
+    .referral-share-btn.email:hover { background: #d33125; }
+    .referral-share-icon { font-size: 18px; }
     .filleuls-list {
       display: flex;
       flex-direction: column;
@@ -4017,7 +4059,7 @@
 
   const APP = {
     name: 'Annuaire YOUPI',
-    version: 'v2.13.0',
+    version: 'v2.13.1',
     versionDate: '15 mai 2026',
     BACKEND_URL: 'https://script.google.com/macros/s/AKfycbzQNSOAGCJp1QmZU0IE1FYiKmKCcGgTUpqKa3RJG9lwiAND_EC5dGdbh2XCu26ZTMoxtw/exec'
   };
@@ -4029,6 +4071,16 @@
   //  → Pour ajouter une nouvelle version, demander à Claude.
   // ------------------------------------------------------------
   const CHANGELOG = [
+    {
+      version: 'v2.13.1',
+      date: '15 mai 2026',
+      title: "✨ Amélioration du partage et de la grille de récompenses",
+      entries: [
+        { type: 'feature', text: "Nouveaux boutons « Partager sur WhatsApp » et « Partager par email » dans votre espace parrainage : un clic suffit pour envoyer un message pré-rempli à vos contacts." },
+        { type: 'design',  text: "Refonte de la grille des récompenses pour une progression plus motivante et cohérente avec leur valeur réelle. Le 1er boost Facebook offert est désormais accessible dès 500 points." },
+        { type: 'fix',     text: "Retrait de deux récompenses peu pertinentes pour se concentrer sur les avantages à forte valeur ajoutée." }
+      ]
+    },
     {
       version: 'v2.13.0',
       date: '15 mai 2026',
@@ -8436,18 +8488,15 @@ SIRET : 395 370 182 00036<br>
     { key: 'referral_signup',       icon: '🤝', label: 'Une entreprise s\'inscrit grâce à vous', pts: '+200' },
     { key: 'referral_pro_upgrade',  icon: '💎', label: 'Votre filleul passe Pro',                pts: '+500' },
     { key: 'weekly_login',          icon: '📅', label: 'Connexion hebdomadaire',                 pts: '+5' },
-    { key: 'anniversary_bonus',     icon: '🎂', label: 'Anniversaire de votre fiche',            pts: '+300' },
-    { key: 'monthly_update_bonus',  icon: '✏️', label: 'Mise à jour mensuelle significative',   pts: '+50' }
+    { key: 'anniversary_bonus',     icon: '🎂', label: 'Anniversaire de votre fiche',            pts: '+300' }
   ];
 
   var SCORE_REWARD_META = {
-    free_boost:         { icon: '🚀', label: '1 boost Facebook offert',     auto: true,  cost: 1000 },
-    one_month_pro:      { icon: '💎', label: '1 mois Pro offert',            auto: true,  cost: 1500 },
-    logo_or:            { icon: '🏅', label: 'Logo "YOUPI Or" sur ma fiche', auto: false, cost: 2000 },
-    newsletter:         { icon: '📰', label: 'Mise en avant newsletter',     auto: false, cost: 2500 },
-    evening_invite:     { icon: '🥂', label: 'Invitation soirée YOUPI',      auto: false, cost: 3000 },
-    one_month_pro_plus: { icon: '⭐', label: '1 mois Pro+ offert',           auto: true,  cost: 4000 },
-    blog_article:       { icon: '📝', label: 'Article blog YOUPI',           auto: false, cost: 5000 }
+    free_boost:         { icon: '🚀', label: '1 boost Facebook offert',  auto: true,  cost: 500 },
+    one_month_pro:      { icon: '💎', label: '1 mois Pro offert',         auto: true,  cost: 1500 },
+    newsletter:         { icon: '📰', label: 'Mise en avant newsletter',  auto: false, cost: 3000 },
+    one_month_pro_plus: { icon: '⭐', label: '1 mois Pro+ offert',        auto: true,  cost: 6000 },
+    blog_article:       { icon: '📝', label: 'Article blog YOUPI',        auto: false, cost: 10000 }
   };
 
   var SCORE_EVENT_LABELS = {
@@ -8629,9 +8678,19 @@ SIRET : 395 370 182 00036<br>
         <div class="referral-code-box">
           <div class="referral-code-label">Votre code de parrainage</div>
           <div class="referral-code-value">${esc(s.referral_code || '------')}</div>
-          <div class="referral-actions">
-            <button class="btn btn-sm" onclick="copyReferralCode()">📋 Copier le code</button>
-            <button class="btn btn-sm" onclick="copyReferralLink('${esc(shareUrl).replace(/'/g, "\\'")}')">🔗 Copier le lien</button>
+          <div class="referral-share-grid">
+            <button class="referral-share-btn whatsapp" onclick="shareReferralWhatsApp()" aria-label="Partager sur WhatsApp">
+              <span class="referral-share-icon">💬</span>
+              <span>WhatsApp</span>
+            </button>
+            <button class="referral-share-btn email" onclick="shareReferralEmail()" aria-label="Partager par email">
+              <span class="referral-share-icon">✉️</span>
+              <span>Email</span>
+            </button>
+            <button class="referral-share-btn copy" onclick="copyReferralLink('${esc(shareUrl).replace(/'/g, "\\'")}')" aria-label="Copier le lien">
+              <span class="referral-share-icon">🔗</span>
+              <span>Copier le lien</span>
+            </button>
           </div>
         </div>
         ${filleulsHtml}
@@ -8639,7 +8698,7 @@ SIRET : 395 370 182 00036<br>
     `;
 
     // Récompenses
-    var rewardKeys = ['free_boost', 'one_month_pro', 'logo_or', 'newsletter', 'evening_invite', 'one_month_pro_plus', 'blog_article'];
+    var rewardKeys = ['free_boost', 'one_month_pro', 'newsletter', 'one_month_pro_plus', 'blog_article'];
     var rewardsHtml = rewardKeys.map(function(key) {
       var r = SCORE_REWARD_META[key];
       if (!r) return '';
@@ -8738,6 +8797,81 @@ SIRET : 395 370 182 00036<br>
     _copyToClipboard_(url, '✅ Lien de parrainage copié !');
   }
   window.copyReferralLink = copyReferralLink;
+
+  // ─── v2.13.1 — Partage WhatsApp et Email avec message pré-rempli ────
+
+  /**
+   * Construit le message de parrainage personnalisé.
+   * Réutilisé pour WhatsApp et Email (avec adaptations légères).
+   */
+  function _buildReferralMessage_(mode) {
+    var code = _scoreState.referral_code || '';
+    var shareUrl = window.location.origin + window.location.pathname + '?ref=' + code;
+    var nomEntreprise = (state.user && state.user.data && state.user.data.nom_entreprise) || '';
+
+    if (mode === 'email') {
+      // Format email : retours à la ligne classiques, plus formel
+      var lines = [
+        'Bonjour,',
+        '',
+        'Je te recommande l\'Annuaire YOUPI®, l\'annuaire conversationnel des entreprises ultra-marines (Martinique, Guadeloupe, Guyane).',
+        '',
+        'C\'est un annuaire avec un agent IA qui répond aux questions des clients à propos des entreprises locales. L\'inscription est gratuite et permet de référencer ton entreprise et de gagner en visibilité.',
+        '',
+        'Pour t\'inscrire en utilisant mon code de parrainage (' + code + '), clique sur ce lien :',
+        shareUrl,
+        '',
+        'À bientôt !',
+        nomEntreprise ? '— ' + nomEntreprise : ''
+      ];
+      return lines.join('\n');
+    }
+
+    // Format WhatsApp : plus chaleureux, emojis ok
+    var waLines = [
+      'Salut ! 👋',
+      '',
+      'Je t\'invite à découvrir l\'Annuaire YOUPI®, l\'annuaire conversationnel des entreprises ultra-marines.',
+      '',
+      'C\'est gratuit et tu peux y inscrire ton entreprise pour gagner en visibilité grâce à l\'agent IA qui répond aux questions des clients.',
+      '',
+      '🎁 Utilise mon code de parrainage : *' + code + '*',
+      '🔗 ' + shareUrl,
+      '',
+      'À bientôt !' + (nomEntreprise ? ' ' + nomEntreprise : '')
+    ];
+    return waLines.join('\n');
+  }
+
+  /**
+   * Ouvre WhatsApp (mobile : app native / desktop : WhatsApp Web)
+   * avec le message de parrainage pré-rempli.
+   */
+  function shareReferralWhatsApp() {
+    var code = _scoreState.referral_code || '';
+    if (!code) { toast('error', 'Code de parrainage indisponible'); return; }
+    var msg = _buildReferralMessage_('whatsapp');
+    // https://wa.me/?text=... ouvre WhatsApp avec le message pré-rempli
+    // Sans numéro = sélecteur de contact / partage libre
+    var url = 'https://wa.me/?text=' + encodeURIComponent(msg);
+    window.open(url, '_blank', 'noopener');
+  }
+  window.shareReferralWhatsApp = shareReferralWhatsApp;
+
+  /**
+   * Ouvre le client mail par défaut avec un sujet et un corps pré-remplis.
+   */
+  function shareReferralEmail() {
+    var code = _scoreState.referral_code || '';
+    if (!code) { toast('error', 'Code de parrainage indisponible'); return; }
+    var subject = 'Je te recommande l\'Annuaire YOUPI®';
+    var body = _buildReferralMessage_('email');
+    var url = 'mailto:?subject=' + encodeURIComponent(subject)
+            + '&body=' + encodeURIComponent(body);
+    window.location.href = url;
+  }
+  window.shareReferralEmail = shareReferralEmail;
+  // ────────────────────────────────────────────────────────────────────
 
   function _copyToClipboard_(text, successMsg) {
     try {
