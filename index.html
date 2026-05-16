@@ -966,6 +966,59 @@
     @media (max-width: 700px) {
       .crm-pro-card-head { flex-direction: column; }
     }
+    /* v2.14.5 — cartes contact repliables (lisibilité) */
+    .crm-pro-card { padding: 0; overflow: hidden; }
+    .crm-pro-card-toggle {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      width: 100%;
+      padding: 14px 16px;
+      background: none;
+      border: none;
+      text-align: left;
+      cursor: pointer;
+      font: inherit;
+      color: inherit;
+    }
+    .crm-pro-card-toggle:hover { background: var(--sand-50); }
+    .crm-pro-card-main { flex: 1; min-width: 0; }
+    .crm-pro-card-compact {
+      font-size: 12.5px;
+      color: var(--text-2);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-top: 3px;
+    }
+    .crm-pro-card-side {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-shrink: 0;
+    }
+    .crm-pro-card-chevron {
+      color: var(--text-2);
+      font-size: 12px;
+      transition: transform 0.18s ease;
+      flex-shrink: 0;
+    }
+    .crm-pro-card.open .crm-pro-card-chevron { transform: rotate(180deg); }
+    .crm-pro-card-body {
+      display: none;
+      padding: 14px 16px 16px 16px;
+      border-top: 1px solid var(--sand-100);
+    }
+    .crm-pro-card.open .crm-pro-card-body { display: block; }
+    .crm-pro-card-body .crm-pro-card-notes { margin-top: 0; }
+    .crm-pro-card-body .crm-pro-card-actions {
+      border-top: none;
+      padding-top: 0;
+      margin-top: 14px;
+    }
+    @media (max-width: 700px) {
+      .crm-pro-card-compact { white-space: normal; }
+    }
     /* ─── Mini-CRM : prise en main guidée (v2.14.4) ─── */
     .crm-method {
       background: linear-gradient(135deg,#eff6ff 0%,#e0eaff 100%);
@@ -4718,7 +4771,7 @@
 
   const APP = {
     name: 'Annuaire YOUPI',
-    version: 'v2.14.4',
+    version: 'v2.14.5',
     versionDate: '16 mai 2026',
     BACKEND_URL: 'https://script.google.com/macros/s/AKfycbzQNSOAGCJp1QmZU0IE1FYiKmKCcGgTUpqKa3RJG9lwiAND_EC5dGdbh2XCu26ZTMoxtw/exec'
   };
@@ -4730,6 +4783,14 @@
   //  → Pour ajouter une nouvelle version, demander à Claude.
   // ------------------------------------------------------------
   const CHANGELOG = [
+    {
+      version: 'v2.14.5',
+      date: '16 mai 2026',
+      title: "📬 « Mes contacts » : liste plus lisible",
+      entries: [
+        { type: 'design', text: "Les fiches contact sont désormais compactes par défaut (nom, statut et coordonnées sur une ligne). Cliquez sur une fiche pour la déplier et voir les notes, le suivi et les actions. Une liste claire, même avec beaucoup de contacts." }
+      ]
+    },
     {
       version: 'v2.14.4',
       date: '16 mai 2026',
@@ -10073,7 +10134,8 @@ SIRET : 395 370 182 00036<br>
     mailing: null,   // null | <contactId> en cours d'envoi mail
     mailDraft: null, // {subject, body}
     methodOpen: null,    // null = auto (ouvert si débutant), true/false = choix manuel
-    guideMailedSeen: false // mémo session : a-t-on déjà vu un contact relancé par mail
+    guideMailedSeen: false, // mémo session : a-t-on déjà vu un contact relancé par mail
+    expanded: {}         // { contactId: true } — cartes dépliées
   };
 
   var CRM_PRO_STATUSES = [
@@ -10766,6 +10828,8 @@ SIRET : 395 370 182 00036<br>
 
   function renderContactCard_(c) {
     var meta = _crmProStatusMeta(c.statut);
+    var isOpen = !!_crmPro.expanded[c.id];
+
     var lastContact = c.last_contacted_at
       ? '📅 Dernier contact : ' + formatDateLong_(c.last_contacted_at)
       : '';
@@ -10777,27 +10841,54 @@ SIRET : 395 370 182 00036<br>
     var hintText = _crmStatusHint_(c.statut);
     var hintPart = hintText ? '<div class="crm-guide-hint">' + hintText + '</div>' : '';
 
+    // Ligne compacte (carte repliée) : coordonnées sur une seule ligne
+    var bits = [];
+    if (c.email) bits.push('✉️ ' + esc(c.email));
+    if (c.telephone) bits.push('📞 ' + esc(c.telephone));
+    if (c.notes) bits.push('📝 note');
+    var compact = bits.length
+      ? bits.join('&nbsp;&nbsp;·&nbsp;&nbsp;')
+      : '<span style="font-style:italic">Aucune coordonnée — cliquez pour compléter</span>';
+
+    var idJs = String(c.id).replace(/'/g, "\\'");
+
     return ''
-      + '<div class="crm-pro-card">'
-      +   '<div class="crm-pro-card-head">'
-      +     '<div>'
+      + '<div class="crm-pro-card' + (isOpen ? ' open' : '') + '" id="crmcard-' + esc(c.id) + '">'
+      +   '<button type="button" class="crm-pro-card-toggle" onclick="toggleContactCard(\'' + idJs + '\')">'
+      +     '<div class="crm-pro-card-main">'
       +       '<div class="crm-pro-card-name">' + esc(c.nom) + '</div>'
-      +       '<div class="crm-pro-card-meta">' + emailPart + (emailPart && phonePart ? ' · ' : '') + phonePart + '</div>'
+      +       '<div class="crm-pro-card-compact">' + compact + '</div>'
       +     '</div>'
-      +     '<span class="crm-pro-card-badge" style="background:' + meta.bg + ';color:' + meta.color + '">' + meta.label + '</span>'
-      +   '</div>'
-      +   notesPart
-      +   (lastContact ? '<div class="crm-pro-card-last">' + lastContact + '</div>' : '')
-      +   hintPart
-      +   '<div class="crm-pro-card-actions">'
-      +     '<button class="btn btn-secondary btn-sm" onclick="startEditContact(\'' + c.id + '\')">✏️ Modifier</button>'
-      +     (c.email
-          ? '<button class="btn btn-secondary btn-sm" onclick="startMailContact(\'' + c.id + '\')">✉️ Envoyer un mail</button>'
+      +     '<div class="crm-pro-card-side">'
+      +       '<span class="crm-pro-card-badge" style="background:' + meta.bg + ';color:' + meta.color + '">' + meta.label + '</span>'
+      +       '<span class="crm-pro-card-chevron">▼</span>'
+      +     '</div>'
+      +   '</button>'
+      +   '<div class="crm-pro-card-body">'
+      +     notesPart
+      +     (lastContact ? '<div class="crm-pro-card-last">' + lastContact + '</div>' : '')
+      +     hintPart
+      +     '<div class="crm-pro-card-actions">'
+      +       '<button class="btn btn-secondary btn-sm" onclick="startEditContact(\'' + idJs + '\')">✏️ Modifier</button>'
+      +       (c.email
+          ? '<button class="btn btn-secondary btn-sm" onclick="startMailContact(\'' + idJs + '\')">✉️ Envoyer un mail</button>'
           : '')
-      +     '<button class="btn btn-ghost btn-sm" onclick="deleteContactFromUI(\'' + c.id + '\', \'' + esc(c.nom).replace(/'/g, "\\'") + '\')" style="color:#dc2626">🗑️</button>'
+      +       '<button class="btn btn-ghost btn-sm" onclick="deleteContactFromUI(\'' + idJs + '\', \'' + esc(c.nom).replace(/'/g, "\\'") + '\')" style="color:#dc2626">🗑️ Supprimer</button>'
+      +     '</div>'
       +   '</div>'
       + '</div>';
   }
+
+  // Dépliage/repliage d'une carte — toggle DOM direct (pas de re-render,
+  // donc pas de saut de scroll), état mémorisé pour les re-rendus ultérieurs.
+  function toggleContactCard(id) {
+    var open = !_crmPro.expanded[id];
+    if (open) _crmPro.expanded[id] = true;
+    else delete _crmPro.expanded[id];
+    var el = document.getElementById('crmcard-' + id);
+    if (el) el.classList.toggle('open', open);
+  }
+  window.toggleContactCard = toggleContactCard;
 
   function setCrmProFilter(key) {
     _crmPro.filter = key;
