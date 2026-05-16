@@ -4513,7 +4513,7 @@
 
   const APP = {
     name: 'Annuaire YOUPI',
-    version: 'v2.14.1',
+    version: 'v2.14.2',
     versionDate: '15 mai 2026',
     BACKEND_URL: 'https://script.google.com/macros/s/AKfycbzQNSOAGCJp1QmZU0IE1FYiKmKCcGgTUpqKa3RJG9lwiAND_EC5dGdbh2XCu26ZTMoxtw/exec'
   };
@@ -4525,6 +4525,14 @@
   //  → Pour ajouter une nouvelle version, demander à Claude.
   // ------------------------------------------------------------
   const CHANGELOG = [
+    {
+      version: 'v2.14.2',
+      date: '15 mai 2026',
+      title: "🛠️ Correction du comptage des visites",
+      entries: [
+        { type: 'fix', text: "Correction d'un problème technique qui empêchait l'enregistrement des vues et des clics sur les mini-sites. Les statistiques se mettent désormais à jour correctement." }
+      ]
+    },
     {
       version: 'v2.14.1',
       date: '15 mai 2026',
@@ -8018,32 +8026,32 @@ SIRET : 395 370 182 00036<br>
   function _trackMiniSiteEvent_(companyId, eventType, slug) {
     if (!companyId) return;
     try {
+      // Le backend (doPost) attend impérativement le format { action, data }.
       var payload = {
         action: 'trackMiniSiteEvent',
-        company_id: companyId,
-        event_type: eventType || 'view',
-        slug: slug || '',
-        referrer: document.referrer || '',
-        ua: navigator.userAgent || ''
+        data: {
+          company_id: companyId,
+          event_type: eventType || 'view',
+          slug: slug || '',
+          referrer: document.referrer || '',
+          ua: navigator.userAgent || ''
+        }
       };
-      // sendBeacon si dispo (survit à la navigation, ex: clic sortant),
-      // sinon fetch keepalive en fallback.
-      var url = APP.BACKEND_URL;
-      var body = JSON.stringify(payload);
-      if (navigator.sendBeacon) {
-        var blob = new Blob([body], { type: 'text/plain;charset=UTF-8' });
-        navigator.sendBeacon(url, blob);
-      } else {
-        fetch(url, {
-          method: 'POST',
-          headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
-          body: body,
-          keepalive: true,
-          mode: 'no-cors'
-        }).catch(function() {});
-      }
+      // On utilise fetch en text/plain (même méthode que api()), car
+      // Apps Script renvoie une redirection 302 vers googleusercontent.com
+      // que fetch suit automatiquement — contrairement à sendBeacon qui
+      // gère mal les redirections POST. keepalive permet à la requête de
+      // survivre si l'utilisateur navigue juste après (clic sortant).
+      fetch(APP.BACKEND_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify(payload),
+        keepalive: true
+      }).catch(function() {
+        // silencieux : le tracking ne casse jamais l'expérience visiteur
+      });
     } catch (e) {
-      // silencieux : le tracking ne casse jamais l'expérience
+      // silencieux
     }
   }
   window._trackMiniSiteEvent_ = _trackMiniSiteEvent_;
