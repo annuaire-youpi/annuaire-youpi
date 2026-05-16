@@ -1263,6 +1263,93 @@
       border-color: #1ebe5d;
       color: #fff;
     }
+    /* v2.14.8 — Parcours du contact */
+    .crm-tl {
+      margin: 14px 0 4px;
+      padding-top: 12px;
+      border-top: 1px solid var(--sand-100);
+    }
+    .crm-tl-title {
+      font-size: 12.5px;
+      font-weight: 800;
+      color: var(--teal-900);
+      margin-bottom: 8px;
+    }
+    .crm-tl-add {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 12px;
+    }
+    .crm-tl-addbtn {
+      padding: 5px 10px;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      background: var(--sand-50);
+      color: var(--text-1);
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .crm-tl-addbtn:hover {
+      background: var(--teal-50);
+      border-color: var(--teal-700);
+      color: var(--teal-800);
+    }
+    .crm-tl-empty {
+      font-size: 12.5px;
+      color: var(--text-2);
+      font-style: italic;
+    }
+    .crm-tl-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 7px 0;
+      border-top: 1px solid var(--sand-100);
+    }
+    .crm-tl-row:first-of-type { border-top: none; }
+    .crm-tl-ic {
+      flex: 0 0 22px;
+      text-align: center;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+    .crm-tl-body { flex: 1; min-width: 0; }
+    .crm-tl-label {
+      font-size: 13px;
+      color: var(--text-1);
+      line-height: 1.4;
+      word-break: break-word;
+    }
+    .crm-tl-date {
+      font-size: 11.5px;
+      color: var(--text-2);
+      margin-top: 1px;
+    }
+    .crm-tl-del {
+      flex: 0 0 auto;
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 13px;
+      opacity: 0.5;
+      padding: 2px 4px;
+    }
+    .crm-tl-del:hover { opacity: 1; }
+    .crm-tl-hidden { display: none; }
+    .crm-tl-more.open .crm-tl-hidden { display: block; }
+    .crm-tl-toggle {
+      margin-top: 8px;
+      background: none;
+      border: none;
+      color: var(--teal-700);
+      font-size: 12.5px;
+      font-weight: 600;
+      cursor: pointer;
+      padding: 4px 0;
+    }
+    .crm-tl-toggle:hover { text-decoration: underline; }
     /* ─── Mini-site public partageable (v2.11.0) ─── */
     .mini-site {
       max-width: 920px;
@@ -4810,7 +4897,7 @@
 
   const APP = {
     name: 'Annuaire YOUPI',
-    version: 'v2.14.7',
+    version: 'v2.14.8',
     versionDate: '16 mai 2026',
     BACKEND_URL: 'https://script.google.com/macros/s/AKfycbzQNSOAGCJp1QmZU0IE1FYiKmKCcGgTUpqKa3RJG9lwiAND_EC5dGdbh2XCu26ZTMoxtw/exec'
   };
@@ -4822,6 +4909,16 @@
   //  → Pour ajouter une nouvelle version, demander à Claude.
   // ------------------------------------------------------------
   const CHANGELOG = [
+    {
+      version: 'v2.14.8',
+      date: '16 mai 2026',
+      title: "🧭 Le parcours de chaque contact",
+      entries: [
+        { type: 'feature', text: "Chaque contact dispose maintenant d'un « Parcours » : l'historique complet de votre relation, du premier contact jusqu'à aujourd'hui." },
+        { type: 'feature', text: "Événements enregistrés automatiquement : création du contact, changement de statut, mail envoyé, message WhatsApp envoyé." },
+        { type: 'feature', text: "Ajoutez vos propres événements en un clic : appel téléphonique, rendez-vous, note datée ou événement libre. Vous gardez une trace de tout, au bon moment." }
+      ]
+    },
     {
       version: 'v2.14.7',
       date: '16 mai 2026',
@@ -10194,6 +10291,7 @@ SIRET : 395 370 182 00036<br>
     methodOpen: null,    // null = auto (ouvert si débutant), true/false = choix manuel
     guideMailedSeen: false, // mémo session : a-t-on déjà vu un contact relancé par mail
     expanded: {},        // { contactId: true } — cartes dépliées
+    timelineOpen: {},    // { contactId: true } — parcours entièrement déplié
     loaded: false,       // v2.14.7 — données déjà chargées en cache ?
     loadedFor: null      // company_id pour lequel le cache est valide
   };
@@ -10916,6 +11014,156 @@ SIRET : 395 370 182 00036<br>
       + '</button>';
   }
 
+  // ─── v2.14.8 — Parcours du contact (historique d'événements) ──────
+
+  function _crmEventMeta_(type) {
+    switch (type) {
+      case 'contact_created': return { icon: '📥', manual: false };
+      case 'status_changed':  return { icon: '🏷️', manual: false };
+      case 'mail_sent':       return { icon: '✉️', manual: false };
+      case 'wa_sent':         return { icon: '💬', manual: false };
+      case 'call':            return { icon: '📞', manual: true };
+      case 'meeting':         return { icon: '🤝', manual: true };
+      case 'note':            return { icon: '📝', manual: true };
+      case 'other':           return { icon: '➕', manual: true };
+      default:                return { icon: '•',  manual: false };
+    }
+  }
+
+  function _crmTimelineHtml_(c) {
+    var events = c.events || [];
+    var idJs = String(c.id).replace(/'/g, "\\'");
+
+    var addBar = '<div class="crm-tl-add">'
+      + '<button type="button" class="crm-tl-addbtn" onclick="addManualEvent(\'' + idJs + '\',\'call\')">📞 Appel</button>'
+      + '<button type="button" class="crm-tl-addbtn" onclick="addManualEvent(\'' + idJs + '\',\'meeting\')">🤝 Rendez-vous</button>'
+      + '<button type="button" class="crm-tl-addbtn" onclick="addManualEvent(\'' + idJs + '\',\'note\')">📝 Note</button>'
+      + '<button type="button" class="crm-tl-addbtn" onclick="addManualEvent(\'' + idJs + '\',\'other\')">➕ Autre</button>'
+      + '</div>';
+    var header = '<div class="crm-tl-title">🧭 Parcours du contact</div>';
+
+    if (events.length === 0) {
+      return '<div class="crm-tl">' + header + addBar
+        + '<div class="crm-tl-empty">Aucun événement pour l\'instant. Ajoutez un appel, un rendez-vous ou une note ci-dessus.</div>'
+        + '</div>';
+    }
+
+    function rowHtml(e) {
+      var m = _crmEventMeta_(e.type);
+      var d = e.date ? formatDateLong_(e.date) : '';
+      var del = m.manual
+        ? '<button type="button" class="crm-tl-del" title="Supprimer" onclick="deleteEvent(\'' + String(e.id).replace(/'/g, "\\'") + '\',\'' + idJs + '\')">🗑️</button>'
+        : '';
+      return '<div class="crm-tl-row">'
+        + '<span class="crm-tl-ic">' + m.icon + '</span>'
+        + '<div class="crm-tl-body">'
+        +   '<div class="crm-tl-label">' + esc(e.label) + '</div>'
+        +   (d ? '<div class="crm-tl-date">' + esc(d) + '</div>' : '')
+        + '</div>'
+        + del
+        + '</div>';
+    }
+
+    var LIMIT = 4;
+    var open = !!_crmPro.timelineOpen[c.id];
+    var head = events.slice(0, LIMIT).map(rowHtml).join('');
+    var rest = events.slice(LIMIT);
+    var moreBlock = '';
+    if (rest.length) {
+      moreBlock = '<div class="crm-tl-more' + (open ? ' open' : '') + '" id="crmtl-' + esc(c.id) + '" data-total="' + events.length + '">'
+        + '<div class="crm-tl-hidden">' + rest.map(rowHtml).join('') + '</div>'
+        + '<button type="button" class="crm-tl-toggle" onclick="toggleTimeline(\'' + idJs + '\')">'
+        +   (open ? '▲ Réduire le parcours' : '▾ Voir tout le parcours (' + events.length + ')')
+        + '</button>'
+        + '</div>';
+    }
+    return '<div class="crm-tl">' + header + addBar + head + moreBlock + '</div>';
+  }
+
+  // Déplier/replier le reste du parcours — toggle DOM (pas de re-render).
+  function toggleTimeline(id) {
+    var open = !_crmPro.timelineOpen[id];
+    if (open) _crmPro.timelineOpen[id] = true;
+    else delete _crmPro.timelineOpen[id];
+    var el = document.getElementById('crmtl-' + id);
+    if (el) {
+      el.classList.toggle('open', open);
+      var btn = el.querySelector('.crm-tl-toggle');
+      if (btn) btn.textContent = open
+        ? '▲ Réduire le parcours'
+        : '▾ Voir tout le parcours (' + (el.getAttribute('data-total') || '') + ')';
+    }
+  }
+  window.toggleTimeline = toggleTimeline;
+
+  async function addManualEvent(contactId, type) {
+    var label = '';
+    var d;
+    if (type === 'call') {
+      d = prompt('Détail de l\'appel (optionnel) :', '');
+      if (d === null) return;
+      label = 'Appel téléphonique' + (d && d.trim() ? ' — ' + d.trim() : '');
+    } else if (type === 'meeting') {
+      d = prompt('Détail du rendez-vous (optionnel) :', '');
+      if (d === null) return;
+      label = 'Rendez-vous' + (d && d.trim() ? ' — ' + d.trim() : '');
+    } else if (type === 'note') {
+      d = prompt('Votre note :', '');
+      if (d === null) return;
+      if (!d.trim()) { toast('error', 'La note est vide'); return; }
+      label = d.trim();
+    } else {
+      d = prompt('Décrivez l\'événement :', '');
+      if (d === null) return;
+      if (!d.trim()) { toast('error', 'Le texte est vide'); return; }
+      label = d.trim();
+    }
+    try {
+      var r = await api('addContactEvent', {
+        token: state.user.token,
+        company_id: state.user.id,
+        contact_id: contactId,
+        type: type,
+        label: label
+      });
+      if (!r.ok) { toast('error', r.error || 'Erreur'); return; }
+      var idx = _crmPro.contacts.findIndex(function(x) { return x.id === contactId; });
+      if (idx !== -1 && r.event) {
+        _crmPro.contacts[idx].events = [r.event].concat(_crmPro.contacts[idx].events || []);
+      }
+      toast('success', 'Événement ajouté ✅');
+      var sy = window.scrollY;
+      _crmRender_();
+      window.scrollTo(0, sy);
+    } catch (err) {
+      toast('error', 'Erreur réseau : ' + err.message);
+    }
+  }
+  window.addManualEvent = addManualEvent;
+
+  async function deleteEvent(eventId, contactId) {
+    if (!confirm('Supprimer cet événement du parcours ?')) return;
+    try {
+      var r = await api('deleteContactEvent', {
+        token: state.user.token,
+        company_id: state.user.id,
+        id: eventId
+      });
+      if (!r.ok) { toast('error', r.error || 'Erreur'); return; }
+      var idx = _crmPro.contacts.findIndex(function(x) { return x.id === contactId; });
+      if (idx !== -1) {
+        _crmPro.contacts[idx].events = (_crmPro.contacts[idx].events || []).filter(function(e) { return e.id !== eventId; });
+      }
+      toast('success', 'Événement supprimé');
+      var sy = window.scrollY;
+      _crmRender_();
+      window.scrollTo(0, sy);
+    } catch (err) {
+      toast('error', 'Erreur réseau : ' + err.message);
+    }
+  }
+  window.deleteEvent = deleteEvent;
+
   function renderContactCard_(c) {
     var meta = _crmProStatusMeta(c.statut);
     var isOpen = !!_crmPro.expanded[c.id];
@@ -10958,6 +11206,7 @@ SIRET : 395 370 182 00036<br>
       +     notesPart
       +     (lastContact ? '<div class="crm-pro-card-last">' + lastContact + '</div>' : '')
       +     hintPart
+      +     _crmTimelineHtml_(c)
       +     '<div class="crm-pro-card-actions">'
       +       '<button class="btn btn-secondary btn-sm" onclick="startEditContact(\'' + idJs + '\')">✏️ Modifier</button>'
       +       (c.email
@@ -11123,6 +11372,7 @@ SIRET : 395 370 182 00036<br>
         var idx = _crmPro.contacts.findIndex(function(x) { return x.id === _crmPro.editing; });
         if (idx !== -1) {
           var prev = _crmPro.contacts[idx];
+          var mergedEvents = (r.events && r.events.length ? r.events : []).concat(prev.events || []);
           _crmPro.contacts[idx] = {
             id: prev.id,
             company_id: prev.company_id,
@@ -11133,7 +11383,8 @@ SIRET : 395 370 182 00036<br>
             notes: payload.contact.notes,
             last_contacted_at: prev.last_contacted_at || '',
             created_at: prev.created_at || '',
-            updated_at: new Date().toISOString()
+            updated_at: new Date().toISOString(),
+            events: mergedEvents
           };
         }
       }
@@ -11343,6 +11594,35 @@ SIRET : 395 370 182 00036<br>
     var url = 'https://wa.me/' + num + '?text=' + encodeURIComponent(d.text.trim());
     window.open(url, '_blank', 'noopener');
     toast('success', 'WhatsApp ouvert dans un nouvel onglet');
+
+    // Parcours : on enregistre l'événement (optimiste local + backend en
+    // arrière-plan, sans bloquer l'interface).
+    var nowIso = new Date().toISOString();
+    var waId = _crmPro.waing;
+    var idx = _crmPro.contacts.findIndex(function(x) { return x.id === waId; });
+    if (idx !== -1) {
+      _crmPro.contacts[idx].last_contacted_at = nowIso;
+      _crmPro.contacts[idx].events = [{
+        id: 'ev_local_' + Date.now(),
+        company_id: state.user.id,
+        contact_id: waId,
+        type: 'wa_sent',
+        label: 'Message WhatsApp envoyé',
+        date: nowIso,
+        created_at: nowIso
+      }].concat(_crmPro.contacts[idx].events || []);
+    }
+    try {
+      api('logWaEvent', {
+        token: state.user.token,
+        company_id: state.user.id,
+        contact_id: waId
+      }).catch(function() {});
+    } catch (e) {}
+
+    _crmPro.waing = null;
+    _crmPro.waDraft = null;
+    _crmRender_();
   }
   window.openWaFromUI = openWaFromUI;
 
@@ -11432,6 +11712,9 @@ SIRET : 395 370 182 00036<br>
       var sentIdx = _crmPro.contacts.findIndex(function(x) { return x.id === _crmPro.mailing; });
       if (sentIdx !== -1) {
         _crmPro.contacts[sentIdx].last_contacted_at = new Date().toISOString();
+        if (r.event) {
+          _crmPro.contacts[sentIdx].events = [r.event].concat(_crmPro.contacts[sentIdx].events || []);
+        }
       }
       _crmPro.guideMailedSeen = true;
       _crmPro.mailing = null;
