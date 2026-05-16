@@ -4810,7 +4810,7 @@
 
   const APP = {
     name: 'Annuaire YOUPI',
-    version: 'v2.14.6',
+    version: 'v2.14.7',
     versionDate: '16 mai 2026',
     BACKEND_URL: 'https://script.google.com/macros/s/AKfycbzQNSOAGCJp1QmZU0IE1FYiKmKCcGgTUpqKa3RJG9lwiAND_EC5dGdbh2XCu26ZTMoxtw/exec'
   };
@@ -4822,6 +4822,14 @@
   //  → Pour ajouter une nouvelle version, demander à Claude.
   // ------------------------------------------------------------
   const CHANGELOG = [
+    {
+      version: 'v2.14.7',
+      date: '16 mai 2026',
+      title: "⚡ « Mes contacts » beaucoup plus rapide",
+      entries: [
+        { type: 'perf', text: "Fini les temps d'attente : la page « Mes contacts » charge vos contacts une seule fois, puis tout devient instantané — ouvrir un formulaire, filtrer, choisir un modèle, annuler, supprimer. Plus aucune attente entre deux clics." }
+      ]
+    },
     {
       version: 'v2.14.6',
       date: '16 mai 2026',
@@ -10185,7 +10193,9 @@ SIRET : 395 370 182 00036<br>
     waDraft: null,   // {text}
     methodOpen: null,    // null = auto (ouvert si débutant), true/false = choix manuel
     guideMailedSeen: false, // mémo session : a-t-on déjà vu un contact relancé par mail
-    expanded: {}         // { contactId: true } — cartes dépliées
+    expanded: {},        // { contactId: true } — cartes dépliées
+    loaded: false,       // v2.14.7 — données déjà chargées en cache ?
+    loadedFor: null      // company_id pour lequel le cache est valide
   };
 
   var CRM_PRO_STATUSES = [
@@ -10212,10 +10222,25 @@ SIRET : 395 370 182 00036<br>
     }
   }
 
-  async function renderProContacts() {
-    if (!state.user || state.user.type !== 'company') return navigate('home');
+  // ── v2.14.7 — Réseau UNE seule fois, puis rendu 100% local ──
+  // Le drame des 5-10 s venait du fait que CHAQUE clic relançait
+  // listMyContacts (Apps Script lent). Désormais : on charge le cache une
+  // fois, puis toutes les interactions UI sont instantanées (rendu local),
+  // et le réseau n'est sollicité que pour les écritures réelles.
 
-    // Chargement
+  function _crmComputeCounts_() {
+    var counts = { all: _crmPro.contacts.length };
+    CRM_PRO_STATUSES.forEach(function(s) { counts[s.key] = 0; });
+    _crmPro.contacts.forEach(function(c) {
+      if (counts[c.statut] !== undefined) counts[c.statut]++;
+    });
+    return counts;
+  }
+
+  async function _crmEnsureLoaded_(force) {
+    if (!force && _crmPro.loaded && _crmPro.loadedFor === state.user.id) {
+      return { ok: true };
+    }
     document.getElementById('main').innerHTML = `
       <div class="dashboard-grid">
         ${proSidebar('pro-contacts')}
@@ -10228,33 +10253,35 @@ SIRET : 395 370 182 00036<br>
         </section>
       </div>
     `;
-
     var r;
     try {
       r = await api('listMyContacts', {
         token: state.user.token,
-        company_id: state.user.id,
-        filter: _crmPro.filter === 'all' ? null : _crmPro.filter
+        company_id: state.user.id
       });
     } catch (err) {
       toast('error', 'Erreur réseau : ' + err.message);
-      return;
+      return { ok: false };
     }
+    if (!r.ok && r.upgrade_required) { renderProContactsUpsell_(); return { ok: false }; }
+    if (!r.ok) { toast('error', r.error || 'Erreur de chargement'); return { ok: false }; }
 
-    // Cas verrouillage Pro
-    if (!r.ok && r.upgrade_required) {
-      renderProContactsUpsell_();
-      return;
+    if (_crmPro.loadedFor && _crmPro.loadedFor !== state.user.id) {
+      _crmPro.expanded = {};
+      _crmPro.filter = 'all';
+      _crmPro.methodOpen = null;
+      _crmPro.guideMailedSeen = false;
     }
-
-    if (!r.ok) {
-      toast('error', r.error || 'Erreur de chargement');
-      return;
-    }
-
     _crmPro.contacts = r.contacts || [];
-    _crmPro.counts = r.counts || { all: 0 };
+    _crmPro.loaded = true;
+    _crmPro.loadedFor = state.user.id;
+    return { ok: true };
+  }
 
+  // Rendu local : AUCUN appel réseau. Utilisé pour toutes les interactions
+  // (ouvrir/annuler un formulaire, filtrer, modèles, plier/déplier...).
+  function _crmRender_() {
+    if (!state.user || state.user.type !== 'company') return navigate('home');
     var bodyHtml = '';
     if (_crmPro.editing !== null) {
       bodyHtml = renderContactEditor_();
@@ -10265,7 +10292,6 @@ SIRET : 395 370 182 00036<br>
     } else {
       bodyHtml = renderContactsList_();
     }
-
     document.getElementById('main').innerHTML = `
       <div class="dashboard-grid">
         ${proSidebar('pro-contacts')}
@@ -10278,6 +10304,14 @@ SIRET : 395 370 182 00036<br>
         </section>
       </div>
     `;
+  }
+  window._crmRender_ = _crmRender_;
+
+  async function renderProContacts(force) {
+    if (!state.user || state.user.type !== 'company') return navigate('home');
+    var res = await _crmEnsureLoaded_(force);
+    if (!res.ok) return;        // upsell / erreur déjà affichés
+    _crmRender_();
   }
   window.renderProContacts = renderProContacts;
 
@@ -10795,7 +10829,7 @@ SIRET : 395 370 182 00036<br>
   }
 
   function renderContactsList_() {
-    var counts = _crmPro.counts || { all: 0 };
+    var counts = _crmComputeCounts_();
     var total = counts.all || 0;
 
     // Détection d'état pour le guide (aucune persistance : dérivé du réel)
@@ -10814,6 +10848,11 @@ SIRET : 395 370 182 00036<br>
       return _crmWelcomeHtml_();
     }
 
+    // Vue filtrée (client-side, instantané)
+    var view = _crmPro.filter === 'all'
+      ? _crmPro.contacts
+      : _crmPro.contacts.filter(function(c) { return c.statut === _crmPro.filter; });
+
     // Barre des filtres
     var filtersHtml = '<div class="crm-pro-filters">';
     filtersHtml += renderCrmProFilterBtn_('all', '📋 Tous', counts.all);
@@ -10823,7 +10862,7 @@ SIRET : 395 370 182 00036<br>
     filtersHtml += '</div>';
 
     var listHtml;
-    if (_crmPro.contacts.length === 0) {
+    if (view.length === 0) {
       listHtml = `
         <div class="card" style="text-align:center;padding:40px 24px">
           <div style="font-size:48px;margin-bottom:10px">🔍</div>
@@ -10833,7 +10872,7 @@ SIRET : 395 370 182 00036<br>
       `;
     } else {
       listHtml = '<div class="crm-pro-list">';
-      _crmPro.contacts.forEach(function(c) {
+      view.forEach(function(c) {
         listHtml += renderContactCard_(c);
       });
       listHtml += '</div>';
@@ -10854,19 +10893,18 @@ SIRET : 395 370 182 00036<br>
   }
 
   function toggleCrmMethod() {
-    // On bascule par rapport à l'état actuellement affiché
-    var counts = _crmPro.counts || {};
+    var counts = _crmComputeCounts_();
     var classed = (counts.client || 0) + (counts.fidele || 0)
                 + (counts.a_recontacter || 0) + (counts.perdu || 0);
     var allDone = (counts.all || 0) >= 1 && classed >= 1 && _crmPro.guideMailedSeen;
     _crmPro.methodOpen = !_crmMethodIsOpen_(allDone);
-    renderProContacts();
+    _crmRender_();
   }
   window.toggleCrmMethod = toggleCrmMethod;
 
   function reopenCrmGuide() {
     _crmPro.methodOpen = true;
-    renderProContacts();
+    _crmRender_();
   }
   window.reopenCrmGuide = reopenCrmGuide;
 
@@ -10947,7 +10985,7 @@ SIRET : 395 370 182 00036<br>
 
   function setCrmProFilter(key) {
     _crmPro.filter = key;
-    renderProContacts();
+    _crmRender_();
   }
   window.setCrmProFilter = setCrmProFilter;
 
@@ -10962,7 +11000,7 @@ SIRET : 395 370 182 00036<br>
       statut: 'nouveau',
       notes: ''
     };
-    renderProContacts();
+    _crmRender_();
   }
   window.startNewContact = startNewContact;
 
@@ -10977,14 +11015,14 @@ SIRET : 395 370 182 00036<br>
       statut: c.statut || 'nouveau',
       notes: c.notes || ''
     };
-    renderProContacts();
+    _crmRender_();
   }
   window.startEditContact = startEditContact;
 
   function cancelContactEdit() {
     _crmPro.editing = null;
     _crmPro.editDraft = null;
-    renderProContacts();
+    _crmRender_();
   }
   window.cancelContactEdit = cancelContactEdit;
 
@@ -11077,9 +11115,31 @@ SIRET : 395 370 182 00036<br>
         return;
       }
       toast('success', isNew ? 'Contact créé ✅' : 'Contact mis à jour ✅');
+
+      // Mise à jour du cache local (zéro appel réseau supplémentaire)
+      if (isNew && r.contact) {
+        _crmPro.contacts.unshift(r.contact);
+      } else if (!isNew) {
+        var idx = _crmPro.contacts.findIndex(function(x) { return x.id === _crmPro.editing; });
+        if (idx !== -1) {
+          var prev = _crmPro.contacts[idx];
+          _crmPro.contacts[idx] = {
+            id: prev.id,
+            company_id: prev.company_id,
+            nom: payload.contact.nom,
+            email: payload.contact.email,
+            telephone: payload.contact.telephone,
+            statut: payload.contact.statut,
+            notes: payload.contact.notes,
+            last_contacted_at: prev.last_contacted_at || '',
+            created_at: prev.created_at || '',
+            updated_at: new Date().toISOString()
+          };
+        }
+      }
       _crmPro.editing = null;
       _crmPro.editDraft = null;
-      await renderProContacts();
+      _crmRender_();
     } catch (err) {
       toast('error', 'Erreur réseau : ' + err.message);
     }
@@ -11096,7 +11156,9 @@ SIRET : 395 370 182 00036<br>
       });
       if (!r.ok) { toast('error', r.error || 'Erreur'); return; }
       toast('success', 'Contact supprimé');
-      await renderProContacts();
+      _crmPro.contacts = _crmPro.contacts.filter(function(x) { return x.id !== id; });
+      delete _crmPro.expanded[id];
+      _crmRender_();
     } catch (err) {
       toast('error', 'Erreur réseau : ' + err.message);
     }
@@ -11112,7 +11174,7 @@ SIRET : 395 370 182 00036<br>
       });
       if (!r.ok) { toast('error', r.error || 'Erreur'); return; }
       toast('success', r.created + ' contacts d\'exemple ajoutés ✅');
-      await renderProContacts();
+      await renderProContacts(true);   // rechargement unique (10 fiches créées côté serveur)
     } catch (err) {
       toast('error', 'Erreur réseau : ' + err.message);
     }
@@ -11207,7 +11269,7 @@ SIRET : 395 370 182 00036<br>
     } else {
       _crmPro.mailDraft = { subject: t.subject, body: t.text };
     }
-    renderProContacts();
+    _crmRender_();
   }
   window.applyCrmTemplate = applyCrmTemplate;
 
@@ -11220,14 +11282,14 @@ SIRET : 395 370 182 00036<br>
     _crmPro.waing = id;
     var prenom = (c.nom || '').split(' ')[0];
     _crmPro.waDraft = { text: 'Bonjour ' + prenom + ',\n\n' };
-    renderProContacts();
+    _crmRender_();
   }
   window.startWaContact = startWaContact;
 
   function cancelWaContact() {
     _crmPro.waing = null;
     _crmPro.waDraft = null;
-    renderProContacts();
+    _crmRender_();
   }
   window.cancelWaContact = cancelWaContact;
 
@@ -11298,14 +11360,14 @@ SIRET : 395 370 182 00036<br>
       subject: '',
       body: 'Bonjour ' + (c.nom.split(' ')[0]) + ',\n\n\n\nCordialement,\n' + (state.user.data.nom_entreprise || '')
     };
-    renderProContacts();
+    _crmRender_();
   }
   window.startMailContact = startMailContact;
 
   function cancelMailContact() {
     _crmPro.mailing = null;
     _crmPro.mailDraft = null;
-    renderProContacts();
+    _crmRender_();
   }
   window.cancelMailContact = cancelMailContact;
 
@@ -11367,9 +11429,14 @@ SIRET : 395 370 182 00036<br>
       });
       if (!r.ok) { toast('error', r.error || 'Échec d\'envoi'); return; }
       toast('success', 'Mail envoyé ✅');
+      var sentIdx = _crmPro.contacts.findIndex(function(x) { return x.id === _crmPro.mailing; });
+      if (sentIdx !== -1) {
+        _crmPro.contacts[sentIdx].last_contacted_at = new Date().toISOString();
+      }
+      _crmPro.guideMailedSeen = true;
       _crmPro.mailing = null;
       _crmPro.mailDraft = null;
-      await renderProContacts();
+      _crmRender_();
     } catch (err) {
       toast('error', 'Erreur réseau : ' + err.message);
     }
