@@ -711,6 +711,154 @@
       text-align: center;
       line-height: 1.5;
     }
+
+    /* ─── v2.13.4 — Grille 3 colonnes des formules (Gratuit/Pro/Pro+) ─ */
+    .sub-status {
+      padding: 14px 18px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+      font-size: 14px;
+      line-height: 1.6;
+      border-left: 4px solid;
+    }
+    .sub-status-info    { background: #eff6ff; border-color: #2563eb; color: #1e3a8a; }
+    .sub-status-success { background: #dcfce7; border-color: #16a34a; color: #166534; }
+    .sub-status-warning { background: #fef3c7; border-color: #f59e0b; color: #92400e; }
+    .sub-status-danger  { background: #fee2e2; border-color: #dc2626; color: #991b1b; }
+
+    .plans-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 16px;
+      align-items: stretch;
+    }
+    @media (max-width: 900px) {
+      .plans-grid { grid-template-columns: 1fr; }
+    }
+    .plan-column {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      overflow: hidden;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .plan-column:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.08); }
+    .plan-column-pro_plus { border: 2px solid #7c3aed; }
+    .plan-column-current {
+      border-width: 3px;
+      transform: scale(1.02);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.12);
+    }
+    .plan-column-current.plan-column-free     { border-color: #475569; }
+    .plan-column-current.plan-column-pro      { border-color: #2563eb; }
+    .plan-column-current.plan-column-pro_plus { border-color: #7c3aed; }
+    .plan-column-current:hover { transform: scale(1.02) translateY(-2px); }
+    @media (max-width: 900px) {
+      .plan-column-current { transform: none; }
+      .plan-column-current:hover { transform: translateY(-2px); }
+    }
+
+    .plan-ribbon {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      padding: 4px 12px;
+      border-radius: 14px;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.4px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+      z-index: 1;
+    }
+    .plan-ribbon-current {
+      background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+      color: white;
+    }
+    .plan-ribbon-premium {
+      background: #fbbf24;
+      color: #78350f;
+    }
+
+    .plan-header {
+      padding: 22px 18px;
+      color: white;
+      text-align: center;
+    }
+    .plan-label {
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      opacity: 0.9;
+      margin-bottom: 6px;
+    }
+    .plan-price {
+      font-size: 36px;
+      font-weight: 800;
+      line-height: 1;
+      margin-bottom: 8px;
+    }
+    .plan-price span {
+      font-size: 15px;
+      font-weight: 500;
+      opacity: 0.85;
+    }
+    .plan-desc {
+      font-size: 13px;
+      opacity: 0.95;
+      line-height: 1.4;
+    }
+    .plan-body {
+      padding: 22px 20px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+    .plan-features {
+      list-style: none;
+      padding: 0;
+      margin: 0 0 18px 0;
+      flex: 1;
+    }
+    .plan-features li {
+      padding: 8px 0;
+      font-size: 13.5px;
+      line-height: 1.5;
+      border-bottom: 1px solid var(--sand-50);
+      color: var(--text-1);
+    }
+    .plan-features li:last-child { border-bottom: none; }
+    .plan-cta {
+      display: block;
+      text-align: center;
+      text-decoration: none;
+      padding: 11px 14px;
+      font-size: 14px;
+      font-weight: 700;
+      border-radius: 8px;
+    }
+    .plan-cta-current {
+      background: #dcfce7;
+      color: #166534;
+      border: 2px solid #16a34a;
+      cursor: default;
+    }
+    .plan-cta-disabled {
+      background: var(--sand-50);
+      color: var(--text-2);
+      cursor: default;
+    }
+    .plan-cta-upgrade { /* style btn-primary normal */ }
+    .plan-note {
+      margin-top: 8px;
+      font-size: 11px;
+      color: var(--text-2);
+      text-align: center;
+      line-height: 1.5;
+    }
     /* ─── Mini-CRM Pro (v2.10.0) ─── */
     .crm-pro-filters {
       display: flex;
@@ -4176,7 +4324,7 @@
 
   const APP = {
     name: 'Annuaire YOUPI',
-    version: 'v2.13.3',
+    version: 'v2.13.4',
     versionDate: '15 mai 2026',
     BACKEND_URL: 'https://script.google.com/macros/s/AKfycbzQNSOAGCJp1QmZU0IE1FYiKmKCcGgTUpqKa3RJG9lwiAND_EC5dGdbh2XCu26ZTMoxtw/exec'
   };
@@ -4188,6 +4336,15 @@
   //  → Pour ajouter une nouvelle version, demander à Claude.
   // ------------------------------------------------------------
   const CHANGELOG = [
+    {
+      version: 'v2.13.4',
+      date: '15 mai 2026',
+      title: "💎 Nouvelle présentation de la page « Mon abonnement »",
+      entries: [
+        { type: 'design',  text: "La page « Mon abonnement » présente désormais les 3 formules côte à côte (Gratuit, Pro, Pro+) avec votre formule actuelle clairement mise en évidence par un cadre coloré et un badge « VOTRE FORMULE »." },
+        { type: 'feature', text: "Comparaison plus claire des avantages de chaque formule : vous voyez d'un coup d'œil ce que vous avez déjà et ce que vous gagneriez en passant à la formule supérieure." }
+      ]
+    },
     {
       version: 'v2.13.3',
       date: '15 mai 2026',
@@ -9819,20 +9976,30 @@ SIRET : 395 370 182 00036<br>
       return;
     }
 
-    var plan = r.plan || '';
-    var isPro = r.is_pro;
-    var isProPlus = r.is_pro_plus;
+    var plan = r.plan || '';            // '', 'pro', 'pro_plus'
+    var isPro = !!r.is_pro;
+    var isProPlus = !!r.is_pro_plus;
     var detail = r.detail;
     var endDate = r.subscription_end_date;
     var cancelAtEnd = detail && detail.cancel_at_period_end;
-    var stripeCustomerExists = r.has_stripe_customer;
+    var stripeCustomerExists = !!r.has_stripe_customer;
 
-    var content;
-    if (plan === 'pro' || plan === 'pro_plus') {
-      content = renderActiveSubscriptionCard_(plan, isPro || isProPlus, endDate, cancelAtEnd, stripeCustomerExists);
-    } else {
-      content = renderUpgradeOptionsCard_(c.email);
+    // Plan effectif = ce qui est ACTIF actuellement
+    // (peut être '' si freemium, 'pro' si Pro actif, 'pro_plus' si Pro+ actif)
+    var effectivePlan = (isProPlus ? 'pro_plus' : (isPro ? 'pro' : ''));
+
+    var statusBanner = _renderSubStatusBanner_(effectivePlan, endDate, cancelAtEnd);
+    var portalButton = '';
+    if ((effectivePlan === 'pro' || effectivePlan === 'pro_plus') && stripeCustomerExists) {
+      portalButton = `
+        <div style="text-align:center;margin-top:8px">
+          <button class="btn btn-secondary" onclick="openCustomerPortal()">🔧 Gérer mon abonnement (changer de plan, CB, annuler)</button>
+          <div style="margin-top:8px;font-size:12px;color:var(--text-2)">Géré via le portail sécurisé Stripe.</div>
+        </div>
+      `;
     }
+
+    var planGrid = _renderPlansGrid_(effectivePlan, c.email);
 
     document.getElementById('main').innerHTML = `
       <div class="dashboard-grid">
@@ -9841,188 +10008,173 @@ SIRET : 395 370 182 00036<br>
           <div class="page-header">
             <h1>💎 Mon abonnement</h1>
           </div>
-          ${content}
+          ${statusBanner}
+          ${planGrid}
+          ${portalButton}
         </section>
       </div>
     `;
   }
 
-  function renderActiveSubscriptionCard_(plan, isActive, endDate, cancelAtEnd, hasStripeCustomer) {
-    var planLabel = plan === 'pro_plus' ? 'Pro+' : 'Pro';
-    var planPrice = plan === 'pro_plus' ? '149€' : '39€';
-    var planBadgeBg = plan === 'pro_plus' ? 'linear-gradient(135deg,#7c3aed 0%,#5b21b6 100%)' : 'linear-gradient(135deg,#2563eb 0%,#1d4ed8 100%)';
+  /**
+   * Bannière de statut au-dessus de la grille des plans.
+   * - Freemium : message d'encouragement à passer Pro
+   * - Pro/Pro+ actif : statut + date de renouvellement
+   * - Annulation programmée : alerte ambrée
+   * - Expiré : alerte rouge
+   */
+  function _renderSubStatusBanner_(effectivePlan, endDate, cancelAtEnd) {
     var endFormatted = endDate ? formatDateLong_(endDate) : '—';
-
-    var statusMessage;
+    if (!effectivePlan) {
+      // Freemium
+      return `
+        <div class="sub-status sub-status-info">
+          🚀 <strong>Vous êtes en formule gratuite</strong> — votre fiche et vos pages illimitées sont déjà actives. Passez à une formule supérieure pour débloquer des outils de gestion avancés pour votre entreprise.
+        </div>
+      `;
+    }
+    var planLabel = effectivePlan === 'pro_plus' ? 'Pro+' : 'Pro';
     if (cancelAtEnd) {
-      statusMessage = '<div style="background:#fef3c7;border-left:4px solid #f59e0b;padding:14px 18px;margin:16px 0;border-radius:6px;font-size:14px;color:#92400e">'
-        + '⚠️ <strong>Annulation programmée.</strong> Votre abonnement prendra fin le <strong>' + endFormatted + '</strong>. '
-        + 'Vous conservez tous les avantages ' + planLabel + ' jusqu\'à cette date.'
-        + '</div>';
-    } else if (isActive) {
-      statusMessage = '<div style="background:#dcfce7;border-left:4px solid #16a34a;padding:14px 18px;margin:16px 0;border-radius:6px;font-size:14px;color:#166534">'
-        + '✅ <strong>Abonnement actif.</strong> Prochain renouvellement le <strong>' + endFormatted + '</strong>.'
-        + '</div>';
-    } else {
-      statusMessage = '<div style="background:#fee2e2;border-left:4px solid #dc2626;padding:14px 18px;margin:16px 0;border-radius:6px;font-size:14px;color:#991b1b">'
-        + '⚠️ <strong>Abonnement expiré.</strong> Réactivez votre abonnement pour retrouver les avantages ' + planLabel + '.'
-        + '</div>';
+      return `
+        <div class="sub-status sub-status-warning">
+          ⚠️ <strong>Annulation programmée.</strong> Votre abonnement ${planLabel} prendra fin le <strong>${endFormatted}</strong>. Vous conservez tous les avantages jusqu'à cette date.
+        </div>
+      `;
     }
-
-    var portalButton = hasStripeCustomer
-      ? '<button class="btn btn-primary" onclick="openCustomerPortal()">🔧 Gérer mon abonnement</button>'
-      : '<div style="color:var(--text-2);font-size:13px;padding:10px;background:var(--sand-50);border-radius:6px">La gestion d\'abonnement sera disponible après votre premier paiement Stripe.</div>';
-
-    var html = ''
-      + '<div class="card" style="text-align:center;padding:32px 24px;margin-bottom:20px">'
-      +   '<div style="display:inline-block;background:' + planBadgeBg + ';color:white;padding:6px 18px;border-radius:20px;font-size:13px;font-weight:700;letter-spacing:0.5px;margin-bottom:16px">FORMULE ' + planLabel.toUpperCase() + '</div>'
-      +   '<div style="font-size:42px;font-weight:800;color:var(--teal-900);margin:8px 0">' + planPrice + '<span style="font-size:18px;color:var(--text-2);font-weight:500">/mois</span></div>'
-      +   statusMessage
-      +   '<div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:18px">'
-      +     portalButton
-      +   '</div>'
-      +   '<div style="margin-top:14px;font-size:12px;color:var(--text-2)">'
-      +     'La gestion (changement de plan, mise à jour CB, annulation, factures) se fait via le portail sécurisé Stripe.'
-      +   '</div>'
-      + '</div>'
-      + renderPlanBenefits_(plan);
-
-    // Si on est Pro (pas Pro+), on propose toujours l'upgrade vers Pro+
-    if (plan === 'pro') {
-      html += renderUpgradeToProPlusCard_();
-    }
-
-    return html;
+    return `
+      <div class="sub-status sub-status-success">
+        ✅ <strong>Abonnement ${planLabel} actif.</strong> Prochain renouvellement le <strong>${endFormatted}</strong>.
+      </div>
+    `;
   }
 
   /**
-   * Card d'upsell vers Pro+ — toujours visible quand l'utilisateur est sur Pro.
-   * Conçue comme un encart à part, sans CTA agressive, mais valorisant les +
-   * apportés par Pro+ par rapport à Pro.
+   * Grille 3 colonnes : Gratuit / Pro / Pro+
+   * @param {string} effectivePlan '' | 'pro' | 'pro_plus' — quelle formule mettre en évidence
+   * @param {string} userEmail
    */
-  function renderUpgradeToProPlusCard_() {
-    var userEmail = state.user.data && state.user.data.email ? state.user.data.email : '';
+  function _renderPlansGrid_(effectivePlan, userEmail) {
     var emailParam = userEmail ? '?prefilled_email=' + encodeURIComponent(userEmail) : '';
+    var proUrl     = STRIPE_LINKS.pro + emailParam;
     var proPlusUrl = STRIPE_LINKS.pro_plus + emailParam;
 
-    // Différences nettes entre Pro et Pro+
-    var plusDeltas = [
-      '🤖 <strong>Agent IA dédié à votre entreprise</strong> (votre propre assistant intelligent)',
-      '🚀 <strong>1 boost Facebook offert chaque mois</strong> (au lieu de tous les 2 mois)',
-      '📈 <strong>Statistiques avancées</strong> avec comparaison à votre secteur',
-      '🎨 <strong>Personnalisation poussée</strong> de votre mini-site',
-      '📞 <strong>Support téléphonique</strong> sous 4h ouvré'
-    ];
-
-    var deltasHtml = '<ul class="sub-features" style="margin-bottom:18px">';
-    plusDeltas.forEach(function(d) {
-      deltasHtml += '<li style="border-bottom-color:#ede9fe">' + d + '</li>';
-    });
-    deltasHtml += '</ul>';
-
-    return ''
-      + '<div class="card sub-upsell-card" style="margin-top:20px;border:2px solid #7c3aed;background:linear-gradient(135deg,#faf5ff 0%,#f5f3ff 100%);position:relative;overflow:hidden">'
-      +   '<div style="position:absolute;top:14px;right:14px;background:#fbbf24;color:#78350f;padding:4px 10px;border-radius:12px;font-size:11px;font-weight:700;letter-spacing:0.4px">⚡ ALLEZ PLUS LOIN</div>'
-      +   '<div style="display:flex;align-items:center;gap:12px;margin-bottom:8px">'
-      +     '<div style="font-size:28px">💎</div>'
-      +     '<div>'
-      +       '<h3 style="margin:0;color:#5b21b6;font-size:19px">Passez à la formule Pro+</h3>'
-      +       '<div style="color:#7c3aed;font-size:14px;margin-top:2px"><strong>149€/mois</strong> — Pour les entreprises ambitieuses</div>'
-      +     '</div>'
-      +   '</div>'
-      +   '<p style="color:var(--text-1);font-size:14px;line-height:1.6;margin:12px 0 14px 0">'
-      +     'Vous avez déjà la formule Pro et ses outils essentiels. Avec <strong>Pro+</strong>, vous bénéficiez en plus de&nbsp;:'
-      +   '</p>'
-      +   deltasHtml
-      +   '<a class="btn btn-primary" href="' + proPlusUrl + '" target="_blank" rel="noopener" style="display:block;text-align:center;background:linear-gradient(135deg,#7c3aed 0%,#5b21b6 100%);padding:12px;font-size:15px;font-weight:700;text-decoration:none">'
-      +     '💎 Passer à Pro+ →'
-      +   '</a>'
-      +   '<div style="margin-top:10px;font-size:11px;color:var(--text-2);text-align:center;line-height:1.5">'
-      +     'Changement géré automatiquement par Stripe · Vous ne payez que la différence proratisée'
-      +   '</div>'
-      + '</div>';
+    return `
+      <div class="plans-grid">
+        ${_renderPlanColumn_('free',     effectivePlan, '')}
+        ${_renderPlanColumn_('pro',      effectivePlan, proUrl)}
+        ${_renderPlanColumn_('pro_plus', effectivePlan, proPlusUrl)}
+      </div>
+    `;
   }
 
-  function renderUpgradeOptionsCard_(userEmail) {
-    var emailParam = userEmail ? '?prefilled_email=' + encodeURIComponent(userEmail) : '';
-    var proUrl = STRIPE_LINKS.pro + emailParam;
-    var proPlusUrl = STRIPE_LINKS.pro_plus + emailParam;
+  /**
+   * Une colonne de la grille des plans.
+   * - Si c'est la formule actuelle de l'utilisateur : ribbon "VOTRE FORMULE", scale léger, bouton "Actuelle"
+   * - Sinon : bouton CTA classique vers Stripe
+   * - Gratuit n'a jamais de CTA (l'utilisateur peut redescendre via le portail Stripe)
+   */
+  function _renderPlanColumn_(plan, currentPlan, ctaUrl) {
+    var isCurrent = (plan === currentPlan) || (plan === 'free' && !currentPlan);
+    var meta = _PLAN_META_[plan];
+    var featuresHtml = meta.features.map(function(f) {
+      return '<li>' + f + '</li>';
+    }).join('');
 
-    return ''
-      + '<div class="card" style="margin-bottom:20px;background:#eff6ff;border-left:4px solid #2563eb">'
-      +   '<div style="font-size:15px;line-height:1.6;color:#1e3a8a">'
-      +     '🚀 <strong>Vous êtes en formule gratuite</strong> — votre fiche et vos pages illimitées sont déjà actives. '
-      +     'Passez à une formule supérieure pour débloquer des outils de gestion avancés pour votre entreprise.'
-      +   '</div>'
-      + '</div>'
-      + '<div class="sub-plans-grid">'
-      +   renderPlanCard_('pro', proUrl)
-      +   renderPlanCard_('pro_plus', proPlusUrl)
-      + '</div>';
+    // CTA selon contexte
+    var ctaHtml;
+    if (isCurrent) {
+      ctaHtml = '<div class="plan-cta plan-cta-current">✓ Votre formule actuelle</div>';
+    } else if (plan === 'free') {
+      // Pas de CTA pour Gratuit quand l'utilisateur n'y est pas
+      // (il peut redescendre via le portail Stripe, mais on ne l'incite pas ici)
+      ctaHtml = '<div class="plan-cta plan-cta-disabled">—</div>';
+    } else {
+      var ctaLabel = plan === 'pro_plus' ? 'Devenir Pro+ →' : 'Devenir Pro →';
+      ctaHtml = '<a class="btn btn-primary plan-cta plan-cta-upgrade" href="' + esc(ctaUrl) + '" target="_blank" rel="noopener">' + ctaLabel + '</a>';
+    }
+
+    var ribbonHtml = '';
+    if (isCurrent) {
+      ribbonHtml = '<div class="plan-ribbon plan-ribbon-current">VOTRE FORMULE</div>';
+    } else if (plan === 'pro_plus') {
+      ribbonHtml = '<div class="plan-ribbon plan-ribbon-premium">⭐ TOUT INCLUS</div>';
+    }
+
+    var noteHtml = '';
+    if (!isCurrent && plan !== 'free') {
+      noteHtml = '<div class="plan-note">Paiement sécurisé Stripe · Annulation à tout moment</div>';
+    } else if (isCurrent && plan !== 'free') {
+      noteHtml = '<div class="plan-note">Géré via votre portail Stripe</div>';
+    } else if (plan === 'free') {
+      noteHtml = '<div class="plan-note">Aucun engagement, aucune CB requise</div>';
+    }
+
+    return `
+      <div class="plan-column plan-column-${plan} ${isCurrent ? 'plan-column-current' : ''}">
+        ${ribbonHtml}
+        <div class="plan-header" style="background:${meta.headerBg}">
+          <div class="plan-label">FORMULE ${meta.label.toUpperCase()}</div>
+          <div class="plan-price">${meta.price}<span>${meta.priceSuffix}</span></div>
+          <div class="plan-desc">${meta.description}</div>
+        </div>
+        <div class="plan-body">
+          <ul class="plan-features">${featuresHtml}</ul>
+          ${ctaHtml}
+          ${noteHtml}
+        </div>
+      </div>
+    `;
   }
 
-  function renderPlanCard_(plan, ctaUrl) {
-    var isPlus = plan === 'pro_plus';
-    var label = isPlus ? 'Pro+' : 'Pro';
-    var price = isPlus ? '149€' : '39€';
-    var bg = isPlus ? 'linear-gradient(135deg,#7c3aed 0%,#5b21b6 100%)' : 'linear-gradient(135deg,#2563eb 0%,#1d4ed8 100%)';
-    var description = isPlus
-      ? 'Pour les entreprises ambitieuses qui veulent automatiser leur relation client.'
-      : 'Pour les entreprises qui veulent gagner du temps au quotidien.';
-    var features = isPlus ? proPlusFeatures_() : proFeatures_();
-    var ctaText = isPlus ? 'Devenir Pro+' : 'Devenir Pro';
-
-    var featuresHtml = '<ul class="sub-features">';
-    features.forEach(function(f) {
-      featuresHtml += '<li>' + f + '</li>';
-    });
-    featuresHtml += '</ul>';
-
-    return ''
-      + '<div class="sub-plan-card' + (isPlus ? ' sub-plan-featured' : '') + '">'
-      +   (isPlus ? '<div class="sub-plan-ribbon">⭐ TOUT INCLUS</div>' : '')
-      +   '<div class="sub-plan-header" style="background:' + bg + '">'
-      +     '<div class="sub-plan-label">FORMULE ' + label.toUpperCase() + '</div>'
-      +     '<div class="sub-plan-price">' + price + '<span>/mois</span></div>'
-      +     '<div class="sub-plan-desc">' + description + '</div>'
-      +   '</div>'
-      +   '<div class="sub-plan-body">'
-      +     featuresHtml
-      +     '<a class="btn btn-primary sub-plan-cta" href="' + ctaUrl + '" target="_blank" rel="noopener">' + ctaText + ' →</a>'
-      +     '<div class="sub-plan-note">Paiement sécurisé par Stripe · Annulation possible à tout moment</div>'
-      +   '</div>'
-      + '</div>';
-  }
-
-  function renderPlanBenefits_(currentPlan) {
-    var features = currentPlan === 'pro_plus' ? proPlusFeatures_() : proFeatures_();
-    var html = '<div class="card"><h3 style="margin-top:0">✨ Vos avantages</h3><ul class="sub-features">';
-    features.forEach(function(f) { html += '<li>' + f + '</li>'; });
-    html += '</ul></div>';
-    return html;
-  }
-
-  function proFeatures_() {
-    return [
-      '📬 <strong>Mini-CRM intégré</strong> pour gérer vos contacts et prospects',
-      '🌐 <strong>Mini-site partageable</strong> personnalisable (URL dédiée)',
-      '📊 <strong>Statistiques</strong> détaillées sur votre activité',
-      '🚀 <strong>1 boost Facebook offert tous les 2 mois</strong> (valeur 234€/an)',
-      '💸 <strong>-30%</strong> sur tous les boosts supplémentaires (27€ au lieu de 39€)',
-      '📞 <strong>Support prioritaire</strong> par email (réponse sous 24h)'
-    ];
-  }
-
-  function proPlusFeatures_() {
-    return [
-      '✅ <strong>Tous les avantages de la formule Pro</strong>',
-      '🤖 <strong>Agent IA dédié à votre entreprise</strong> (votre propre assistant intelligent)',
-      '🚀 <strong>1 boost Facebook offert chaque mois</strong> (valeur 468€/an)',
-      '📈 <strong>Statistiques avancées</strong> + comparaison avec votre secteur',
-      '🎨 <strong>Personnalisation poussée</strong> de votre mini-site',
-      '📞 <strong>Support téléphonique</strong> sous 4h ouvré'
-    ];
-  }
+  // ─── Métadonnées des plans (label, prix, couleurs, features) ────
+  var _PLAN_META_ = {
+    free: {
+      label: 'Gratuit',
+      price: '0€',
+      priceSuffix: '/mois',
+      description: 'Pour commencer en douceur, sans engagement.',
+      headerBg: 'linear-gradient(135deg,#475569 0%,#334155 100%)',
+      features: [
+        '📋 <strong>Fiche entreprise illimitée</strong> dans l\'annuaire',
+        '📄 <strong>Pages services illimitées</strong>',
+        '🌐 <strong>Mini-site public</strong> partageable (rendu standard)',
+        '🤖 <strong>Recommandation par l\'agent IA</strong> Annuaire YOUPI',
+        '🏆 <strong>YOUPI Score</strong> et programme de récompenses',
+        '🤝 <strong>Code de parrainage</strong> pour gagner des points'
+      ]
+    },
+    pro: {
+      label: 'Pro',
+      price: '39€',
+      priceSuffix: '/mois',
+      description: 'Pour les entreprises qui veulent gagner du temps au quotidien.',
+      headerBg: 'linear-gradient(135deg,#2563eb 0%,#1d4ed8 100%)',
+      features: [
+        '✅ <strong>Tous les avantages Gratuit</strong>',
+        '📬 <strong>Mini-CRM intégré</strong> pour gérer vos contacts',
+        '🎨 <strong>Mini-site personnalisable</strong> (couleur, photo, sections)',
+        '📊 <strong>Statistiques détaillées</strong> sur votre activité',
+        '🚀 <strong>1 boost Facebook offert tous les 2 mois</strong> (234€/an)',
+        '💸 <strong>-30% sur les boosts supplémentaires</strong> (27€ au lieu de 39€)',
+        '📞 <strong>Support prioritaire</strong> par email sous 24h'
+      ]
+    },
+    pro_plus: {
+      label: 'Pro+',
+      price: '149€',
+      priceSuffix: '/mois',
+      description: 'Pour les entreprises ambitieuses qui veulent automatiser leur relation client.',
+      headerBg: 'linear-gradient(135deg,#7c3aed 0%,#5b21b6 100%)',
+      features: [
+        '✅ <strong>Tous les avantages Pro</strong>',
+        '🤖 <strong>Agent IA dédié à votre entreprise</strong> (votre assistant)',
+        '🚀 <strong>1 boost Facebook offert chaque mois</strong> (468€/an)',
+        '📈 <strong>Statistiques avancées</strong> + comparaison à votre secteur',
+        '🎨 <strong>Personnalisation poussée</strong> du mini-site',
+        '📞 <strong>Support téléphonique</strong> sous 4h ouvré'
+      ]
+    }
+  };
 
   function formatDateLong_(iso) {
     if (!iso) return '—';
